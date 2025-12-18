@@ -67,6 +67,7 @@ export class SignInComponent implements OnInit {
         take(1),
       )
       .subscribe((res: any) => {
+        console.log(res);
         if (res.statusCode < 400) {
           const userData = res.data;
           localStorage.setItem('authObj', JSON.stringify(userData));

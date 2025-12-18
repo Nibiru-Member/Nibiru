@@ -79,16 +79,16 @@
   }
 
   <!-- DASHBOARD -->
-  <div class="scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 mx-auto space-y-8 p-3 text-white">
+  <div class="mx-auto space-y-8 p-3 text-white">
     <!-- TOP FRAGMENTED MDF FILES -->
     <section
-      class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 mb-8 max-h-[400px] overflow-y-auto rounded-lg shadow-lg">
+      class="bg-muted mb-8 max-h-[400px] overflow-hidden rounded-lg shadow-lg">
       <div class="w-full bg-[#e7000b] px-4 py-3 text-sm uppercase tracking-widest text-white">
         Top Fragmented MDF Files
       </div>
-      <div class="p-3">
-        <table class="min-w-full table-fixed rounded-lg text-xs sm:text-sm">
-          <thead class="bg-muted uppercase text-white">
+      <div class="p-3 max-h-[350px] overflow-y-auto" style="padding: 0px !important; ">
+        <table class="min-w-full rounded-lg text-xs sm:text-sm border-collapse">
+          <thead class="bg-muted uppercase text-white table-fixed top-0 sticky z-50">
             <tr>
               <th class="w-1/14 px-3 py-2 text-[#e7000b]">Action</th>
               <th class="w-1/12 px-3 py-2 text-[#e7000b]">Database</th>
@@ -214,7 +214,7 @@
             </tr>
             @if (mdfFiles.length === 0) {
             <tr>
-              <td colspan="6" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
+              <td colspan="12" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
             </tr>
             }
           </tbody>
@@ -225,11 +225,11 @@
     <!-- INDEX STATISTICS -->
     <section
       (click)="openMenuIndex = null; openSubMenu = null"
-      class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 mb-8 max-h-[400px] overflow-y-auto rounded-lg shadow-lg">
+      class="bg-muted mb-8 max-h-[400px] rounded-lg shadow-lg">
       <div class="w-full bg-[#e7000b] px-4 py-3 text-sm uppercase tracking-widest text-white">INDEX STATISTICS</div>
-      <div class="p-3">
-        <table class="min-w-full table-fixed overflow-hidden rounded-lg text-xs sm:text-sm">
-          <thead class="bg-muted uppercase text-white">
+      <div class="p-3 max-h-[350px] overflow-y-auto" style="padding: 0px !important;">
+        <table class="min-w-full rounded-lg text-xs sm:text-sm border-collapse">
+          <thead class="bg-muted uppercase text-white table-fixed top-0 sticky z-50">
             <tr>
               <th class="w-1/14 px-3 py-2 text-[#e7000b]">Action</th>
               <th class="w-1/12 px-3 py-2 text-[#e7000b]">Tables</th>
@@ -340,11 +340,11 @@
     <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
       <!-- Index Storage Utilization -->
       <section
-        class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 max-h-[400px] overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        class="bg-muted mb-8 max-h-[400px] overflow-hidden rounded-lg shadow-lg">
         <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">INDEX STORAGE UTILIZATION</div>
-        <div class="p-3">
-          <table class="w-full border-collapse overflow-hidden rounded-lg text-left">
-            <thead class="bg-muted text-gray-300">
+        <div class="p-3 max-h-[350px] overflow-y-auto" style="padding: 0px !important; ">
+          <table class="min-w-full rounded-lg text-xs sm:text-sm border-collapse">
+            <thead class="bg-muted uppercase text-white table-fixed top-0 sticky z-50">
               <tr>
                 <th class="w-1/14 px-3 py-2 text-[#e7000b]">Action</th>
                 <th class="w-1/12 px-3 py-2 text-[#e7000b]">Index</th>
@@ -374,7 +374,7 @@
               </tr>
               @if (indexStorageUtilization.length === 0) {
               <tr>
-                <td colspan="6" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
+                <td colspan="12" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
               </tr>
               }
             </tbody>
@@ -384,11 +384,11 @@
 
       <!-- Index FIll Factor History-->
       <section
-        class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 max-h-[400px] overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        class="bg-muted mb-8 max-h-[400px] overflow-hidden rounded-lg shadow-lg">
         <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">FILL FACTOR HISTORY</div>
-        <div class="p-3">
-          <table class="w-full border-collapse overflow-hidden rounded-lg text-left">
-            <thead class="bg-muted text-gray-300">
+        <div class="p-3 max-h-[200px] overflow-y-auto" style="padding: 0px !important; ">
+          <table class="min-w-full rounded-lg text-xs sm:text-sm border-collapse">
+            <thead class="bg-muted uppercase text-white table-fixed top-0 sticky z-50">
               <tr>
                 <th class="w-1/14 px-3 py-2 text-[#e7000b]">Action</th>
                 <th class="w-1/12 px-3 py-2 text-[#e7000b]">Index</th>
@@ -420,7 +420,7 @@
               </tr>
               @if (fillFactorHistory.length === 0) {
               <tr>
-                <td colspan="6" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
+                <td colspan="12" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
               </tr>
               }
             </tbody>
@@ -433,11 +433,11 @@
     <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
       <!-- TOP FRAGMENTED INDEXES -->
       <section
-        class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 max-h-[400px] overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+      class="bg-muted mb-8 max-h-[400px] overflow-hidden rounded-lg shadow-lg">
         <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">Top Fragmented Indexes</div>
-        <div class="p-2">
-          <table class="w-full border-collapse overflow-hidden rounded-lg text-left">
-            <thead class="bg-muted text-gray-300">
+        <div class="p-3 max-h-[350px] overflow-y-auto" style="padding: 0px !important; ">
+          <table class="min-w-full rounded-lg text-xs sm:text-sm border-collapse">
+            <thead class="bg-muted uppercase text-white table-fixed top-0 sticky z-50">
               <tr>
                 <th class="w-1/14 px-3 py-2 text-[#e7000b]">Action</th>
                 <th class="px-3 text-[#e7000b]">Index</th>
@@ -472,7 +472,7 @@
               </tr>
               @if (fragmentedIndexes.length === 0) {
               <tr>
-                <td colspan="7" class="mt-5 px-3 py-2 text-center text-gray-400">No Record Found.</td>
+                <td colspan="12" class="mt-5 px-3 py-2 text-center text-gray-400">No Record Found.</td>
               </tr>
               }
             </tbody>
@@ -482,7 +482,7 @@
 
       <!-- FILL FACTOR -->
       <section
-        class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 flex max-h-[400px] flex-col overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 flex max-h-[400px] flex-col overflow-hidden rounded-lg p-0 text-xs shadow-lg sm:text-sm">
         <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">Fill Factor Correlation</div>
 
         <div class="bg-muted p-6 text-gray-400 shadow-inner">
@@ -499,7 +499,7 @@
             [legend]="fillFactorChartOptions.legend || {}"
             [tooltip]="fillFactorChartOptions.tooltip || {}">
           </apx-chart>
-          } @if (fillFactorChartOptions) {
+          } @if (!fillFactorChartOptions) {
           <div class="p-6 text-gray-300">No Data Found</div>
           }
         </div>
@@ -542,15 +542,11 @@
         </div>
         <!-- Case 1: NO DB selected yet and API not called -->
         @if (!isTotalIndexApiCalled) {
-        <div class="flex h-[250px] w-full items-center justify-center text-lg font-semibold text-gray-400">
-          No Record Found
-        </div>
+          <p class="text-center text-gray-400" style="margin-top: 30px;">No Record Found.</p>
         }
         <!-- Case 2: API called AND no data -->
         @if (isTotalIndexApiCalled && noFragmentationData) {
-        <div class="flex h-[250px] w-full items-center justify-center text-lg font-semibold text-gray-400">
-          No Record Found
-        </div>
+          <p class="text-center text-gray-400" style="margin-top: 30px;">No Record Found.</p>
         }
         <!-- Case 3: API called AND data exists -->
         @if (isTotalIndexApiCalled && totalIndexFragmentationChartOptions && !noFragmentationData) {
@@ -595,17 +591,17 @@
           </div>
           } } @else {
 
-          <p class="text-center italic text-gray-400">No Record Found..</p>
+          <p class="text-center text-gray-400">No Record Found.</p>
 
           }
         </div>
       </section>
 
       <!-- RECENT ACTIVITIES -->
-      <section class="bg-muted max-h-[400px] max-w-full overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+      <section class="bg-muted max-h-[400px] max-w-full overflow-hidden rounded-lg text-xs shadow-lg sm:text-sm">
         <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">Recent Activities</div>
 
-        <div class="scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 overflow-y-auto p-6">
+        <div class="scrollbar-thin max-h-[350px] scrollbar-thumb-gray-900 scrollbar-track-gray-800 overflow-y-auto p-6">
           <!-- NO ACTIVITY MESSAGE -->
           @if (activityList.length === 0) {
           <div class="flex h-40 w-full items-center justify-center text-base font-semibold text-gray-400">
