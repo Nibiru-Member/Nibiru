@@ -1,0 +1,58 @@
+<div class="bg-muted relative mx-auto w-[30vw] max-w-2xl p-6">
+  <!-- Header -->
+  <div class="mb-6 flex items-center justify-between">
+    <h2 class="text-xl font-semibold text-gray-100">Select the SQL Servers to connect</h2>
+    <button
+      type="button"
+      (click)="closeDialog()"
+      class="cursor-pointer text-gray-400 transition hover:text-gray-200"
+      aria-label="Close">
+      <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    </button>
+  </div>
+
+  <form [formGroup]="serverForm" (ngSubmit)="onSubmit()" class="space-y-6">
+    <p class="text-md text-white">{{ data.message }}</p>
+    <!-- Server List -->
+    <div class="space-y-3 rounded-md bg-[#121212] p-4">
+      @for (server of servers; track $index; let i = $index) {
+      <div class="flex items-center space-x-3">
+        <input
+          type="checkbox"
+          [formControl]="serverArray.at(i)"
+          class="h-4 w-4 cursor-pointer rounded border-gray-600 bg-gray-700 accent-blue-500" />
+        <label class="cursor-pointer select-none text-gray-200">{{ server }}</label>
+      </div>
+      }
+    </div>
+
+    <!-- Select All -->
+    <div class="flex items-center justify-between text-gray-300">
+      <div class="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          [checked]="isAllSelected"
+          (change)="toggleSelectAll($event)"
+          class="h-4 w-4 cursor-pointer rounded border-gray-600 bg-gray-700 accent-blue-500" />
+        <label class="cursor-pointer select-none">Select all</label>
+      </div>
+      <span>{{ selectedCount }} Selected</span>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex justify-end space-x-4 border-t border-gray-700 pt-6">
+      <button
+        type="button"
+        class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+        (click)="closeDialog()">
+        CANCEL
+      </button>
+      <button
+        type="submit"
+        [disabled]="selectedCount === 0"
+        class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white">
+        CONNECT
+      </button>
+    </div>
+  </form>
+</div>

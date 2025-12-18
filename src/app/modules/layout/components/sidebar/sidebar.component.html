@@ -1,0 +1,30 @@
+<nav
+  [ngClass]="menuService.showSideBar ? 'w-[210px] xl:w-[280px]' : 'w-[70px]'"
+  class="hidden h-full flex-col justify-between bg-black transition-all duration-300 lg:flex">
+  <div class="overflow-hidden">
+    <!-- Logo -->
+    <div [ngClass]="menuService.showSideBar ? 'justify-between' : 'justify-center'" class="mb-2 flex h-9 items-center">
+      @if(menuService.showSideBar){
+      <div class="flex items-center">
+        <a
+          (click)="toggleSidebar()"
+          class="mt-5 flex cursor-pointer items-center justify-center rounded-sm focus:outline-hidden focus:ring-1">
+          <svg-icon [svgClass]="'h-auto w-60'" src="assets/logo/NIBIRU_LOGO_COLORFUL_TRANSPARENT_BG.svg"> </svg-icon>
+        </a>
+      </div>
+      }
+      <button
+        (click)="toggleSidebar()"
+        class="hover:text-muted-foreground mt-3 flex cursor-pointer items-center justify-center rounded-md p-2 text-white transition-all duration-200 focus:outline-hidden"
+        [ngClass]="{ 'rotate-180': !menuService.showSideBar }">
+        <svg-icon src="assets/icons/heroicons/solid/chevron-double-left.svg"> </svg-icon>
+      </button>
+    </div>
+
+    <!-- Menu Items -->
+    <div
+      class="scrollbar-thumb--sm scrollbar-track-rounded scrollbar-thin scrollbar-track-transparent scrollbar-thumb-card mt-5 h-full overflow-auto">
+      <app-sidebar-menu></app-sidebar-menu>
+    </div>
+  </div>
+</nav>

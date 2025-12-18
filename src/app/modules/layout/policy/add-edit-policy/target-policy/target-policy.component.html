@@ -1,0 +1,112 @@
+<div>
+  <h3 class="mb-2 text-sm font-medium text-white">Select from Management Environment</h3>
+
+  <div class="bg-gray-950 max-h-80 overflow-y-auto rounded-md border border-gray-600 p-3">
+    <!-- Loading / Empty -->
+    <ng-container *ngIf="isLoading">
+      <div class="py-4 text-center text-gray-400">Loading...</div>
+    </ng-container>
+
+    <ng-container *ngIf="!isLoading && !treeData.length">
+      <div class="py-4 text-center text-gray-500">No databases found.</div>
+    </ng-container>
+
+    <!-- Tree -->
+    <ng-container *ngIf="treeData.length > 0">
+      <ul>
+        <li class="py-1" *ngFor="let serverNode of treeData; trackBy: trackByName">
+          <div
+            class="flex items-center rounded py-1 transition-colors hover:bg-gray-800"
+            (click)="toggleNode(serverNode, $event)">
+            <div class="mr-1 flex w-5 items-center justify-center">
+              <ng-container *ngIf="serverNode.children.length > 0; else noToggle">
+                <button class="text-gray-400 hover:text-white" (click)="toggleNode(serverNode, $event)">
+                  <svg-icon
+                    [src]="
+                      serverNode.expanded
+                        ? 'assets/icons/heroicons/outline/minus.svg'
+                        : 'assets/icons/heroicons/outline/plus.svg'
+                    "
+                    [svgClass]="'h-3 w-3'">
+                  </svg-icon>
+                </button>
+              </ng-container>
+              <ng-template #noToggle>
+                <div class="h-3 w-3"></div>
+              </ng-template>
+            </div>
+
+            <!-- Checkbox -->
+            <input
+              type="checkbox"
+              class="mr-2 border border-white accent-red-500"
+              [checked]="isNodeSelected(serverNode)"
+              (change)="onNodeSelectionChanged(serverNode, getChecked($event))"
+              (click)="$event.stopPropagation()" />
+
+            <svg-icon [src]="getSvgIcon(serverNode.icon)" [svgClass]="'h-4 w-4 mr-2 ' + getIconColor(serverNode.icon)">
+            </svg-icon>
+
+            <span class="truncate text-sm text-white">{{ serverNode.name }}</span>
+          </div>
+
+          <!-- Children -->
+          <ng-container *ngIf="serverNode.expanded">
+            <ul class="ml-4 space-y-1">
+              <ng-container
+                *ngTemplateOutlet="recursiveTree; context: { $implicit: serverNode.children }"></ng-container>
+            </ul>
+          </ng-container>
+        </li>
+      </ul>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Recursive Template -->
+<ng-template #recursiveTree let-nodes>
+  <ng-container *ngFor="let node of nodes; trackBy: trackByName">
+    <li class="py-1">
+      <div
+        class="flex items-center rounded py-1 transition-colors hover:bg-gray-800"
+        (click)="toggleNode(node, $event)">
+        <div class="mr-1 flex w-5 items-center justify-center">
+          <ng-container *ngIf="node.children?.length > 0; else noToggle2">
+            <button class="text-gray-400 hover:text-white" (click)="toggleNode(node, $event)">
+              <svg-icon
+                [src]="
+                  node.expanded ? 'assets/icons/heroicons/outline/minus.svg' : 'assets/icons/heroicons/outline/plus.svg'
+                "
+                [svgClass]="'h-3 w-3'">
+              </svg-icon>
+            </button>
+          </ng-container>
+          <ng-template #noToggle2>
+            <div class="h-3 w-3"></div>
+          </ng-template>
+        </div>
+
+        <!-- Checkbox -->
+        <input
+          type="checkbox"
+          class="mr-2 accent-red-500"
+          [checked]="isNodeSelected(node)"
+          (change)="onNodeSelectionChanged(node, getChecked($event))"
+          (click)="$event.stopPropagation()" />
+
+        <svg-icon [src]="getSvgIcon(node.icon)" [svgClass]="'h-4 w-4 mr-2 ' + getIconColor(node.icon)"></svg-icon>
+
+        <span class="truncate text-sm text-white">{{ node.name }}</span>
+      </div>
+
+      <!-- Children -->
+      <ng-container *ngIf="node.expanded">
+        <ul class="ml-4 space-y-1">
+          <ng-container *ngIf="node.children?.length">
+            <ng-container *ngTemplateOutlet="recursiveTree; context: { $implicit: node.children }"></ng-container>
+          </ng-container>
+        </ul>
+      </ng-container>
+    </li>
+  </ng-container>
+</ng-template>

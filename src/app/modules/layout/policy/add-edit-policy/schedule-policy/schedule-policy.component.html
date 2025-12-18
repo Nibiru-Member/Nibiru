@@ -1,0 +1,89 @@
+<div class="space-y-6 text-gray-300">
+  <!-- Schedule Toggle Checkbox -->
+  <label class="mb-2 flex items-center space-x-2 text-sm">
+    <input
+      type="checkbox"
+      [(ngModel)]="isSchedule"
+      (ngModelChange)="isScheduleChange.emit($event)"
+      class="accent-red-500" />
+    <span>Schedule</span>
+  </label>
+
+  <!-- Entire UI only visible when checked -->
+  @if (isSchedule) {
+  <div class="space-y-6">
+    <!-- TYPE -->
+    <div class="border-b border-gray-700 pb-4">
+      <h3 class="mb-3 text-sm font-medium">Type</h3>
+
+      <div class="flex items-center space-x-6">
+        <label class="flex items-center space-x-2 text-sm" *ngFor="let type of ['Monthly', 'Weekly', 'Daily', 'Once']">
+          <input
+            type="radio"
+            name="scheduleType"
+            [value]="type"
+            [(ngModel)]="scheduleType"
+            (change)="onScheduleTypeChange($event)"
+            class="accent-red-500" />
+          <span>{{ type }}</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="border-b border-gray-700 pb-4">
+      <h3 class="mb-3 text-sm font-medium">Schedule</h3>
+
+      <div class="mb-3 flex items-center space-x-8">
+        <!-- Start Time -->
+        <div class="flex items-center space-x-3">
+          <span class="text-sm">Start:</span>
+          <input
+            type="text"
+            [(ngModel)]="startTime"
+            (input)="onStartTimeChange($event)"
+            class="bg-gray-950 w-32 rounded-md border border-gray-600 p-1 text-center text-sm" />
+        </div>
+
+        <!-- Days -->
+        <div class="flex items-center space-x-3">
+          <span class="text-sm">On:</span>
+          <div class="flex items-center space-x-3">
+            <label *ngFor="let day of days; let i = index" class="flex items-center space-x-1 text-sm">
+              <input
+                type="checkbox"
+                [(ngModel)]="selectedDays[i]"
+                (change)="onSelectedDaysChange(i, $event)"
+                class="accent-red-500" />
+              <span>{{ day }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESTRICTION -->
+    <div>
+      <h3 class="mb-3 text-sm font-medium">Restriction</h3>
+
+      <div class="flex items-center space-x-4">
+        <span class="shrink-0 whitespace-nowrap text-sm"> Execute only between: </span>
+
+        <input
+          type="text"
+          [(ngModel)]="restrictionStart"
+          (input)="onRestrictionStartChange($event)"
+          class="bg-gray-950 w-32 rounded-md border border-gray-600 p-1 text-center text-sm" />
+
+        <span class="shrink-0 text-sm">and</span>
+
+        <input
+          type="text"
+          [(ngModel)]="restrictionEnd"
+          (input)="onRestrictionEndChange($event)"
+          class="bg-gray-950 w-32 rounded-md border border-gray-600 p-1 text-center text-sm" />
+      </div>
+    </div>
+  </div>
+  }
+</div>

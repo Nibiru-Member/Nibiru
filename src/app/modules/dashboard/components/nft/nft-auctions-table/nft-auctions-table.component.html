@@ -1,0 +1,38 @@
+<div class="bg-background flex-col rounded-lg px-8 py-8 sm:flex-row">
+  <div class="mb-4 flex items-center justify-between">
+    <div class="flex-col items-center">
+      <h3 class="text-md text-foreground font-bold">Active Auctions</h3>
+      <span class="text-muted-foreground text-xs">Updated 37 minutes ago</span>
+    </div>
+    <button
+      class="bg-card text-muted-foreground hover:bg-muted hover:text-foreground flex-none rounded-md px-4 py-2.5 text-xs font-semibold">
+      History
+    </button>
+  </div>
+
+  <div class="relative overflow-x-auto">
+    <table class="w-full table-auto">
+      <!--Tables head-->
+      <thead class="text-muted-foreground text-xs uppercase">
+        <tr>
+          <th class="py-3 text-left">Item</th>
+          <th class="py-3 text-right">Open Price</th>
+          <th class="py-3 text-right">Price $</th>
+          <th class="py-3 text-right">Recent Offer</th>
+          <th class="py-3 text-right">Time Left</th>
+          <th class="py-3 text-right">View</th>
+        </tr>
+      </thead>
+      <!--end Tables head-->
+      <!--Tables body-->
+      <tbody>
+        <tr
+          *ngFor="let auction of activeAuction"
+          [auction]="auction"
+          nft-auctions-table-item
+          class="border-border hover:bg-card border-b border-dashed hover:bg-gray-700"></tr>
+      </tbody>
+      <!--end::Tables body-->
+    </table>
+  </div>
+</div>

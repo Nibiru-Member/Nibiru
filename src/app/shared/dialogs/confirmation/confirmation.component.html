@@ -1,0 +1,51 @@
+<div class="bg-muted relative mx-auto w-[30vw] max-w-2xl p-6">
+  <!-- Header -->
+  <div class="mb-6 flex items-center justify-between">
+    <h2 class="text-xl font-semibold text-gray-100">{{ data.title }}</h2>
+    <button
+      type="button"
+      (click)="closeDialog()"
+      class="cursor-pointer text-gray-400 transition hover:text-gray-200"
+      aria-label="Close">
+      <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    </button>
+  </div>
+
+  <!-- Main Message -->
+  @if (!data.showStatusSelector) {
+  <div class="flex items-center justify-center border-t border-gray-700 py-6">
+    <p class="text-md text-white">{{ data.message }}</p>
+  </div>
+  }
+
+  <!-- STATUS SELECTOR — visible ONLY when data.showStatusSelector = true -->
+  @if (data.showStatusSelector) {
+  <div class="flex justify-center py-4">
+    <div class="flex w-full max-w-xs flex-col gap-3 text-white">
+      <label class="text-sm text-gray-300">Select Policy Status:</label>
+
+      <select [formControl]="statusControl" class="rounded border border-gray-600 bg-gray-800 px-3 py-2 text-white">
+        <option [value]="true">Active</option>
+        <option [value]="false">Inactive</option>
+      </select>
+    </div>
+  </div>
+  }
+
+  <!-- Footer Buttons -->
+  <div class="mt-4 flex justify-center space-x-4">
+    <button
+      type="button"
+      class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+      (click)="closeDialog()">
+      {{ data.cancelText }}
+    </button>
+
+    <button
+      type="submit"
+      class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white"
+      (click)="onSubmit()">
+      {{ data.submitText }}
+    </button>
+  </div>
+</div>

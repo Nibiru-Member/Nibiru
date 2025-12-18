@@ -1,0 +1,184 @@
+<header class="bg-muted mb-6 flex flex-col items-center justify-between space-y-3 sm:flex-row sm:space-y-0">
+  <p class="p-5 text-sm font-semibold tracking-widest text-white">Roles</p>
+
+  <nav class="space-x-2 px-3">
+    <!-- Export BUTTON -->
+    <button
+      class="flex-none cursor-pointer rounded-md bg-gray-700 px-4 py-2.5 text-sm text-white hover:text-white"
+      (click)="exportCSV()">
+      Export
+    </button>
+
+    <!-- ADD ROLE -->
+    <button
+      class="bg-primary hover:text-foreground flex-none cursor-pointer rounded-md px-4 py-2.5 text-white"
+      (click)="onAddEditRole()">
+      Add Role
+    </button>
+  </nav>
+</header>
+
+<div class="bg-muted my-3 mx-auto max-w-6xl rounded-lg p-6 text-gray-200">
+  <!-- SEARCH + FILTER -->
+  <div class="mb-4 flex items-center justify-end">
+    <!-- SEARCH BOX -->
+    <div class="relative w-80">
+      <input
+        [(ngModel)]="searchText"
+        (input)="debouncedSearch()"
+        type="text"
+        placeholder="Search"
+        class="w-full rounded-md bg-gray-800 py-2 pl-10 pr-4 text-sm text-gray-300 outline-none" />
+
+      <svg-icon
+        src="assets/icons/heroicons/outline/magnifying-glass.svg"
+        [svgClass]="'absolute left-3 top-2.5 h-4 w-4 text-gray-400'"></svg-icon>
+    </div>
+  </div>
+  <!-- TABLE -->
+  <table class="min-w-full table-fixed">
+    <thead>
+      <tr class="bg-muted text-left text-sm tracking-wider text-white">
+        <!-- ACTION -->
+        <th class="w-24 px-6 py-3 text-[#e7000b]">Action</th>
+
+        <!-- NAME WITH SORT -->
+        <th class="cursor-pointer px-6 py-3 text-left text-[#e7000b]" (click)="sortBy('name')">
+          <div class="flex items-center space-x-1">
+            <span>Name</span>
+
+            @if (sortColumn === 'name' && sortDirection === 'asc') {
+            <span>▲</span>
+            } @if (sortColumn === 'name' && sortDirection === 'desc') {
+            <span>▼</span>
+            }
+          </div>
+        </th>
+
+        <th class="px-6 py-3 text-left text-[#e7000b]">CreatedAt</th>
+        <th class="px-6 py-3 text-left text-[#e7000b]">Status</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (user of filteredAndSortedUsers; track user; let i = $index) {
+      <tr class="border-b border-gray-600 transition-colors hover:bg-gray-700">
+        <!-- ACTION MENU -->
+        <td class="px-6 py-3">
+          <div class="relative inline-block text-left">
+            <button class="role-menu-button rounded-md bg-gray-700 px-2 py-1" (click)="toggleMenu(i)">
+              <svg-icon
+                src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
+            </button>
+
+            <!-- DROPDOWN -->
+            @if (openedMenu === i) {
+            <div
+              @dropdownAnimation
+              class="absolute right-0 z-20 mt-2 w-32 rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+              <div class="py-2 text-sm text-gray-200">
+                <div
+                  class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                  (click)="$event.stopPropagation(); onPermission(user.id); closeMenu()">
+                  <svg-icon src="assets/icons/heroicons/outline/user-shield.svg" [svgClass]="'h-4 w-4'"></svg-icon>
+                  <span>Permission</span>
+                </div>
+
+                <div
+                  class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                  (click)="$event.stopPropagation(); onAddEditRole(user); closeMenu()">
+                  <svg-icon src="assets/icons/heroicons/outline/pencil.svg" [svgClass]="'h-4 w-4'"></svg-icon>
+                  <span>Edit</span>
+                </div>
+
+                <div
+                  class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                  (click)="$event.stopPropagation(); openConfirmationDialog(user.id); closeMenu()">
+                  <svg-icon
+                    src="assets/icons/heroicons/outline/trash.svg"
+                    [svgClass]="'h-4 w-4 text-red-400'"></svg-icon>
+                  <span>Delete</span>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+        </td>
+
+        <!-- NAME -->
+        <td class="px-6 py-3">
+          {{ user?.name }}
+        </td>
+
+        <!-- CREATED AT -->
+        <td class="px-6 py-3">
+          {{ user?.createdAt | date: 'yyyy-MM-dd' }}
+        </td>
+
+        <!-- STATUS -->
+        <td class="px-6 py-3">
+          <span [class]="getStatusClass(user.isActive)">{{ user.isActive ? 'Active' : 'Inactive' }}</span>
+        </td>
+      </tr>
+      }
+    </tbody>
+  </table>
+
+  <!-- EMPTY STATE -->
+  @if (!isLoading && filteredAndSortedUsers.length === 0) {
+  <div class="items-center">
+    <div class="ml-10 mt-10 text-center text-white">No Role found. Click "Add Role" to create one.</div>
+  </div>
+  }
+
+  <!-- PAGINATION -->
+  <div class="mt-6 flex items-center justify-between border-t border-none pt-4 text-gray-300">
+    <p class="text-sm">Showing {{ (page - 1) * pageSize + 1 }} to {{ endRecord }} of {{ totalRecords }} roles</p>
+
+    <div class="flex items-center space-x-2">
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="page === 1"
+        (click)="goToFirst()">
+        First
+      </button>
+
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="page === 1"
+        (click)="changePage(page - 1)">
+        ‹ Prev
+      </button>
+
+      <ng-container *ngFor="let p of paginationPages">
+        <button
+          class="rounded-md px-3 py-2 text-sm"
+          [ngClass]="p === page ? 'bg-primary text-white' : 'bg-gray-700 text-gray-200'"
+          (click)="changePage(p)">
+          {{ p }}
+        </button>
+      </ng-container>
+
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="page === totalPages"
+        (click)="changePage(page + 1)">
+        Next ›
+      </button>
+
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="page === totalPages"
+        (click)="goToLast()">
+        Last
+      </button>
+    </div>
+  </div>
+</div>
+<!-- LOADER (Tailwind only) -->
+@if (isLoading) {
+<div class="absolute inset-0 z-40 flex items-center justify-center bg-black/40">
+  <div class="border-t-primary h-12 w-12 animate-spin rounded-full border-4 border-gray-300"></div>
+</div>
+}

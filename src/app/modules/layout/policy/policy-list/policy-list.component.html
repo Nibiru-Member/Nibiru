@@ -1,0 +1,287 @@
+<header
+  class="bg-muted mb-6 flex flex-col items-center justify-between space-y-3 rounded-lg px-4 py-2 sm:flex-row sm:space-y-0">
+  <p class="p-2 text-sm font-semibold tracking-widest text-white">POLICY MANAGEMENT</p>
+
+  <nav class="flex items-center space-x-2 px-3">
+    <div class="mx-auto max-w-6xl">
+      <div class="bg-muted relative flex justify-end p-4">
+        <div class="max-w-2xl">
+          <div class="relative w-60">
+            <input
+              [(ngModel)]="searchText"
+              (input)="debouncedSearch()"
+              type="text"
+              placeholder="Search"
+              class="rounded-md bg-gray-800 py-3 pl-10 pr-4 text-sm text-gray-300 outline-none" />
+            <svg-icon
+              src="assets/icons/heroicons/outline/magnifying-glass.svg"
+              [svgClass]="'absolute left-3 top-2.5 h-4 w-4 text-gray-400'">
+            </svg-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button (click)="exportPoliciesCSV()" class="mr-3 rounded-md bg-gray-700 px-4 py-2.5 text-sm text-white">
+      Export
+    </button>
+
+    <button
+      (click)="onAddEditPolicy()"
+      class="bg-primary rounded-md px-4 py-2.5 text-white transition-colors hover:bg-red-600">
+      Add Policy
+    </button>
+  </nav>
+</header>
+
+<!-- Main table -->
+<div class="bg-muted mx-auto mb-3 max-w-6xl p-4 text-gray-200 shadow-md">
+  @if (!isLoading) {
+
+  <div class="overflow-x-auto">
+    <table class="border-spacing-y-1 min-w-full border-separate">
+      <thead>
+        <tr class="text-left text-sm uppercase tracking-wider text-white">
+          <th class="w-4 px-4 py-3"></th>
+          <th class="px-4 py-3 text-[#e7000b]">Policy</th>
+          <th class="px-4 py-3 text-[#e7000b]">Description</th>
+          <th class="px-4 py-3 text-[#e7000b]">Schedule</th>
+          <th class="px-4 py-3 text-[#e7000b]">Category</th>
+          <th class="px-4 py-3 text-[#e7000b]">Last Run</th>
+          <th class="px-4 py-3 text-[#e7000b]">Next Run</th>
+          <th class="px-4 py-3 text-[#e7000b]">Status</th>
+          <th class="w-32 px-4 py-3 text-right text-[#e7000b]">Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <!-- No Records -->
+        @if (!isLoading && policies.length === 0) {
+        <tr>
+          <td colspan="10" class="py-8 text-center text-gray-400">No policies found</td>
+        </tr>
+        }
+
+        <!-- Policy List -->
+        @for (policy of policies; track policy.policyId) {
+
+        <tr
+          class="cursor-pointer border-b border-gray-600 transition-colors hover:bg-gray-700"
+          (click)="toggleExpand(policy.policyId)">
+          <td class="px-4 py-3">
+            <svg-icon
+              [src]="
+                expandedPolicyId === policy.policyId
+                  ? 'assets/icons/heroicons/solid/chevron-up.svg'
+                  : 'assets/icons/heroicons/solid/chevron-down.svg'
+              "
+              [svgClass]="'h-4 w-4 text-gray-400 transition-transform duration-200'">
+            </svg-icon>
+          </td>
+
+          <td class="space-x-3 px-6 py-3 font-medium text-white">
+            {{ policy.policyName || 'Policy' }}
+          </td>
+
+          <td class="px-4 py-3 text-sm text-gray-300">
+            {{ policy.description || '—' }}
+          </td>
+
+          <td class="px-4 py-3 text-sm text-gray-300">
+            {{ policy.scheduleType || '—' }}
+          </td>
+
+          <td class="px-4 py-3 text-gray-300">
+            {{ policy.name || '—' }}
+          </td>
+
+          <td class="px-4 py-3 text-sm text-gray-300">
+            {{ policy.restrictionEndTime || '—' }}
+          </td>
+
+          <td class="px-4 py-3 text-sm text-gray-300">
+            {{ policy.restrictionStartTime || '—' }}
+          </td>
+
+          <td class="px-4 py-3">
+            <span [class]="getStatusClass(policy.isEnabled)">
+              {{ policy.isEnabled ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+
+          <td class="flex items-center justify-end space-x-3 px-6 py-3 text-center">
+            <svg-icon
+              src="assets/icons/heroicons/outline/pencil.svg"
+              [svgClass]="'h-4 w-4 cursor-pointer hover:text-blue-300'"
+              matTooltip="Edit"
+              matTooltipPosition="above"
+              (click)="$event.stopPropagation(); onAddEditPolicy(policy.policyId)">
+            </svg-icon>
+
+            <svg-icon
+              src="assets/icons/heroicons/outline/arrow-path.svg"
+              [svgClass]="'h-4 w-4 cursor-pointer hover:text-blue-300'"
+              matTooltip="Update Status"
+              matTooltipPosition="above"
+              (click)="$event.stopPropagation(); onPolicyUpdate(policy.policyId)">
+            </svg-icon>
+          </td>
+        </tr>
+
+        <!-- Expanded Details -->
+        @if (expandedPolicyId === policy.policyId) {
+        <tr class="bg-gray-950 text-sm text-gray-400">
+          <td colspan="12" class="px-10 py-4">
+            <table class="min-w-full rounded-lg">
+              <tbody>
+                <tr class="border-muted border-b hover:bg-gray-700">
+                  <td class="w-1/4 px-4 py-2 font-medium text-gray-300">General</td>
+                  <td class="px-4 py-2 text-gray-400">
+                    <span class="text-green-100">Server:</span> {{ policy.serverName }};
+                    <span class="text-green-100">Owner:</span> {{ policy.ownerName }};
+                    <span class="text-green-100">Category:</span> {{ policy.categoryName }}
+                  </td>
+                </tr>
+
+                <tr class="border-muted border-b hover:bg-gray-700">
+                  <td class="px-4 py-2 font-medium text-gray-300">Target</td>
+                  <td class="px-4 py-2 text-gray-400">
+                    <span class="text-green-100">Targets:</span>
+                    {{ policy.isAllIndex && policy.isMDF ? 'All Index + MDF' : 'All Index' }}
+                  </td>
+                </tr>
+
+                <tr class="border-muted border-b hover:bg-gray-700">
+                  <td class="px-4 py-2 font-medium text-gray-300">Thresholds</td>
+                  <td class="px-4 py-2 text-gray-400">
+                    <span class="text-green-100">Fragmentation Value:</span> {{ policy.fragmentationThreshold }};
+                    <span class="text-green-100">Scan Density:</span> {{ policy.scanDensityThreshold }}
+                  </td>
+                </tr>
+
+                <tr class="border-muted border-b hover:bg-gray-700">
+                  <td class="px-4 py-2 font-medium text-gray-300">Filters</td>
+                  <td class="px-4 py-2 text-gray-400">
+                    <span class="text-green-100">Page Counts:</span>
+                    <span class="text-green-100">Min:</span> {{ policy.minPageCount }};
+                    <span class="text-green-100">Max:</span> {{ policy.maxPageCount }};
+                    <span class="text-green-100">Index Sorting:</span> {{ policy.primaryIndexSorting }}
+                  </td>
+                </tr>
+
+                <tr class="border-muted border-b hover:bg-gray-700">
+                  <td class="px-4 py-2 font-medium text-gray-300">Defragment Action</td>
+                  <td class="px-4 py-2 text-gray-400">
+                    <span class="text-green-100">Update Statistics:</span> {{ policy.updateStatistics }},
+                    <span class="text-green-100">Recompile Statistics:</span> {{ policy.recompiledSP }},
+                    <span class="text-green-100">Current Fill Factor:</span> {{ policy.fillFactorNewValue }},
+                    <span class="text-green-100">New Fill Factor:</span> {{ policy.fillFactorNewValue }}
+                  </td>
+                </tr>
+
+                <tr class="border-muted border-b hover:bg-gray-700">
+                  <td class="px-4 py-2 font-medium text-gray-300">Schedule</td>
+                  <td class="px-4 py-2 text-gray-400">
+                    <span class="text-green-100">Daily at</span> {{ policy.scheduleTime }} ({{
+                      getActiveDays(policy)
+                    }});
+                    <span class="text-green-100">Restrictions:</span>
+                    {{ policy.restrictionStartTime }} to {{ policy.restrictionEndTime }}
+                  </td>
+                </tr>
+
+                <tr class="border-muted border-b hover:bg-gray-700">
+                  <td class="px-4 py-2 font-medium text-gray-300">Backup</td>
+                  <td class="px-4 py-2 text-gray-400">
+                    <span class="text-green-100">Backup Before MDF Defragmentation:</span>
+                    {{ policy.isBackup ? 'Yes' : 'No' }}
+                  </td>
+                </tr>
+
+                <tr class="border-muted border-b hover:bg-gray-700">
+                  <td class="px-4 py-2 font-medium text-gray-300">Notifications</td>
+                  <td class="px-4 py-2 text-gray-400">
+                    <span class="text-green-100">Reorganize:</span> {{ policy.isReorganize ? 'Yes' : 'No' }},
+                    <span class="text-green-100">Rebuild Offline:</span>
+                    {{ policy.isRebuildOnline ? 'Yes' : 'No' }},
+                    <span class="text-green-100">Automated Response:</span> {{ policy.isAutomate ? 'Yes' : 'No' }} ({{
+                      policy.emailRecipients
+                    }}) <span class="text-green-100">Update Statistics:</span> {{ policy.updateStatistics }}
+                  </td>
+                </tr>
+
+                <tr class="border-muted border-b hover:bg-gray-700">
+                  <td class="px-4 py-2 font-medium text-gray-300">Fill Factor</td>
+                  <td class="px-4 py-2 text-gray-400">
+                    <span class="text-green-100">Current Value:</span> {{ policy.fillFactorNewValue }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+        } }
+        <!-- end @for -->
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="mt-6 flex items-center justify-between pt-4 text-gray-300">
+      <p class="text-sm">
+        Showing
+        <span class="font-semibold">{{ (page - 1) * pageSize + 1 }}</span>
+        to <span class="font-semibold">{{ endRecord }}</span> of
+        <span class="font-semibold">{{ totalRecords }}</span> policies
+      </p>
+
+      <div class="flex items-center space-x-2">
+        <button
+          class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+          [disabled]="page === 1"
+          (click)="goToFirst()">
+          First
+        </button>
+
+        <button
+          class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+          [disabled]="page === 1"
+          (click)="changePage(page - 1)">
+          ‹ Prev
+        </button>
+
+        @for (p of paginationPages; track p) {
+        <button
+          class="rounded-md px-3 py-2 text-sm"
+          [ngClass]="p === page ? 'bg-primary text-white' : 'bg-gray-700 text-gray-200'"
+          (click)="changePage(p)">
+          {{ p }}
+        </button>
+        }
+
+        <button
+          class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+          [disabled]="page === totalPages"
+          (click)="changePage(page + 1)">
+          Next ›
+        </button>
+
+        <button
+          class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+          [disabled]="page === totalPages"
+          (click)="goToLast()">
+          Last
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- overflow -->
+  }
+  <!-- end isLoading=false -->
+</div>
+
+<!-- Loader -->
+@if (isLoading) {
+<div class="absolute inset-0 z-40 flex items-center justify-center bg-black/40">
+  <div class="border-t-primary h-12 w-12 animate-spin rounded-full border-4 border-gray-300"></div>
+</div>
+}

@@ -1,0 +1,272 @@
+<header class="bg-muted mb-6 flex flex-col items-center justify-between space-y-3 sm:flex-row sm:space-y-0">
+  <p class="p-5 text-sm font-semibold tracking-widest text-white">Lookup</p>
+
+  <nav class="space-x-2 px-3">
+    <!-- Export -->
+    <button
+      class="flex-none cursor-pointer rounded-md bg-gray-700 px-4 py-2.5 text-sm text-white hover:text-white"
+      (click)="exportCSV()">
+      Export
+    </button>
+
+    <!-- Add Lookup -->
+    <button class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white" (click)="onAddEditLookup()">
+      Add Lookup
+    </button>
+  </nav>
+</header>
+
+<div class="bg-muted my-3 mx-auto max-w-6xl rounded-lg p-6 text-gray-200">
+  <!-- Search -->
+  <div class="mb-4 flex items-center justify-end">
+    <div class="relative w-80">
+      <input
+        [(ngModel)]="searchText"
+        (input)="debouncedSearch()"
+        type="text"
+        placeholder="Search"
+        class="text-md w-full rounded-md bg-gray-800 py-2 pl-10 pr-4 text-gray-300 outline-none" />
+
+      <svg-icon
+        src="assets/icons/heroicons/outline/magnifying-glass.svg"
+        [svgClass]="'absolute left-3 top-2.5 h-4 w-4 text-gray-400'">
+      </svg-icon>
+    </div>
+  </div>
+
+  <!-- Lookup Tables -->
+  <table class="min-w-full">
+    <thead>
+      <tr class="bg-muted text-left text-sm tracking-wider text-white">
+        <th class="w-8 px-4 py-3"></th>
+
+        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('lookUpName')">
+          Type @if (sortColumn === 'lookUpName') {
+          <span></span>
+          }
+        </th>
+
+        <th class="px-6 py-3 text-left text-[#e7000b]">CreatedAt</th>
+        <th class="px-6 py-3 text-left text-[#e7000b]">Status</th>
+        <th class="w-48 px-6 py-3 text-right text-[#e7000b]">Action</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- No Records -->
+      @if (!isLoading && pagedLookups.length === 0) {
+      <tr>
+        <td colspan="10" class="py-8 text-center text-gray-400">No lookups found.</td>
+      </tr>
+      }
+
+      <!-- Lookup Rows -->
+      @for (lookup of pagedLookups; track lookup.lookUpId) {
+
+      <!-- Main Lookup Row -->
+      <tr
+        class="cursor-pointer border-b border-gray-600 transition-colors hover:bg-gray-700"
+        (click)="toggleExpand(lookup.lookUpId!)">
+        <td class="px-6 py-3">
+          <svg-icon
+            [src]="
+              expandedLookupId === lookup.lookUpId
+                ? 'assets/icons/heroicons/solid/chevron-up.svg'
+                : 'assets/icons/heroicons/solid/chevron-down.svg'
+            "
+            [svgClass]="'h-4 w-4 text-white'">
+          </svg-icon>
+        </td>
+
+        <td class="px-6 py-3">{{ lookup.lookUpName }}</td>
+
+        <td class="px-6 py-3">
+          {{ lookup?.createdDate | date: 'yyyy-MM-dd' }}
+        </td>
+
+        <td class="px-6 py-3">
+          <span [class]="getStatusClass(lookup.isActive)">
+            {{ lookup.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </td>
+
+        <td class="flex justify-end space-x-3 px-6 py-3">
+          <div class="relative inline-block text-left">
+            <button
+              class="lookup-menu-button rounded-md bg-gray-700 px-2 py-1"
+              (click)="toggleMenu('parent-' + lookup.lookUpId); $event.stopPropagation()">
+              <svg-icon
+                src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                [svgClass]="'h-5 w-5 cursor-pointer'">
+              </svg-icon>
+            </button>
+
+            @if (openedMenu === 'parent-' + lookup.lookUpId) {
+            <div
+              @dropdownAnimation
+              class="lookup-menu-dropdown absolute right-0 z-20 mt-2 w-40 rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+              <div class="py-2 text-sm text-gray-200">
+                <div
+                  class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                  (click)="$event.stopPropagation(); onAddEditLookup(lookup); closeMenu()">
+                  <svg-icon src="assets/icons/heroicons/outline/pencil.svg" [svgClass]="'h-4 w-4'"></svg-icon>
+                  <span>Edit</span>
+                </div>
+
+                <div
+                  class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                  (click)="$event.stopPropagation(); openConfirmationDialog(lookup.lookUpId!, 'lookup'); closeMenu()">
+                  <svg-icon
+                    src="assets/icons/heroicons/outline/trash.svg"
+                    [svgClass]="'h-4 w-4 text-red-400'"></svg-icon>
+                  <span>Delete</span>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+        </td>
+      </tr>
+
+      <!-- Expanded Sub-Lookups -->
+      @if (expandedLookupId === lookup.lookUpId) {
+      <tr class="bg-gray-950">
+        <td colspan="6" class="px-6 py-4">
+          <div class="ml-6">
+            <div class="mb-3 flex justify-between">
+              <h3 class="text-lg font-semibold text-white">Sub-Lookups</h3>
+              <button class="bg-primary rounded-md px-4 py-2 text-white" (click)="onAddEditSubLookup(lookup)">
+                Add Sub-Lookup
+              </button>
+            </div>
+
+            <table class="bg-gray-950 min-w-full">
+              <thead>
+                <tr class="text-left text-sm text-gray-300">
+                  <th class="px-4 py-2 text-[#e7000b]">Name</th>
+                  <th class="px-4 py-2 text-[#e7000b]">CreatedAt</th>
+                  <th class="px-4 py-2 text-[#e7000b]">Status</th>
+                  <th class="px-4 py-2 text-right text-[#e7000b]">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (sub of subLookups[lookup.lookUpId!]; track sub.subLookUpId) {
+                <tr class="hover:bg-gray-700">
+                  <td class="px-4 py-2">
+                    {{ sub.lookUpName }}
+                  </td>
+
+                  <td class="px-4 py-2">
+                    {{ sub.createdDate | date: 'yyyy-MM-dd' }}
+                  </td>
+
+                  <td class="px-4 py-2">
+                    <span [class]="getStatusClass(sub.isActive)">
+                      {{ sub.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+
+                  <td class="flex justify-end space-x-3 px-4 py-2">
+                    <div class="relative inline-block text-left">
+                      <button
+                        class="lookup-menu-button rounded-md bg-gray-700 px-2 py-1"
+                        (click)="
+                          toggleMenu('sub-' + lookup.lookUpId + '-' + sub.subLookUpId); $event.stopPropagation()
+                        ">
+                        <svg-icon
+                          src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                          [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
+                      </button>
+
+                      @if (openedMenu === 'sub-' + lookup.lookUpId + '-' + sub.subLookUpId) {
+                      <div
+                        @dropdownAnimation
+                        class="lookup-menu-dropdown absolute right-0 z-20 mt-2 w-40 rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+                        <div class="py-2 text-sm text-gray-200">
+                          <div
+                            class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                            (click)="$event.stopPropagation(); onAddEditSubLookup(lookup, sub); closeMenu()">
+                            <svg-icon
+                              src="assets/icons/heroicons/outline/pencil.svg"
+                              [svgClass]="'h-4 w-4 text-blue-400'"></svg-icon>
+                            <span>Edit</span>
+                          </div>
+
+                          <div
+                            class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                            (click)="
+                              $event.stopPropagation();
+                              openConfirmationDialog(sub.subLookUpId!, 'sublookup');
+                              closeMenu()
+                            ">
+                            <svg-icon
+                              src="assets/icons/heroicons/outline/trash.svg"
+                              [svgClass]="'h-4 w-4 text-red-400'"></svg-icon>
+
+                            <span>Delete</span>
+                          </div>
+                        </div>
+                      </div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+                } @if (!(subLookups[lookup.lookUpId!] && subLookups[lookup.lookUpId!].length)) {
+                <tr>
+                  <td colspan="3" class="py-4 text-center text-gray-400">No sub-lookups. Click “Add Sub-Lookup”.</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </td>
+      </tr>
+      } }
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  @if (totalRecords > 0) {
+  <div class="mt-6 flex items-center justify-between pt-4 text-gray-300">
+    <p class="text-sm">
+      Showing
+      <span class="font-semibold">{{ (page - 1) * pageSize + 1 }}</span>
+      to <span class="font-semibold">{{ endRecord }}</span> of <span class="font-semibold">{{ totalRecords }}</span>
+      lookups
+    </p>
+
+    <div class="flex items-center space-x-2">
+      <button class="rounded-md bg-gray-700 px-3 py-2" [disabled]="page === 1" (click)="goToFirst()">First</button>
+
+      <button class="rounded-md bg-gray-700 px-3 py-2" [disabled]="page === 1" (click)="changePage(page - 1)">
+        ‹ Prev
+      </button>
+
+      @for (p of paginationPages; track p) {
+      <button
+        class="rounded-md px-3 py-2"
+        [ngClass]="p === page ? 'bg-primary text-white' : 'bg-gray-700 text-gray-200'"
+        (click)="changePage(p)">
+        {{ p }}
+      </button>
+      }
+
+      <button class="rounded-md bg-gray-700 px-3 py-2" [disabled]="page === totalPages" (click)="changePage(page + 1)">
+        Next ›
+      </button>
+
+      <button class="rounded-md bg-gray-700 px-3 py-2" [disabled]="page === totalPages" (click)="goToLast()">
+        Last
+      </button>
+    </div>
+  </div>
+  }
+</div>
+
+<!-- Loader -->
+@if (isLoading) {
+<div class="absolute inset-0 z-40 flex items-center justify-center bg-black/40">
+  <div class="border-t-primary h-12 w-12 animate-spin rounded-full border-4 border-gray-300"></div>
+</div>
+}

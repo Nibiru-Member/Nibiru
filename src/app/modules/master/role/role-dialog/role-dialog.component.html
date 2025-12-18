@@ -1,0 +1,70 @@
+<div class="bg-muted relative mx-auto w-[30vw] max-w-2xl p-6">
+  <!-- Close Button -->
+  <div class="mb-6 flex items-center justify-between">
+    <h2 class="text-xl font-semibold text-gray-100">{{ data?.id ? 'Edit Role' : 'Add Role' }}</h2>
+
+    <button
+      type="button"
+      (click)="closeDialog()"
+      class="cursor-pointer text-gray-400 transition hover:text-gray-200"
+      aria-label="Close">
+      <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    </button>
+  </div>
+
+  <form [formGroup]="roleForm" (ngSubmit)="onSubmit()" novalidate class="space-y-5 border-t border-gray-700 pt-6">
+    <!-- Servers -->
+    <div class="flex items-center space-x-4">
+      <label for="roleName" class="w-1/3 font-medium text-gray-200">Role Name:</label>
+      <div class="w-2/3">
+        <input
+          id="roleName"
+          type="text"
+          formControlName="roleName"
+          placeholder="Enter role name"
+          class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <label class="w-1/3 font-medium text-gray-200">Status:</label>
+
+      <div class="flex w-2/3 items-center">
+        <button
+          type="button"
+          (click)="toggleStatus()"
+          class="relative inline-flex h-7 w-14 cursor-pointer items-center rounded-full transition-colors duration-300"
+          [ngClass]="roleForm.get('status')?.value ? 'bg-primary' : 'bg-gray-600'">
+          <span
+            class="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-300"
+            [ngStyle]="{
+              transform: roleForm.get('status')?.value ? 'translateX(28px)' : 'translateX(0px)'
+            }">
+          </span>
+        </button>
+
+        <span
+          class="ml-3 text-sm font-medium"
+          [ngClass]="roleForm.get('status')?.value ? 'text-primary' : 'text-gray-400'">
+          {{ roleForm.get('status')?.value ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex justify-end space-x-4 border-t border-gray-700 pt-6">
+      <button
+        type="button"
+        class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+        (click)="closeDialog()">
+        CANCEL
+      </button>
+      <button
+        type="submit"
+        [disabled]="roleForm.invalid"
+        class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white">
+        {{ data?.id ? 'UPDATE' : 'SAVE' }}
+      </button>
+    </div>
+  </form>
+</div>

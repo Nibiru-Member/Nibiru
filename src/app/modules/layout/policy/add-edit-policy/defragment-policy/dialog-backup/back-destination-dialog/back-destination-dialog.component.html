@@ -1,0 +1,88 @@
+<div
+  class="flex max-h-[70vh] w-[520px] max-w-full flex-col rounded-md border border-gray-700 bg-gray-900 text-[13px] text-gray-100 shadow-lg">
+  <!-- HEADER -->
+  <div class="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
+    <div class="font-semibold">Select Backup Destination</div>
+    <button
+      type="button"
+      (click)="closeDialog()"
+      class="flex h-6 w-6 items-center justify-center rounded hover:bg-gray-700"
+      aria-label="Close">
+      ✕
+    </button>
+  </div>
+
+  <!-- BODY -->
+  <div class="flex-1 space-y-4 px-5 py-4 text-[13px]">
+    <!-- Description -->
+    <p class="text-gray-200">
+      Select the file for the backup destination. You can create frequently used backup file locations.
+    </p>
+
+    <!-- Destinations on disk -->
+    <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+      <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200">Destinations on disk</div>
+
+      <!-- Drive + Folder + Backup Type -->
+      <div class="grid grid-cols-3 gap-4">
+        <!-- Drive -->
+        <div>
+          <label class="block text-sm font-medium text-white">Drive</label>
+          <select
+            class="mt-1 w-full rounded-md border-gray-300 p-2 text-sm"
+            [(ngModel)]="selectedDrive"
+            (change)="onDriveChange()">
+            <option value="">-- Select drive --</option>
+            <option *ngFor="let d of drives" [value]="d.driveLetter">{{ d.driveLetter }}</option>
+          </select>
+        </div>
+
+        <!-- Folder -->
+        <div>
+          <label class="block text-sm font-medium text-white">Folder</label>
+          <select
+            class="mt-1 w-full rounded-md border-gray-300 p-2 text-sm"
+            [(ngModel)]="selectedFolder"
+            (change)="onFolderChange()">
+            <option value="">-- Select folder --</option>
+            <option *ngFor="let f of folders" [value]="f.fullPath">{{ f.fullPath }}</option>
+          </select>
+        </div>
+
+        <!-- Backup Type -->
+        <div>
+          <label class="block text-sm font-medium text-white">Backup Name</label>
+
+          <input
+            type="text"
+            class="mt-1 w-full rounded-md border-gray-300 p-2 text-sm"
+            placeholder="Enter manually..."
+            [(ngModel)]="selectedBackupType" />
+        </div>
+      </div>
+
+      <!-- Backup Path -->
+      <div>
+        <label class="block text-sm font-medium text-white">Backup Path</label>
+        <input
+          type="text"
+          class="mt-1 w-full rounded-md border-gray-300 p-2 text-sm"
+          placeholder="Auto-generated or enter manually..."
+          [(ngModel)]="backupPath" />
+      </div>
+      @if (errorMessage) {
+      <div class="text-white-400 text-left">{{ errorMessage }}</div>
+      }
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="flex justify-end gap-3 border-t border-gray-700 bg-gray-800 px-5 py-2">
+    <button
+      class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+      (click)="closeDialog()">
+      Cancel
+    </button>
+    <button (click)="save()" class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white">OK</button>
+  </div>
+</div>

@@ -1,0 +1,247 @@
+<div class="mx-auto max-w-6xl text-gray-200">
+  <!-- Tabs -->
+  <div class="flex w-full border-b border-gray-700">
+    <button
+      class="w-1/2 py-2 text-center text-lg font-semibold transition-colors duration-200"
+      [ngClass]="activeTab === 'info' ? 'border-b-2 border-red-500 text-red-500' : 'text-gray-400'"
+      (click)="setActiveTab('info')">
+      Account Profile
+    </button>
+
+    <button
+      class="w-1/2 py-2 text-center text-lg font-semibold transition-colors duration-200"
+      [ngClass]="activeTab === 'users' ? 'border-b-2 border-red-500 text-red-500' : 'text-gray-400'"
+      (click)="setActiveTab('users')">
+      Account Users
+    </button>
+  </div>
+
+  <!-- TAB CONTENT -->
+
+  @if (activeTab === 'info') {
+  <div class="bg-muted mx-auto overflow-hidden rounded-xl p-8 text-gray-200 shadow-lg">
+    <!-- Profile Section -->
+    <div class="mb-10 flex flex-col items-center">
+      <div class="relative">
+        <img
+          [src]="base64Image || 'assets/logo/dummy-avatar.jpg'"
+          alt="Profile Picture"
+          class="h-32 w-32 rounded-full border-4 border-gray-700 object-cover shadow-md" />
+      </div>
+    </div>
+
+    <!-- Info Section -->
+    <div class="grid grid-cols-1 gap-10 sm:grid-cols-2">
+      <!-- Basic Information -->
+      <div>
+        <h3 class="mb-3 border-b border-gray-700 pb-1 text-lg font-semibold">Basic Information</h3>
+        <div class="space-y-2 text-sm">
+          <div><span class="font-medium text-gray-400">Phone:</span> {{ account?.phone1 || '—' }}</div>
+
+          <div>
+            <span class="font-medium text-gray-400">Email:</span>
+            @if (account?.email) {
+            <a href="mailto:{{ account?.email }}" class="text-blue-400 hover:text-blue-300">
+              {{ account?.email }}
+            </a>
+            }
+          </div>
+
+          <div>
+            <span class="font-medium text-gray-400">Website:</span>
+            @if (account?.website) {
+            <a target="_blank" href="{{ account?.website }}" class="break-all text-blue-400 hover:text-blue-300">
+              {{ account?.website }}
+            </a>
+            }
+          </div>
+
+          <div><span class="font-medium text-gray-400">About:</span> {{ account?.aboutCompany || '—' }}</div>
+        </div>
+      </div>
+
+      <!-- License Details -->
+      <div>
+        <h3 class="mb-3 border-b border-gray-700 pb-1 text-lg font-semibold">License Details</h3>
+        <div class="space-y-2 text-sm">
+          <div><span class="font-medium text-gray-400">Plan:</span> {{ account?.licenseType }}</div>
+          <div>
+            <span class="font-medium text-gray-400">Start Date:</span>
+            {{ account?.licenseStartDate | date: 'mediumDate' }}
+          </div>
+          <div>
+            <span class="font-medium text-gray-400">Valid Upto:</span>
+            {{ account?.licenseEndDate | date: 'mediumDate' }}
+          </div>
+          <div><span class="font-medium text-gray-400">Projects:</span> {{ account?.noOfInstance }}</div>
+          <div><span class="font-medium text-gray-400">Users:</span> {{ account?.noOfUser }}</div>
+          <div><span class="font-medium text-gray-400">Databases:</span> {{ account?.noOfDatabase }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  } @if (activeTab === 'users') {
+  <header class="bg-muted relative flex flex-col items-center justify-between space-y-3 sm:flex-row sm:space-y-0">
+    <!-- LEFT SIDE CONTROLS -->
+    <div class="flex items-center space-x-3 p-4">
+      <!-- SEARCH -->
+      <div class="relative w-80">
+        <input
+          [(ngModel)]="searchText"
+          (input)="debouncedSearch()"
+          type="text"
+          placeholder="Search users"
+          class="w-full rounded-md bg-gray-800 py-2 pl-10 pr-4 text-sm text-gray-300 outline-none" />
+
+        <svg-icon
+          src="assets/icons/heroicons/outline/magnifying-glass.svg"
+          [svgClass]="'absolute left-3 top-2.5 h-4 w-4 text-gray-400'">
+        </svg-icon>
+      </div>
+    </div>
+
+    <!-- ADD USER -->
+    <nav class="space-x-2 px-3">
+      <button
+        class="flex-none cursor-pointer space-x-2 rounded-md bg-gray-800 px-4 py-2.5 text-white"
+        (click)="exportUsersCSV()">
+        <span>Export</span>
+      </button>
+
+      <button class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white" (click)="onAddEditUser()">
+        Add User
+      </button>
+    </nav>
+  </header>
+
+  <div class="bg-muted mx-auto p-6 text-gray-200">
+    <table class="min-w-full">
+      <thead>
+        <tr class="bg-muted text-left text-sm tracking-wider text-white">
+          <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('userName')">
+            Name @if (sortColumn === 'userName' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'userName' &&
+            sortDirection === 'desc') { ▼ }
+          </th>
+
+          <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('email')">
+            Email @if (sortColumn === 'email' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'email' &&
+            sortDirection === 'desc') { ▼ }
+          </th>
+
+          <th class="px-6 py-3 text-[#e7000b]">Phone</th>
+          <th class="px-6 py-3 text-[#e7000b]">Role</th>
+          <th class="w-24 px-6 py-3 text-right text-[#e7000b]">Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (user of pagedUsers; track user.id) {
+        <tr class="border-b border-gray-600 hover:bg-gray-700">
+          <td class="px-6 py-3">{{ user.userName }}</td>
+          <td class="px-6 py-3">{{ user.email }}</td>
+          <td class="px-6 py-3">{{ user.phoneNumber }}</td>
+          <td class="px-6 py-3">{{ user.roleName || '—' }}</td>
+
+          <td class="flex justify-end space-x-3 px-6 py-3 text-right">
+            <div class="relative inline-block text-left">
+              <button
+                class="user-menu-button rounded-md bg-gray-700 px-2 py-1"
+                (click)="$event.stopPropagation(); toggleMenu(user.id)">
+                <svg-icon
+                  src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                  [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
+              </button>
+
+              @if (openedMenu === user.id) {
+              <div
+                @dropdownAnimation
+                class="user-menu-dropdown absolute right-0 z-20 mt-2 w-40 rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+                <div class="py-2 text-sm text-gray-200">
+                  <div
+                    class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                    (click)="$event.stopPropagation(); onAddEditUser(user); closeMenu()">
+                    <svg-icon src="assets/icons/heroicons/outline/pencil.svg" [svgClass]="'h-4 w-4'"></svg-icon>
+                    <span>Edit</span>
+                  </div>
+
+                  <div
+                    class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                    (click)="$event.stopPropagation(); openConfirmationDialog(user.id); closeMenu()">
+                    <svg-icon
+                      src="assets/icons/heroicons/outline/trash.svg"
+                      [svgClass]="'h-4 w-4 text-red-400'"></svg-icon>
+                    <span>Delete</span>
+                  </div>
+                </div>
+              </div>
+              }
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (pagedUsers.length === 0) {
+    <div class="mt-10 text-center text-white">No User found. Click "Add User" to create one.</div>
+    } @if (totalRecords > 0) {
+    <div class="mt-6 flex items-center justify-between pt-4 text-gray-300">
+      <p class="text-sm">
+        Showing
+        <span class="font-semibold">{{ (page - 1) * pageSize + 1 }}</span>
+        to
+        <span class="font-semibold">{{ endRecord }}</span>
+        of
+        <span class="font-semibold">{{ totalRecords }}</span>
+        users
+      </p>
+
+      <div class="flex items-center space-x-2">
+        <button
+          class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+          [disabled]="page === 1"
+          (click)="goToFirst()">
+          First
+        </button>
+
+        <button
+          class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+          [disabled]="page === 1"
+          (click)="changePage(page - 1)">
+          ‹ Prev
+        </button>
+
+        @for (p of paginationPages; track p) {
+        <button
+          class="rounded-md px-3 py-2 text-sm"
+          [ngClass]="p === page ? 'bg-primary text-white' : 'bg-gray-700 text-gray-200'"
+          (click)="changePage(p)">
+          {{ p }}
+        </button>
+        }
+
+        <button
+          class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+          [disabled]="page === totalPages"
+          (click)="changePage(page + 1)">
+          Next ›
+        </button>
+
+        <button
+          class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+          [disabled]="page === totalPages"
+          (click)="goToLast()">
+          Last
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>
+
+@if (isLoading) {
+<div class="absolute inset-0 z-40 flex items-center justify-center bg-black/40">
+  <div class="border-t-primary h-12 w-12 animate-spin rounded-full border-4 border-gray-300"></div>
+</div>
+}

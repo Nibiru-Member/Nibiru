@@ -1,0 +1,45 @@
+<div class="bg-muted relative mx-auto w-[30vw] max-w-2xl p-6">
+    <!-- Close Button -->
+    <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-xl font-semibold text-gray-100">DEFAULT NOTIFICATIONS</h2>
+
+        <button type="button" (click)="closeDialog()"
+            class="cursor-pointer text-gray-400 transition hover:text-gray-200" aria-label="Close">
+            <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+        </button>
+    </div>
+
+    <form [formGroup]="notificationForm" (ngSubmit)="onSubmit()" novalidate
+        class="space-y-5 border-t border-gray-700 pt-6">
+        <!-- Alert Name -->
+        <div class="flex flex-col space-y-2">
+            <label for="indexName" class="font-medium text-gray-200">Index Pages:</label>
+            <div>
+                <input id="indexName" type="text" formControlName="indexName" placeholder="Enter alert name"
+                    class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+        </div>
+
+        <!-- Set a Value -->
+        <div class="flex flex-col space-y-2">
+            <label class="font-medium text-gray-200">% Used:</label>
+            <div class="relative">
+                <input type="text" formControlName="used" placeholder="Enter value"
+                    class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
+            </div>
+        </div>
+        <!-- Buttons -->
+        <div class="flex justify-end space-x-4 border-t border-gray-700 pt-6">
+            <button type="button"
+                class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+                (click)="closeDialog()">
+                CANCEL
+            </button>
+            <button type="submit" [disabled]="notificationForm.invalid"
+                class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white">
+                CREATE
+            </button>
+        </div>
+    </form>
+</div>

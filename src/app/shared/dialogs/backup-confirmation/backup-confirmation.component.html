@@ -1,0 +1,24 @@
+<div class="bg-muted w-[500px] p-6 text-white shadow-2xl">
+  <!-- Header -->
+  <div class="flex items-center justify-between border-b border-gray-700 pb-3">
+    <h2 class="text-lg font-semibold">Backup</h2>
+    <button class="text-gray-400 transition hover:text-white" (click)="closeDialog()">
+      <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="mt-4">
+    <p class="mb-4 text-sm text-gray-300">Would you like to Backup the MDF file before defragmentation ?</p>
+  </div>
+
+  <!-- Footer -->
+  <div class="mt-6 flex justify-end gap-3">
+    <button
+      class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+      (click)="closeDialog()">
+      No
+    </button>
+    <button class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white" (click)="onRun()">Yes</button>
+  </div>
+</div>

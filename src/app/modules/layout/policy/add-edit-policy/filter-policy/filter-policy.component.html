@@ -1,0 +1,28 @@
+<div>
+  <h3 class="mb-2 text-sm font-medium">Page Count</h3>
+  <div class="mb-4 flex items-center">
+    <span class="mr-2 text-sm">Min:</span>
+    <input
+      type="number"
+      [(ngModel)]="pageCountMin"
+      (input)="onPageCountMinChange($event)"
+      class="bg-gray-950 w-16 rounded-md border border-gray-600 p-1 text-center" />
+    <span class="ml-4 mr-2 text-sm">Max:</span>
+    <input
+      type="number"
+      [(ngModel)]="pageCountMax"
+      (input)="onPageCountMaxChange($event)"
+      class="bg-gray-950 w-16 rounded-md border border-gray-600 p-1 text-center" />
+  </div>
+
+  <label class="mb-2 block text-sm">Primary Index Sorting</label>
+  <select
+    [(ngModel)]="primaryIndexSorting"
+    (change)="onPrimaryIndexSortingChange($event)"
+    class="bg-gray-950 w-full rounded-md border border-gray-600 p-2 text-sm text-gray-300">
+    <option value="" disabled>Select Primary Index Sorting</option>
+    <option value="fragmentation-desc">Fragmentation, Descending Order</option>
+    <option value="scan-density-desc">Scan Density, Descending Order</option>
+    <option value="page-count-desc">Page Count, Descending Order</option>
+  </select>
+</div>

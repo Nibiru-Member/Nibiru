@@ -1,0 +1,106 @@
+<div class="bg-muted w-full max-w-md space-y-6 rounded-lg shadow-lg">
+  <!-- Header -->
+  <div class="mb-0 bg-white text-center">
+    <svg-icon
+      src="../../../../../assets/logo/NIBIRU_LOGO_COLORFUL_TRANSPARENT_BLACK_BG.svg"
+      [svgClass]="'h-20 w-100 mr-2'"></svg-icon>
+  </div>
+
+  <!-- Login with Google -->
+  <div class="m-0 px-8 py-5">
+    <!-- Form -->
+    <form class="space-y-6" [formGroup]="form">
+      <!-- Email Field -->
+      <div class="form__group">
+        <label for="email" class="text-white-foreground mb-1 block text-left text-sm font-medium">
+          Email address <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="email"
+          autocomplete="false"
+          [ngClass]="{ 'is__invalid-input': submitted && f['email'].errors }"
+          class="bg-background text-foreground focus:border-primary focus:ring-primary block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1"
+          placeholder="Enter your email"
+          formControlName="email" />
+
+        @if( (submitted && f['email'].invalid) || (f['email'].invalid && (f['email'].dirty || f['email'].touched))){
+        <div class="mt-1 text-left text-xs text-white">
+          @if(f['email'].errors?.['required']){
+          <div>Required field</div>
+          } @if(f['email'].errors?.['email']){
+          <div>Enter a valid email address</div>
+          }
+        </div>
+        }
+      </div>
+
+      <!-- Password Field -->
+      <div class="form__group relative">
+        <label for="password" class="text-white-foreground mb-1 block text-left text-sm font-medium">
+          Password <span class="text-red-500">*</span></label
+        >
+        <input
+          [type]="passwordTextType ? 'text' : 'password'"
+          id="password"
+          autocomplete="new-password"
+          [ngClass]="{ 'is__invalid-input': submitted && f['password'].errors }"
+          class="bg-background text-foreground focus:border-primary focus:ring-primary block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1"
+          placeholder="Enter your password"
+          formControlName="password" />
+        <!-- Toggle Password Visibility -->
+        <span class="text-muted-foreground absolute top-8 right-3 cursor-pointer" (click)="togglePasswordTextType()">
+          <svg-icon
+            [src]="
+              passwordTextType ? 'assets/icons/heroicons/outline/eye.svg' : 'assets/icons/heroicons/outline/eye-off.svg'
+            "
+            [svgClass]="'h-5 w-5'">
+          </svg-icon>
+        </span>
+        @if( (submitted && f['password'].invalid) || (f['password'].invalid && (f['password'].dirty ||
+        f['password'].touched))){
+        <div class="mt-1 text-left text-xs text-white">
+          @if(f['password'].errors?.['required']){
+          <div>Required field</div>
+          } @if(f['password'].errors?.['invalidPassword']){
+          <div>
+            Password must include at least one lowercase letter, one uppercase letter, one number, and one special
+            character, and be between 8 to 12 characters long.
+          </div>
+          }
+        </div>
+        }
+      </div>
+
+      <!-- Submit Button -->
+      <app-button full impact="bold" tone="primary" shape="rounded" size="medium" (click)="onSubmit()"
+        >Log in</app-button
+      >
+      <!-- Forgot -->
+      <div class="mt-2 flex items-center justify-center text-sm">
+        <app-button routerLink="/auth/forgot-password" impact="none" tone="primary" shape="rounded" size="small">
+          Forgot password?
+        </app-button>
+      </div>
+    </form>
+  </div>
+  <div class="mb-0 flex items-center">
+    <hr class="flex-1 border-white" />
+  </div>
+
+  <div class="m-0 px-8 py-5">
+    <!-- Sign Up -->
+    <div class="text-white-foreground flex items-center justify-center text-center text-sm">
+      Don't have an account?
+      <app-button routerLink="/auth/sign-up" impact="none" tone="primary" shape="rounded" size="small">
+        Sign up
+      </app-button>
+    </div>
+    <div routerLink="/dashboard" class="my-3">
+      <app-button full impact="bold" tone="light" shape="rounded" size="medium">
+        <svg-icon src="assets/icons/microsoft.svg" [svgClass]="'h-6 w-6 mr-2'"></svg-icon>
+        <span class="text-white"> Log in with Microsoft </span>
+      </app-button>
+    </div>
+  </div>
+</div>

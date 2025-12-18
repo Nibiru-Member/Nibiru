@@ -1,0 +1,257 @@
+<!-- Top Buttons -->
+<div
+  class="mt-5 mb-3 flex justify-center"
+  [ngClass]="menuService.showSideBar ? 'flex-row space-x-2' : 'flex-col items-center space-y-2'">
+  <button
+    class="bg-secondary hover:bg-secondary/90 flex w-[85%] items-center justify-center gap-1 rounded-md px-2 py-1 text-white"
+    (click)="openServerDialog()"
+    [ngClass]="menuService.showSideBar ? '' : 'h-10 w-10 justify-center rounded-full p-0'"
+    title="Connect to a server">
+    <svg-icon src="assets/icons/heroicons/outline/plus.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    @if (menuService.showSideBar) { <span>Connect</span> }
+  </button>
+
+  <button
+    class="flex w-[85%] items-center justify-center gap-1 rounded-md bg-red-600 px-2 py-1 text-white hover:bg-red-700 disabled:bg-gray-700 disabled:text-gray-400"
+    (click)="disconnectServer()"
+    [disabled]="!currentConnection"
+    [ngClass]="menuService.showSideBar ? '' : 'h-10 w-10 justify-center rounded-full p-0'"
+    title="Disconnect from current server">
+    <svg-icon src="assets/icons/heroicons/outline/power.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    @if (menuService.showSideBar) { <span>Disconnect</span> }
+  </button>
+</div>
+
+<!-- Management Environment -->
+<div class="mb-3 flex justify-center">
+  <button class="flex cursor-pointer items-center gap-1 px-4 py-2 text-white" (click)="toggleSidebar()">
+    <svg-icon src="assets/icons/heroicons/outline/structure-svgrepo-com.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    @if (menuService.showSideBar) { <span>Management Environment</span> }
+  </button>
+</div>
+
+<!-- Tree Data -->
+@if (treeData && treeData.length > 0) {
+<div class="space-y-1">
+  <!-- server (root) -->
+  @for (serverNode of treeData; track trackByName($index, serverNode)) {
+  <div class="tree-level">
+    <div
+      class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
+      (click)="toggleNode(serverNode, $event)">
+      <div class="mr-1 flex w-5 items-center justify-center">
+        @if (serverNode.children && serverNode.children.length > 0) {
+        <button class="text-gray-400 hover:text-white" (click)="toggleNode(serverNode, $event)">
+          <svg-icon
+            [src]="
+              serverNode.expanded
+                ? 'assets/icons/heroicons/outline/minus.svg'
+                : 'assets/icons/heroicons/outline/plus.svg'
+            "
+            [svgClass]="'h-3 w-3'">
+          </svg-icon>
+        </button>
+        } @else {
+        <div class="h-3 w-3"></div>
+        }
+      </div>
+
+      <svg-icon
+        [src]="getSvgIcon(serverNode.icon)"
+        [svgClass]="'h-4 w-4 mr-2 ' + getIconColor(serverNode.icon)"></svg-icon>
+
+      @if (menuService.showSideBar) {
+      <span class="truncate text-sm text-white">{{ serverNode.name }}</span>
+      }
+    </div>
+
+    <!-- databases -->
+    @if (serverNode.expanded && serverNode.children && serverNode.children.length) {
+    <div class="ml-4 space-y-1">
+      @for (databaseNode of serverNode.children; track trackByName($index, databaseNode)) {
+      <div class="tree-level">
+        <div
+          class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
+          (click)="toggleNode(databaseNode, $event)">
+          <div class="mr-1 flex w-5 items-center justify-center">
+            @if ((databaseNode.children && databaseNode.children.length > 0) || databaseNode.icon === 'database') {
+            <button class="text-gray-400 hover:text-white" (click)="toggleNode(databaseNode, $event)">
+              <svg-icon
+                [src]="
+                  databaseNode.expanded
+                    ? 'assets/icons/heroicons/outline/minus.svg'
+                    : 'assets/icons/heroicons/outline/plus.svg'
+                "
+                [svgClass]="'h-3 w-3'">
+              </svg-icon>
+            </button>
+            } @else {
+            <div class="h-3 w-3"></div>
+            }
+          </div>
+
+          <svg-icon
+            [src]="getSvgIcon(databaseNode.icon)"
+            [svgClass]="'h-4 w-4 mr-2 ' + getIconColor(databaseNode.icon)"></svg-icon>
+
+          @if (menuService.showSideBar) {
+          <span class="truncate text-sm text-white">{{ databaseNode.name }}</span>
+          }
+        </div>
+
+        <!-- main folder level -->
+        @if (databaseNode.expanded && databaseNode.children && databaseNode.children.length) {
+        <div class="ml-4 space-y-1">
+          @for (mainFolderNode of databaseNode.children; track trackByName($index, mainFolderNode)) {
+          <div class="tree-level">
+            <div
+              class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
+              (click)="toggleNode(mainFolderNode, $event)">
+              <div class="mr-1 flex w-5 items-center justify-center">
+                @if (mainFolderNode.children && mainFolderNode.children.length > 0) {
+                <button class="text-gray-400 hover:text-white" (click)="toggleNode(mainFolderNode, $event)">
+                  <svg-icon
+                    [src]="
+                      mainFolderNode.expanded
+                        ? 'assets/icons/heroicons/outline/minus.svg'
+                        : 'assets/icons/heroicons/outline/plus.svg'
+                    "
+                    [svgClass]="'h-3 w-3'">
+                  </svg-icon>
+                </button>
+                } @else {
+                <div class="h-3 w-3"></div>
+                }
+              </div>
+
+              <svg-icon
+                [src]="getSvgIcon(mainFolderNode.icon)"
+                [svgClass]="'h-4 w-4 mr-2 ' + getIconColor(mainFolderNode.icon)"></svg-icon>
+              <span class="truncate text-sm text-white">{{ mainFolderNode.name }}</span>
+            </div>
+
+            <!-- subfolder level -->
+            @if (mainFolderNode.expanded && mainFolderNode.children && mainFolderNode.children.length) {
+            <div class="ml-4 space-y-1">
+              @for (subFolderNode of mainFolderNode.children; track trackByName($index, subFolderNode)) {
+              <div class="tree-level">
+                <div
+                  class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
+                  (click)="toggleNode(subFolderNode, $event)">
+                  <div class="mr-1 flex w-5 items-center justify-center">
+                    @if (subFolderNode.children && subFolderNode.children.length > 0) {
+                    <button class="text-gray-400 hover:text-white" (click)="toggleNode(subFolderNode, $event)">
+                      <svg-icon
+                        [src]="
+                          subFolderNode.expanded
+                            ? 'assets/icons/heroicons/outline/minus.svg'
+                            : 'assets/icons/heroicons/outline/plus.svg'
+                        "
+                        [svgClass]="'h-3 w-3'">
+                      </svg-icon>
+                    </button>
+                    } @else {
+                    <div class="h-3 w-3"></div>
+                    }
+                  </div>
+
+                  <svg-icon
+                    [src]="getSvgIcon(subFolderNode.icon)"
+                    [svgClass]="'h-4 w-4 mr-2 ' + getIconColor(subFolderNode.icon)"></svg-icon>
+                  <span class="truncate text-sm text-white">{{ subFolderNode.name }}</span>
+                </div>
+
+                <!-- function type level -->
+                @if (subFolderNode.expanded && subFolderNode.children && subFolderNode.children.length) {
+                <div class="ml-4 space-y-1">
+                  @for (functionTypeNode of subFolderNode.children; track trackByName($index, functionTypeNode)) {
+                  <div class="tree-level">
+                    <div
+                      class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
+                      (click)="toggleNode(functionTypeNode, $event)">
+                      <div class="mr-1 flex w-5 items-center justify-center">
+                        @if (functionTypeNode.children && functionTypeNode.children.length > 0) {
+                        <button class="text-gray-400 hover:text-white" (click)="toggleNode(functionTypeNode, $event)">
+                          <svg-icon
+                            [src]="
+                              functionTypeNode.expanded
+                                ? 'assets/icons/heroicons/outline/minus.svg'
+                                : 'assets/icons/heroicons/outline/plus.svg'
+                            "
+                            [svgClass]="'h-3 w-3'">
+                          </svg-icon>
+                        </button>
+                        } @else {
+                        <div class="h-3 w-3"></div>
+                        }
+                      </div>
+
+                      <svg-icon
+                        [src]="getSvgIcon(functionTypeNode.icon)"
+                        [svgClass]="'h-4 w-4 mr-2 ' + getIconColor(functionTypeNode.icon)"></svg-icon>
+                      <span class="truncate text-sm text-white">{{ functionTypeNode.name }}</span>
+                    </div>
+
+                    <!-- final items -->
+                    @if (functionTypeNode.expanded && functionTypeNode.children && functionTypeNode.children.length) {
+                    <div class="ml-4 space-y-1">
+                      @for (itemNode of functionTypeNode.children; track trackByName($index, itemNode)) {
+                      <div class="tree-level">
+                        <div
+                          class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
+                          (click)="toggleNode(itemNode, $event)">
+                          <div class="mr-1 flex w-5 items-center justify-center">
+                            @if (itemNode.children && itemNode.children.length > 0) {
+                            <button class="text-gray-400 hover:text-white" (click)="toggleNode(itemNode, $event)">
+                              <svg-icon
+                                [src]="
+                                  itemNode.expanded
+                                    ? 'assets/icons/heroicons/outline/minus.svg'
+                                    : 'assets/icons/heroicons/outline/plus.svg'
+                                "
+                                [svgClass]="'h-3 w-3'">
+                              </svg-icon>
+                            </button>
+                            } @else {
+                            <div class="h-3 w-3"></div>
+                            }
+                          </div>
+
+                          <svg-icon
+                            [src]="getSvgIcon(itemNode.icon)"
+                            [svgClass]="'h-4 w-4 mr-2 ' + getIconColor(itemNode.icon)"></svg-icon>
+                          <span class="truncate text-sm text-white">{{ itemNode.name }}</span>
+                        </div>
+                      </div>
+                      }
+                    </div>
+                    }
+                  </div>
+                  }
+                </div>
+                }
+              </div>
+              }
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+  </div>
+  }
+</div>
+}
+
+<!-- No data / Loading states -->
+@if (!errorMessage && (!treeData || treeData.length === 0) && !isLoading) {
+<div class="py-5 text-center text-gray-500">No databases found.</div>
+} @if (isLoading) {
+<div class="py-5 text-center text-gray-500">Loading...</div>
+} @if (errorMessage) {
+<div class="text-white-400 py-5 text-center">{{ errorMessage }}</div>
+}

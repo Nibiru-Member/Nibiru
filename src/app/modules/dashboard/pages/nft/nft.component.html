@@ -1,0 +1,648 @@
+<header class="bg-muted mb-3 flex flex-col items-center justify-between space-y-3 sm:flex-row sm:space-y-0">
+  <p class="p-5 text-sm tracking-widest text-white"><app-dynamic-breadcrumb></app-dynamic-breadcrumb></p>
+  <nav class="space-x-2 px-3">
+    <button
+      class="cursor-pointer rounded-md px-4 py-1 text-white transition-colors"
+      [ngClass]="{ 'bg-primary shadow-md': selectedPeriod === 'DAILY', 'bg-gray-700': selectedPeriod !== 'DAILY' }"
+      (click)="selectPeriod('DAILY')">
+      DAILY
+    </button>
+    <button
+      class="cursor-pointer rounded-md px-4 py-1 text-white transition-colors"
+      [ngClass]="{ 'bg-primary shadow-md': selectedPeriod === 'WEEKLY', 'bg-gray-700': selectedPeriod !== 'WEEKLY' }"
+      (click)="selectPeriod('WEEKLY')">
+      WEEKLY
+    </button>
+    <button
+      class="cursor-pointer rounded-md px-4 py-1 text-white transition-colors"
+      [ngClass]="{ 'bg-primary shadow-md': selectedPeriod === 'MONTHLY', 'bg-gray-700': selectedPeriod !== 'MONTHLY' }"
+      (click)="selectPeriod('MONTHLY')">
+      MONTHLY
+    </button>
+  </nav>
+</header>
+
+@if (!serverState.getConnection() || !serverState.isDatabaseListLoaded()) {
+<div class="py-10 text-center text-gray-400">No Record Found (No Server connected yet)</div>
+} @if (serverState.getConnection() && serverState.isDatabaseListLoaded()){
+<div>
+  @if (ServerHealthStatus && ServerHealthStatus.length > 0) {
+  <div class="m-6 mb-6 grid grid-cols-1 gap-4 sm:grid-cols-6">
+    <!-- Active Sessions -->
+    <div class="rounded-lg bg-gradient-to-br from-slate-800 to-blue-900 p-5 shadow-lg ring-1 ring-gray-700">
+      <p class="text-xs uppercase tracking-widest text-white">Active Sessions</p>
+      <p class="mt-2 text-2xl font-bold text-blue-300">
+        {{ ServerHealthStatus[0].activeSessionCount }}
+      </p>
+    </div>
+
+    <!-- Memory Usage -->
+    <div class="rounded-lg bg-gradient-to-br from-gray-800 to-emerald-900 p-5 shadow-lg ring-1 ring-gray-700">
+      <p class="text-xs uppercase tracking-widest text-white">Memory Usage</p>
+      <p class="mt-2 text-2xl font-bold text-emerald-300">
+        {{ ServerHealthStatus[0].memoryUsagePercentage | number: '1.1-1' }}%
+      </p>
+    </div>
+
+    <!-- Executing Jobs -->
+    <div class="rounded-lg bg-gradient-to-br from-gray-800 to-yellow-900 p-5 shadow-lg ring-1 ring-gray-700">
+      <p class="text-xs uppercase tracking-widest text-white">Executing Jobs</p>
+      <p class="mt-2 text-2xl font-bold text-yellow-300">
+        {{ ServerHealthStatus[0].executingJobCount }}
+      </p>
+    </div>
+
+    <!-- Users Logged In -->
+    <div class="rounded-lg bg-gradient-to-br from-gray-800 to-purple-900 p-5 shadow-lg ring-1 ring-gray-700">
+      <p class="text-xs uppercase tracking-widest text-white">Users Logged In</p>
+      <p class="mt-2 text-2xl font-bold text-purple-300">
+        {{ ServerHealthStatus[0].usersLoggedInCount }}
+      </p>
+    </div>
+
+    <!-- Active Transactions -->
+    <div class="rounded-lg bg-gradient-to-br from-gray-800 to-orange-900 p-5 shadow-lg ring-1 ring-gray-700">
+      <p class="text-xs uppercase tracking-widest text-white">Active Transactions</p>
+      <p class="mt-2 text-2xl font-bold text-orange-300">
+        {{ ServerHealthStatus[0].activeTransactionCount }}
+      </p>
+    </div>
+
+    <!-- Max Log Usage -->
+    <div class="rounded-lg bg-gradient-to-br from-gray-800 to-red-900 p-5 shadow-lg ring-1 ring-gray-700">
+      <p class="text-xs uppercase tracking-widest text-white">Max Log Usage</p>
+      <p class="mt-2 text-2xl font-bold text-red-300">
+        {{ ServerHealthStatus[0].maxLogUsagePercentage | number: '1.1-1' }}%
+      </p>
+    </div>
+  </div>
+  }
+
+  <!-- DASHBOARD -->
+  <div class="scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 mx-auto space-y-8 p-3 text-white">
+    <!-- TOP FRAGMENTED MDF FILES -->
+    <section
+      class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 mb-8 max-h-[400px] overflow-y-auto rounded-lg shadow-lg">
+      <div class="w-full bg-[#e7000b] px-4 py-3 text-sm uppercase tracking-widest text-white">
+        Top Fragmented MDF Files
+      </div>
+      <div class="p-3">
+        <table class="min-w-full table-fixed rounded-lg text-xs sm:text-sm">
+          <thead class="bg-muted uppercase text-white">
+            <tr>
+              <th class="w-1/14 px-3 py-2 text-[#e7000b]">Action</th>
+              <th class="w-1/12 px-3 py-2 text-[#e7000b]">Database</th>
+              <th class="w-1/8 px-3 py-2 text-[#e7000b]">Servers</th>
+              <th class="w-2/6 px-3 py-2 text-[#e7000b]">Location</th>
+              <th class="w-1/14 px-3 py-2 text-[#e7000b]">Size</th>
+              <th class="w-1/6 px-3 py-2 text-[#e7000b]">% Fragmented</th>
+              <th class="w-1/8 px-3 py-2 text-[#e7000b]">Status w/Index</th>
+            </tr>
+          </thead>
+          <tbody class="bg-muted">
+            <tr *ngFor="let f of mdfFiles" class="transition-colors hover:bg-gray-700">
+              <!-- Action Column -->
+              <!-- inside *ngFor="let f of files" -->
+              <td class="px-6 py-3">
+                <div class="relative overflow-visible">
+                  <!-- Three-dots Button -->
+                  <button
+                    type="button"
+                    class="rounded-md bg-gray-700 px-2 py-1 hover:bg-gray-600"
+                    (click)="openMenu($event, f); $event.stopPropagation()">
+                    <svg-icon src="assets/icons/heroicons/outline/ellipsis-vertical1.svg" [svgClass]="'h-5 w-5'">
+                    </svg-icon>
+                  </button>
+                </div>
+              </td>
+
+              <!-- GLOBAL CONTEXT MENU OVERLAY -->
+              @if (menu.visible) {
+              <div
+                class="fixed z-[99999] min-w-[180px] rounded-md border border-gray-700 bg-gray-800 shadow-lg"
+                [style.top.px]="menu.y"
+                [style.left.px]="menu.x"
+                (click)="$event.stopPropagation()"
+                (mouseleave)="closeMenu()">
+                <!-- ================= TASK (WITH SUBMENU) ================= -->
+                <div
+                  class="group relative flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700">
+                  <span class="text-sm text-white">Task</span>
+                  <span class="text-gray-400">▶</span>
+
+                  <!-- SUBMENU -->
+                  <div
+                    class="absolute left-full top-0 ml-1 hidden min-w-[190px] rounded-md border border-gray-700 bg-gray-900 shadow-md group-hover:block">
+                    <div
+                      class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
+                      (click)="onAttachDatabase(menu.row); closeMenu()">
+                      <span class="ml-2 text-sm text-white">Attach Database</span>
+                    </div>
+
+                    <div
+                      class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
+                      (click)="onDetachDatabase(menu.row); closeMenu()">
+                      <span class="ml-2 text-sm text-white">Detach Database</span>
+                    </div>
+
+                    <!-- Take Offline -->
+                    <div
+                      class="flex items-center px-4 py-2"
+                      [class.cursor-pointer]="!isOffline"
+                      [class.opacity-50]="isOffline"
+                      [class.pointer-events-none]="isOffline"
+                      [class.hover:bg-gray-700]="!isOffline"
+                      (click)="!isOffline && openCloseConnectionsDialog(menu.row, true); closeMenu()">
+                      <span class="ml-2 text-sm text-white">Take Offline</span>
+                    </div>
+
+                    <!-- Bring Online -->
+                    <div
+                      class="flex items-center px-4 py-2"
+                      [class.cursor-pointer]="isOffline"
+                      [class.opacity-50]="!isOffline"
+                      [class.pointer-events-none]="!isOffline"
+                      [class.hover:bg-gray-700]="isOffline"
+                      (click)="isOffline && openCloseConnectionsDialog(menu.row, false); closeMenu()">
+                      <span class="ml-2 text-sm text-white">Bring Online</span>
+                    </div>
+
+                    <!-- Backup -->
+                    <div
+                      class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
+                      (click)="backupMdfFile(menu.row); closeMenu()">
+                      <span class="ml-2 text-sm text-white">Backup</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ================= INDEX REORG ================= -->
+                <div
+                  class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
+                  (click)="onIndexReorg(menu.row); closeMenu()">
+                  <span class="text-sm text-white">Index Reorg</span>
+                </div>
+
+                <!-- ================= REINDEX ================= -->
+                <div
+                  class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
+                  (click)="onReindex(menu.row); closeMenu()">
+                  <span class="text-sm text-white">Reindex</span>
+                </div>
+              </div>
+              }
+
+              <td class="break-words px-3 py-2 font-medium">
+                <a (click)="openDetailedFragmentation(f)" class="cursor-pointer underline underline-offset-1">
+                  {{ f.mdfFiles }}
+                </a>
+              </td>
+              <td class="break-words px-3 py-2">{{ f.serverName }}</td>
+              <td class="max-w-xs break-words px-3 py-2">{{ f.location }}</td>
+              <td class="px-3 py-2 text-right">{{ f.sizeFormatted }}</td>
+              <td class="px-3 py-2 text-center">{{ f.fragmentedPercent }}%</td>
+
+              <td
+                class="break-words px-3 py-2 text-right text-gray-900"
+                [ngClass]="{
+                  'text-yellow-400': f.statusWithIndex === 'Recommend Defragment',
+                  'text-green-400': f.statusWithIndex === 'Successful',
+                  'text-red-400': f.statusWithIndex === 'Failed'
+                }">
+                {{ f.statusWithIndex }}
+              </td>
+            </tr>
+            @if (mdfFiles.length === 0) {
+            <tr>
+              <td colspan="6" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- INDEX STATISTICS -->
+    <section
+      (click)="openMenuIndex = null; openSubMenu = null"
+      class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 mb-8 max-h-[400px] overflow-y-auto rounded-lg shadow-lg">
+      <div class="w-full bg-[#e7000b] px-4 py-3 text-sm uppercase tracking-widest text-white">INDEX STATISTICS</div>
+      <div class="p-3">
+        <table class="min-w-full table-fixed overflow-hidden rounded-lg text-xs sm:text-sm">
+          <thead class="bg-muted uppercase text-white">
+            <tr>
+              <th class="w-1/14 px-3 py-2 text-[#e7000b]">Action</th>
+              <th class="w-1/12 px-3 py-2 text-[#e7000b]">Tables</th>
+              <th class="w-1/8 px-3 py-2 text-[#e7000b]">Index</th>
+              <th class="w-2/6 px-3 py-2 text-[#e7000b]">Index Type</th>
+              <th class="w-1/14 px-3 py-2 text-[#e7000b]">Sorted</th>
+              <th class="w-1/14 px-3 py-2 text-[#e7000b]">Cluster</th>
+              <th class="w-1/2 px-3 py-2 text-[#e7000b]">Columns Indexed</th>
+              <th class="w-1/8 px-3 py-2 text-[#e7000b]">Size</th>
+              <th class="w-1/8 px-3 py-2 text-[#e7000b]">Rows</th>
+              <th class="w-1/8 px-3 py-2 text-[#e7000b]">Pages</th>
+              <th class="w-1/2 px-3 py-2 text-[#e7000b]">Fragmentation %</th>
+              <th class="w-1/4 px-3 py-2 text-[#e7000b]">Fill Factor %</th>
+              <th class="w-1/2 px-3 py-2 text-[#e7000b]">Defragmentation Status</th>
+            </tr>
+          </thead>
+          <tbody class="bg-muted">
+            @for (f of indexFilesReviews; track index; let index = $index) {
+            <tr class="cursor-pointer transition-colors hover:bg-gray-700">
+              <td class="px-6 py-3" (click)="$event.stopPropagation(); toggleMenu(index)">
+                <div class="relative inline-block text-center">
+                  <!-- BUTTON -->
+                  <button class="role-menu-button rounded-md bg-gray-700 px-2 py-1">
+                    <svg-icon
+                      src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                      [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
+                  </button>
+
+                  <!-- Main Dropdown -->
+                  @if ( openMenuIndex === index) {
+                  <div
+                    class="absolute left-0 z-50 mt-1 w-48 rounded bg-gray-800 text-white shadow-lg"
+                    (click)="$event.stopPropagation()">
+                    <button class="block w-full px-3 py-2 text-left hover:bg-gray-700">Adjust Threshold</button>
+                    <button class="block w-full px-3 py-2 text-left hover:bg-gray-700">Adjust Fill Factor</button>
+
+                    <!-- Submenu — Run Now -->
+                    <div class="relative">
+                      <button class="w-full px-3 py-2 text-left hover:bg-gray-700" (click)="toggleSubMenu('run')">
+                        <div class="group relative flex cursor-pointer items-center justify-between">
+                          <span class="text-sm text-white">Run Now</span>
+                          <span class="text-gray-400">▶</span>
+                        </div>
+                      </button>
+                      @if (openSubMenu === 'run'){
+                      <div class="absolute left-full top-0 z-50 w-40 rounded bg-gray-700 shadow-lg">
+                        <button class="block w-full px-3 py-2 text-left">Rebuild</button>
+                        <button class="block w-full px-3 py-2 text-left">ReIndex</button>
+                      </div>
+                      }
+                    </div>
+                    <!-- Submenu — Schedule -->
+                    <div class="relative">
+                      <button class="w-full px-3 py-2 text-left hover:bg-gray-700" (click)="toggleSubMenu('schedule')">
+                        <div class="group relative flex cursor-pointer items-center justify-between">
+                          <span class="text-sm text-white">Schedule</span>
+                          <span class="text-gray-400">▶</span>
+                        </div>
+                      </button>
+                      @if (openSubMenu === 'schedule'){
+                      <div class="absolute left-full top-0 z-50 w-56 rounded bg-gray-700 shadow-lg">
+                        <button class="block w-full px-3 py-2 text-left">Update Statistics</button>
+                        <button class="block w-full px-3 py-2 text-left">Recompile Stored Procedures</button>
+                      </div>
+                      }
+                    </div>
+                  </div>
+                  }
+                </div>
+              </td>
+              <td class="break-words px-3 py-2 font-medium">{{ f.table }}</td>
+              <td class="break-words px-3 py-2 text-center">{{ f.index }}</td>
+              <td class="max-w-xs break-words px-3 py-2">{{ f.indexType }}</td>
+              <td class="px-3 py-2 text-right">{{ f.sortedPercent }}</td>
+
+              <!-- Cluster Column with Dropdown -->
+              <td class="relative px-3 py-2 text-center">
+                <span class="cursor-pointer">{{ f.cluster || '✔' }}</span>
+              </td>
+
+              <td class="px-3 py-2 text-center">{{ f.columnsIndexed }}</td>
+              <td class="break-words px-3 py-2 font-medium">{{ f.sizeKB }}</td>
+              <td class="break-words px-3 py-2 font-medium">{{ f.rows }}</td>
+              <td class="break-words px-3 py-2 font-medium">{{ f.pages }}</td>
+              <td class="break-words px-3 py-2 text-center font-medium">{{ f.fragmentationPercent }}</td>
+              <td class="break-words px-3 py-2 text-center font-medium">{{ f.fillFactor }}</td>
+              <td
+                class="break-words px-3 py-2 text-center"
+                [ngClass]="{
+                  'text-yellow-400': f.defragmentationStatus === 'Recommend Rebuild',
+                  'text-green-400': f.defragmentationStatus === 'Successful',
+                  'text-red-400': f.defragmentationStatus === 'Failed',
+                  'text-blue-400': f.defragmentationStatus === 'Recommend Reindex'
+                }">
+                {{ f.defragmentationStatus }}
+              </td>
+            </tr>
+            } @if (indexFilesReviews.length === 0) {
+            <tr>
+              <td colspan="13" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+      <!-- Index Storage Utilization -->
+      <section
+        class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 max-h-[400px] overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">INDEX STORAGE UTILIZATION</div>
+        <div class="p-3">
+          <table class="w-full border-collapse overflow-hidden rounded-lg text-left">
+            <thead class="bg-muted text-gray-300">
+              <tr>
+                <th class="w-1/14 px-3 py-2 text-[#e7000b]">Action</th>
+                <th class="w-1/12 px-3 py-2 text-[#e7000b]">Index</th>
+                <th class="w-1/8 px-3 py-2 text-[#e7000b]">Size</th>
+                <th class="w-2/6 px-3 py-2 text-[#e7000b]">% Split</th>
+                <th class="w-1/8 px-3 py-2 text-[#e7000b]"># Pages</th>
+                <th class="w-1/14 px-3 py-2 text-[#e7000b]">Levels</th>
+              </tr>
+            </thead>
+            <tbody class="bg-muted">
+              <tr *ngFor="let f of indexStorageUtilization" class="cursor-pointer transition-colors hover:bg-gray-700">
+                <td class="px-6 py-3">
+                  <div class="relative inline-block text-center">
+                    <!-- BUTTON -->
+                    <button class="role-menu-button rounded-md bg-gray-700 px-2 py-1">
+                      <svg-icon
+                        src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                        [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
+                    </button>
+                  </div>
+                </td>
+                <td class="break-words px-3 py-2 font-medium">{{ f.indexName }}</td>
+                <td class="break-words px-3 py-2">{{ f.totalSizeKB }}</td>
+                <td class="max-w-xs break-words px-3 py-2">{{ f.avgFragmentationPercent }}</td>
+                <td class="px-3 py-2 text-right">{{ f.totalPages }}</td>
+                <td class="px-3 py-2 text-right">{{ f.maxLevels }}</td>
+              </tr>
+              @if (indexStorageUtilization.length === 0) {
+              <tr>
+                <td colspan="6" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Index FIll Factor History-->
+      <section
+        class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 max-h-[400px] overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">FILL FACTOR HISTORY</div>
+        <div class="p-3">
+          <table class="w-full border-collapse overflow-hidden rounded-lg text-left">
+            <thead class="bg-muted text-gray-300">
+              <tr>
+                <th class="w-1/14 px-3 py-2 text-[#e7000b]">Action</th>
+                <th class="w-1/12 px-3 py-2 text-[#e7000b]">Index</th>
+                <th class="w-1/6 px-3 py-2 text-[#e7000b]">Started</th>
+                <th class="w-2/14 px-3 py-2 text-[#e7000b]">Action</th>
+                <th class="w-1/6 px-3 py-2 text-[#e7000b]">Frag %</th>
+                <th class="w-1/4 px-3 py-2 text-[#e7000b]">Fill Factor %</th>
+                <th class="w-1/3 px-3 py-2 text-[#e7000b]">Frag Change</th>
+              </tr>
+            </thead>
+            <tbody class="bg-muted">
+              <tr *ngFor="let f of fillFactorHistory" class="cursor-pointer transition-colors hover:bg-gray-700">
+                <td class="px-6 py-3">
+                  <div class="relative inline-block text-center">
+                    <!-- BUTTON -->
+                    <button class="role-menu-button rounded-md bg-gray-700 px-2 py-1">
+                      <svg-icon
+                        src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                        [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
+                    </button>
+                  </div>
+                </td>
+                <td class="break-words px-3 py-2 font-medium">{{ f.index }}</td>
+                <td class="break-words px-3 py-2">{{ f.started | date: 'yyyy-MM-dd' }}</td>
+                <td class="max-w-xs break-words px-3 py-2 text-center">{{ f.action }}</td>
+                <td class="px-3 py-2 text-center">{{ f.fragPercent }}</td>
+                <td class="px-3 py-2 text-center">{{ f.fillFactorPercent }}</td>
+                <td class="break-words px-3 py-2 font-medium">{{ f.fragChange }}</td>
+              </tr>
+              @if (fillFactorHistory.length === 0) {
+              <tr>
+                <td colspan="6" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- GRID -->
+    <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+      <!-- TOP FRAGMENTED INDEXES -->
+      <section
+        class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 max-h-[400px] overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">Top Fragmented Indexes</div>
+        <div class="p-2">
+          <table class="w-full border-collapse overflow-hidden rounded-lg text-left">
+            <thead class="bg-muted text-gray-300">
+              <tr>
+                <th class="w-1/14 px-3 py-2 text-[#e7000b]">Action</th>
+                <th class="px-3 text-[#e7000b]">Index</th>
+                <th class="px-3 text-[#e7000b]">Tables</th>
+                <th class="px-3 text-[#e7000b]">Type</th>
+                <th class="px-3 text-center text-[#e7000b]">Cluster</th>
+                <th class="px-3 text-[#e7000b]">Frag %</th>
+                <th class="px-3 text-[#e7000b]">Fill Factor %</th>
+                <th class="px-3 text-[#e7000b]">Frag Change</th>
+              </tr>
+            </thead>
+
+            <tbody class="bg-muted text-gray-200">
+              <tr *ngFor="let idx of fragmentedIndexes" class="cursor-pointer transition-colors hover:bg-gray-700">
+                <td class="px-6 py-3">
+                  <div class="relative inline-block text-center">
+                    <!-- BUTTON -->
+                    <button class="role-menu-button rounded-md bg-gray-700 px-2 py-1">
+                      <svg-icon
+                        src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                        [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
+                    </button>
+                  </div>
+                </td>
+                <td class="break-words px-3 py-2">{{ idx.index }}</td>
+                <td class="break-words px-3 py-2">{{ idx.table }}</td>
+                <td class="px-3 py-2">{{ idx.type }}</td>
+                <td class="px-3 py-2 text-center">{{ idx.cluster }}</td>
+                <td class="px-3 py-2 text-right">{{ idx.fragPercentage }}%</td>
+                <td class="px-3 py-2 text-right">{{ idx.fillFactorPercentage }}%</td>
+                <td class="px-3 py-2 text-right">{{ idx.fragChange }}</td>
+              </tr>
+              @if (fragmentedIndexes.length === 0) {
+              <tr>
+                <td colspan="7" class="mt-5 px-3 py-2 text-center text-gray-400">No Record Found.</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- FILL FACTOR -->
+      <section
+        class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 flex max-h-[400px] flex-col overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">Fill Factor Correlation</div>
+
+        <div class="bg-muted p-6 text-gray-400 shadow-inner">
+          @if (fillFactorChartOptions) {
+          <apx-chart
+            [series]="fillFactorChartOptions.series"
+            [chart]="fillFactorChartOptions.chart"
+            [xaxis]="fillFactorChartOptions.xaxis"
+            [yaxis]="fillFactorChartOptions.yaxis || {}"
+            [stroke]="fillFactorChartOptions.stroke || {}"
+            [markers]="fillFactorChartOptions.markers || {}"
+            [grid]="fillFactorChartOptions.grid || {}"
+            [dataLabels]="fillFactorChartOptions.dataLabels || {}"
+            [legend]="fillFactorChartOptions.legend || {}"
+            [tooltip]="fillFactorChartOptions.tooltip || {}">
+          </apx-chart>
+          } @if (fillFactorChartOptions) {
+          <div class="p-6 text-gray-300">No Data Found</div>
+          }
+        </div>
+      </section>
+
+      <!-- TOTAL FRAGMENTATION -->
+      <section
+        class="scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 bg-muted flex max-h-[400px] flex-col overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        <div class="w-full bg-[#e7000b] px-4 py-3 text-sm uppercase tracking-widest text-white">
+          Total Fragmentation
+        </div>
+
+        <div class="bg-[#2a2a2a] p-4 text-gray-300">
+          @if (noFragmentation) {
+          <div class="flex h-[250px] w-full items-center justify-center text-lg font-semibold text-gray-400">
+            No Record Found
+          </div>
+          } @else { @if (totalFragmentationChartOptions) {
+          <apx-chart
+            [series]="totalFragmentationChartOptions.series"
+            [chart]="totalFragmentationChartOptions.chart"
+            [plotOptions]="totalFragmentationChartOptions.plotOptions"
+            [colors]="totalFragmentationChartOptions.colors"
+            [xaxis]="totalFragmentationChartOptions.xaxis"
+            [yaxis]="totalFragmentationChartOptions.yaxis"
+            [dataLabels]="totalFragmentationChartOptions.dataLabels"
+            [grid]="totalFragmentationChartOptions.grid"
+            [tooltip]="totalFragmentationChartOptions.tooltip"
+            [legend]="totalFragmentationChartOptions.legend">
+          </apx-chart>
+          } }
+        </div>
+      </section>
+
+      <!-- TOTAL Index FRAGMENTATION -->
+      <section
+        class="scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 bg-muted flex max-h-[400px] flex-col overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        <div class="w-full bg-[#e7000b] px-4 py-3 text-sm uppercase tracking-widest text-white">
+          Total Index Fragmentation
+        </div>
+        <!-- Case 1: NO DB selected yet and API not called -->
+        @if (!isTotalIndexApiCalled) {
+        <div class="flex h-[250px] w-full items-center justify-center text-lg font-semibold text-gray-400">
+          No Record Found
+        </div>
+        }
+        <!-- Case 2: API called AND no data -->
+        @if (isTotalIndexApiCalled && noFragmentationData) {
+        <div class="flex h-[250px] w-full items-center justify-center text-lg font-semibold text-gray-400">
+          No Record Found
+        </div>
+        }
+        <!-- Case 3: API called AND data exists -->
+        @if (isTotalIndexApiCalled && totalIndexFragmentationChartOptions && !noFragmentationData) {
+        <apx-chart
+          [series]="totalIndexFragmentationChartOptions.series"
+          [chart]="totalIndexFragmentationChartOptions.chart"
+          [plotOptions]="totalIndexFragmentationChartOptions.plotOptions"
+          [colors]="totalIndexFragmentationChartOptions.colors"
+          [xaxis]="totalIndexFragmentationChartOptions.xaxis"
+          [yaxis]="totalIndexFragmentationChartOptions.yaxis"
+          [dataLabels]="totalIndexFragmentationChartOptions.dataLabels"
+          [grid]="totalIndexFragmentationChartOptions.grid"
+          [tooltip]="totalIndexFragmentationChartOptions.tooltip"
+          [legend]="totalIndexFragmentationChartOptions.legend">
+        </apx-chart>
+        }
+      </section>
+
+      <!-- DISK STORAGE -->
+      <section
+        class="bg-muted scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 max-h-[400px] overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">Disk Storage</div>
+
+        <div class="p-6">
+          @if (diskStorage && diskStorage.length > 0) { @for (disk of diskStorage; track disk.drive) {
+          <div class="mb-6">
+            <div class="mb-1 flex justify-between text-gray-300">
+              <span>{{ disk.drive }}</span>
+              <span>{{ disk.usedSpaceGB.toFixed(2) }}GB / {{ disk.totalSizeGB.toFixed(2) }}GB</span>
+            </div>
+
+            <div class="mt-5 h-5 w-full overflow-hidden rounded-full bg-gray-700 shadow-inner">
+              <div
+                class="h-5 rounded-full transition-all duration-500"
+                [ngStyle]="{
+                  width: 100 - disk.freePercent + '%',
+                  background: getDiskColor(disk.freePercent)
+                }"></div>
+            </div>
+
+            <p class="mt-2 text-center text-sm text-gray-400">{{ disk.freePercent.toFixed(1) }}% Free</p>
+          </div>
+          } } @else {
+
+          <p class="text-center italic text-gray-400">No Record Found..</p>
+
+          }
+        </div>
+      </section>
+
+      <!-- RECENT ACTIVITIES -->
+      <section class="bg-muted max-h-[400px] max-w-full overflow-y-auto rounded-lg p-0 text-xs shadow-lg sm:text-sm">
+        <div class="w-full bg-[#e7000b] px-4 py-3 uppercase tracking-widest text-white">Recent Activities</div>
+
+        <div class="scrollbar-thin scrollbar-thumb-gray-900 scrollbar-track-gray-800 overflow-y-auto p-6">
+          <!-- NO ACTIVITY MESSAGE -->
+          @if (activityList.length === 0) {
+          <div class="flex h-40 w-full items-center justify-center text-base font-semibold text-gray-400">
+            No Activity Captured Yet!
+          </div>
+          }
+
+          <!-- ACTIVITY LIST -->
+          @if (activityList.length > 0) {
+          <ul class="space-y-4">
+            <li *ngFor="let item of activityList" class="flex space-x-3">
+              <span
+                class="mt-1 text-xl"
+                [ngClass]="{
+                  'text-green-500': item.status === 'S',
+                  'text-yellow-500': item.status === 'U',
+                  'text-red-500': item.status === 'D'
+                }">
+                ●
+              </span>
+
+              <div>
+                <p class="text-sm font-semibold">
+                  <span class="text-white">{{ item.activityModuleName }}</span>
+                  <span class="ml-1 font-normal text-gray-400">{{ item.description }}</span>
+                </p>
+
+                <time class="mt-0.5 block text-xs text-gray-600">
+                  {{ item.timeAgo }}
+                </time>
+              </div>
+            </li>
+          </ul>
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+}

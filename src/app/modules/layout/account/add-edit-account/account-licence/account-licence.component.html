@@ -1,0 +1,127 @@
+<form #licenseForm="ngForm" (ngSubmit)="$event.preventDefault()">
+  <div class="max-h-[500px] space-y-6 overflow-y-auto p-4">
+    <!-- No. of Users -->
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div>
+        <label class="text-sm text-white">No. of Users *</label>
+        <input
+          type="number"
+          name="noOfUsers"
+          required
+          min="1"
+          [(ngModel)]="localLicenseData.noOfUsers"
+          #noOfUsers="ngModel"
+          class="bg-gray-950 w-full rounded-md border border-gray-600 p-3 text-white" />
+
+        @if (noOfUsers.invalid && (noOfUsers.touched || noOfUsers.dirty)) {
+        <p class="text-white-400 text-xs">No. of Users is required.</p>
+        }
+      </div>
+
+      <!-- Price -->
+      <div>
+        <label class="text-sm text-white">Price *</label>
+        <input
+          type="text"
+          required
+          name="price"
+          [(ngModel)]="localLicenseData.price"
+          #price="ngModel"
+          class="bg-gray-950 w-full rounded-md border border-gray-600 p-3 text-white" />
+
+        @if (price.invalid && (price.touched || price.dirty)) {
+        <p class="text-white-400 text-xs">Price is required.</p>
+        }
+      </div>
+    </div>
+
+    <!-- Dates -->
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div>
+        <label class="text-sm text-white">Start Date *</label>
+        <input
+          type="date"
+          name="licenseStartDate"
+          required
+          [(ngModel)]="localLicenseData.licenseStartDate"
+          #licenseStartDate="ngModel"
+          class="bg-gray-950 w-full rounded-md border border-gray-600 p-3 text-white" />
+
+        @if (licenseStartDate.invalid && (licenseStartDate.touched || licenseStartDate.dirty)) {
+        <p class="text-white-400 text-xs">Start Date is required.</p>
+        }
+      </div>
+
+      <div>
+        <label class="text-sm text-white">End Date *</label>
+        <input
+          type="date"
+          name="licenseEndDate"
+          required
+          [(ngModel)]="localLicenseData.licenseEndDate"
+          #licenseEndDate="ngModel"
+          class="bg-gray-950 w-full rounded-md border border-gray-600 p-3 text-white" />
+
+        @if (licenseEndDate.invalid && (licenseEndDate.touched || licenseEndDate.dirty)) {
+        <p class="text-white-400 text-xs">End Date is required.</p>
+        }
+      </div>
+    </div>
+
+    <!-- License Type -->
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div>
+        <label class="text-sm text-white">License Type *</label>
+        <select
+          required
+          name="licenseType"
+          [(ngModel)]="localLicenseData.licenseType"
+          #licenseType="ngModel"
+          class="bg-gray-950 w-full rounded-md border border-gray-600 p-3 text-white">
+          <option value="" disabled>-- Select --</option>
+          <option value="Basic">Basic</option>
+          <option value="Standard">Standard</option>
+          <option value="Premium">Premium</option>
+        </select>
+
+        @if (licenseType.invalid && (licenseType.touched || licenseType.dirty)) {
+        <p class="text-white-400 text-xs">License Type is required.</p>
+        }
+      </div>
+
+      <!-- No. of Instances -->
+      <div>
+        <label class="text-sm text-white">No. of Instances *</label>
+        <input
+          type="number"
+          required
+          name="noOfInstances"
+          min="1"
+          [(ngModel)]="localLicenseData.noOfInstances"
+          #noOfInstances="ngModel"
+          class="bg-gray-950 w-full rounded-md border border-gray-600 p-3 text-white" />
+
+        @if (noOfInstances.invalid && (noOfInstances.touched || noOfInstances.dirty)) {
+        <p class="text-white-400 text-xs">No. of Instances is required.</p>
+        }
+      </div>
+    </div>
+
+    <!-- No. of Databases -->
+    <div>
+      <label class="text-sm text-white">No. of Databases *</label>
+      <input
+        type="number"
+        required
+        min="1"
+        name="noOfDatabases"
+        [(ngModel)]="localLicenseData.noOfDatabases"
+        #noOfDatabases="ngModel"
+        class="bg-gray-950 w-full rounded-md border border-gray-600 p-3 text-white" />
+
+      @if (noOfDatabases.invalid && (noOfDatabases.touched || noOfDatabases.dirty)) {
+      <p class="text-white-400 text-xs">No. of Databases is required.</p>
+      }
+    </div>
+  </div>
+</form>

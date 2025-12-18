@@ -1,0 +1,45 @@
+<div class="bg-muted max-h[500px] w-[900px] rounded-lg p-0 text-white shadow-lg">
+  <div class="flex items-center justify-between p-4">
+    <h2 class="text-lg font-semibold">Condition Details: {{ data?.checkName }}</h2>
+
+    <button type="button" (click)="closeDialog()" class="cursor-pointer text-gray-400 transition hover:text-gray-200">
+      <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    </button>
+  </div>
+  <div class="custom-scrollbar max-h-[350px] overflow-y-auto">
+    <table class="w-full border-collapse text-sm">
+      <thead class="sticky top-0 z-10 bg-[#222]">
+        <tr class="border-b border-gray-600 text-xs uppercase text-gray-400">
+          <th class="p-2 text-left text-[#e7000b]">Condition</th>
+          <th class="p-2 text-left text-[#e7000b]">Current</th>
+          <th class="p-2 text-left text-[#e7000b]">Threshold</th>
+          <th class="p-2 text-left text-[#e7000b]">Status</th>
+          <th class="p-2 text-left text-[#e7000b]">Reason</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let item of listData" class="text-gray-200 hover:bg-gray-700">
+          <td class="p-2">{{ item?.conditionName }}</td>
+          <td class="p-2">{{ item?.currentValue }}</td>
+          <td class="p-2">{{ item?.thresholdValue }}</td>
+          <td class="p-2">
+            <span class="rounded px-2 py-1" [ngClass]="item.isConditionMet ? 'text-green-400' : 'text-red-400'">
+              {{ item?.isConditionMet ? 'Met' : 'Failed' }}
+            </span>
+          </td>
+          <td class="p-2">{{ item?.failureReason || 'None' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex items-center justify-end border-t border-gray-700 px-6 py-4">
+    <button
+      type="button"
+      class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+      (click)="closeDialog()">
+      CLOSE
+    </button>
+  </div>
+</div>

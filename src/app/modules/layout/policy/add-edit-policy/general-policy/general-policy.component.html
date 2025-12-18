@@ -1,0 +1,94 @@
+<div>
+  <!-- DESCRIPTION -->
+  <label class="mb-2 block text-sm">Description</label>
+  <textarea class="bg-gray-950 w-full rounded-md border border-gray-600 p-2 text-sm" rows="3" [(ngModel)]="description">
+  </textarea>
+
+  <!-- CATEGORY -->
+  <div class="mt-4">
+    <label class="mb-2 block text-sm">Category</label>
+
+    <div class="grid grid-cols-12 items-center gap-4">
+      <!-- EXISTING CATEGORY DROPDOWN -->
+      <div class="col-span-5">
+        <select
+          [(ngModel)]="category"
+          (ngModelChange)="onCategoryChange($event)"
+          class="bg-gray-950 w-full rounded-md border border-gray-600 p-2 text-sm">
+          <option value="" disabled>-- Choose a Category --</option>
+
+          <option *ngFor="let c of categoryList" [value]="c.value">
+            {{ c.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- OR TEXT -->
+      <div class="col-span-1 text-center text-sm text-gray-400">OR</div>
+
+      <!-- CREATE NEW CATEGORY -->
+      <div class="col-span-6 flex">
+        <input
+          type="text"
+          [(ngModel)]="newCategoryName"
+          placeholder="-- Create a New One --"
+          class="bg-gray-950 flex-1 rounded-l-md border border-gray-600 p-2 text-sm" />
+
+        <button
+          (click)="addNewCategory()"
+          class="rounded-r-md border border-gray-600 bg-gray-700 px-3 text-xl font-bold text-white">
+          +
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVER -->
+  <div class="mt-4">
+    <label class="mb-1 block text-sm">Server</label>
+    <select
+      [(ngModel)]="server"
+      (ngModelChange)="onServerChange($event)"
+      class="bg-gray-950 w-full rounded-md border border-gray-600 p-2 text-sm">
+      <option value="" [selected]="true" disabled>-- Choose a Server --</option>
+
+      <option *ngFor="let s of serverDetails" [value]="s.serverName">
+        {{ s.serverName }}
+      </option>
+    </select>
+  </div>
+
+  <!-- OWNER + NAME -->
+  <div class="mt-4 grid grid-cols-2 gap-4">
+    <!-- OWNER -->
+    <div>
+      <label class="mb-1 block text-sm">Owner</label>
+      <select
+        class="bg-gray-950 w-full rounded-md border border-gray-600 p-2 text-sm"
+        [(ngModel)]="owner"
+        (ngModelChange)="onOwnerChange($event)">
+        <option value="" disabled>-- Select Owner --</option>
+
+        <option *ngFor="let o of ownerList" [value]="o.value">
+          {{ o.label }}
+        </option>
+      </select>
+
+      <!-- Selected Owner Display -->
+      @if (owner) {
+      <div class="bg-gray-950 mt-2 flex items-center rounded-md border border-gray-600 p-2 text-sm">
+        <span class="mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-gray-500 text-xs text-white">
+          {{ getInitials(getOwnerLabel(owner)) }}
+        </span>
+        {{ getOwnerLabel(owner) }}
+      </div>
+      }
+    </div>
+
+    <!-- NAME -->
+    <div>
+      <label class="mb-2 block text-sm">Name</label>
+      <input class="bg-gray-950 w-full rounded-md border border-gray-600 p-2 text-sm" type="text" [(ngModel)]="name" />
+    </div>
+  </div>
+</div>

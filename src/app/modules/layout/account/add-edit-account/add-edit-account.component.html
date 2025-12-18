@@ -1,0 +1,80 @@
+<div class="bg-muted max-h-[500px] w-[900px] rounded-lg p-0 text-white shadow-lg">
+  <!-- Header -->
+  <div class="flex items-center justify-between border-b border-gray-700 p-4">
+    <h2 class="text-lg font-semibold">
+      {{ isEditMode ? 'Edit Account' : 'New Account' }}
+    </h2>
+
+    <button
+      type="button"
+      (click)="closeDialog()"
+      class="cursor-pointer text-gray-400 transition hover:text-gray-200"
+      aria-label="Close">
+      <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex justify-between border-b border-gray-700 px-4 text-sm font-medium">
+    @for (tab of tabs; let i = $index; track i) {
+    <div
+      class="flex-1 cursor-pointer py-2 text-center transition-colors duration-200"
+      [ngClass]="{
+        'border-b-2 border-red-500 text-red-500': activeTab === i,
+        'text-gray-500': activeTab !== i
+      }"
+      [class.opacity-50]="!isEditMode && i === 1 && !accountId"
+      (click)="onTabClick(i)">
+      {{ tab }}
+    </div>
+    }
+  </div>
+
+  <!-- Tab Content -->
+  <div class="p-6">
+    @if (activeTab === 0) {
+    <app-account-profile
+      [profileData]="accountData.profileData"
+      [isEditMode]="isEditMode"
+      (profileUpdated)="onProfileUpdated($event)"
+      (profilePictureUploaded)="onProfilePictureUploaded($event)"
+      (formReference)="captureProfileForm($event)">
+    </app-account-profile>
+    } @if (activeTab === 1) {
+    <app-account-licence
+      [licenseData]="accountData.licenseData"
+      (licenseUpdated)="onLicenseUpdated($event)"
+      (formReference)="captureLicenseForm($event)">
+    </app-account-licence>
+    }
+  </div>
+
+  <!-- Footer -->
+  <div class="flex items-center justify-between border-t border-gray-700 px-6 py-4">
+    <div class="flex-1">
+      @if (activeTab > 0) {
+      <button
+        class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+        (click)="previousStep()">
+        PREVIOUS
+      </button>
+      }
+    </div>
+
+    <div class="flex items-center">
+      @if (activeTab < tabs.length - 1) {
+      <button
+        class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white disabled:cursor-not-allowed disabled:opacity-50"
+        (click)="nextStep()">
+        {{ isEditMode ? 'UPDATE ACCOUNT' : 'CREATE ACCOUNT' }}
+      </button>
+      } @if (activeTab === tabs.length - 1) {
+      <button
+        class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white disabled:cursor-not-allowed disabled:opacity-50"
+        (click)="saveAccount()">
+        {{ isEditMode ? 'UPDATE LICENCE' : 'CREATE LICENCE' }}
+      </button>
+      }
+    </div>
+  </div>
+</div>

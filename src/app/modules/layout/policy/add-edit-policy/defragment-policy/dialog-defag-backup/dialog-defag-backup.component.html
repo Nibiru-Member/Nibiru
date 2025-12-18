@@ -1,0 +1,140 @@
+<div
+  class="flex max-h-[80vh] w-[900px] max-w-full flex-col rounded-md border border-gray-700 bg-gray-900 text-[13px] text-gray-100 shadow-lg">
+  <!-- HEADER -->
+  <div class="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
+    <div class="font-semibold">
+      Back Up Database
+      <span *ngIf="selectedDatabase"> - {{ selectedDatabase }}</span>
+    </div>
+
+    <button
+      type="button"
+      (click)="closeDialog()"
+      class="flex h-6 w-6 items-center justify-center rounded hover:bg-gray-700"
+      aria-label="Close">
+      ✕
+    </button>
+  </div>
+
+  <!-- BODY -->
+  <div class="flex-1 space-y-4 overflow-y-auto bg-gray-900 px-5 py-4">
+    <!-- SOURCE -->
+    <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+      <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200">Source</div>
+
+      <!-- Server Dropdown -->
+      <div class="grid grid-cols-[140px,1fr] items-center">
+        <label>Server:</label>
+        <select
+          [(ngModel)]="selectedServer"
+          (change)="onServerChange()"
+          class="w-full rounded border border-gray-600 bg-gray-900 px-2 py-1 text-[13px]">
+          <option value="">-- Select Server --</option>
+          <option *ngFor="let s of servers" [value]="s.serverName">
+            {{ s.serverName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Database Dropdown -->
+      <div class="grid grid-cols-[140px,1fr] items-center">
+        <label>Database:</label>
+        <select
+          [(ngModel)]="selectedDatabase"
+          (change)="onDatabaseChange()"
+          class="w-full rounded border border-gray-600 bg-gray-900 px-2 py-1 text-[13px]">
+          <option value="">-- Select Database --</option>
+          <option *ngFor="let d of databases" [value]="d">{{ d }}</option>
+        </select>
+      </div>
+
+      <!-- Backup Type -->
+      <div class="grid grid-cols-[140px,1fr] items-center">
+        <label>Backup type:</label>
+        <select
+          [(ngModel)]="selectedBackupType"
+          class="w-full rounded border border-gray-600 bg-gray-900 px-2 py-1 text-[13px]">
+          <option *ngFor="let t of backupTypes" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- DESTINATION -->
+    <div class="flex flex-col space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+      <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200">Destination</div>
+
+      <!-- Back up to -->
+      <div class="grid grid-cols-[140px,1fr] items-center">
+        <label>Back up to:</label>
+        <select
+          class="w-full rounded border border-gray-600 bg-gray-900 px-2 py-1 text-[13px]"
+          [(ngModel)]="backupDeviceType">
+          <option value="Disk">Disk</option>
+          <option value="Url">URL</option>
+        </select>
+      </div>
+
+      <!-- Destination list + buttons -->
+      <div class="mt-1 flex items-start gap-2">
+        <!-- destination text area = height of 3 buttons -->
+        <div class="flex h-[85px] flex-1 overflow-x-auto overflow-y-auto rounded border border-gray-600 bg-gray-900">
+          <div class="min-w-max">
+            <div class="cursor-default whitespace-nowrap bg-blue-900/60 px-2 py-[2px] text-[12px] text-white">
+              {{ backupPath ? backupPath : location }}
+            </div>
+            <!-- <div
+              *ngFor="let dest of destinations; let i = index"
+              (click)="selectedDestinationIndex = i"
+              class="cursor-default whitespace-nowrap px-2 py-[2px] text-[12px]"
+              [ngClass]="{
+                'bg-blue-900/60 text-white': selectedDestinationIndex === i
+              }">
+              {{ dest.fullPath }}
+            </div> -->
+          </div>
+        </div>
+
+        <!-- buttons stacked on the right -->
+        <div class="flex w-[90px] flex-col gap-1">
+          <button
+            type="button"
+            class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600"
+            (click)="openDestinationDialog()">
+            Add...
+          </button>
+
+          <button
+            type="button"
+            class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600 disabled:opacity-40"
+            [disabled]="selectedDestinationIndex === -1"
+            (click)="onRemoveDestination()">
+            Remove
+          </button>
+
+          <button
+            type="button"
+            class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600 disabled:opacity-40"
+            [disabled]="selectedDestinationIndex === -1"
+            (click)="onDestinationContents()">
+            Contents
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="flex justify-end gap-3 border-t border-gray-700 bg-gray-800 px-5 py-2">
+    <button
+      (click)="closeDialog()"
+      class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white">
+      Cancel
+    </button>
+    <button
+      (click)="save()"
+      [disabled]="saving"
+      class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white">
+      OK
+    </button>
+  </div>
+</div>

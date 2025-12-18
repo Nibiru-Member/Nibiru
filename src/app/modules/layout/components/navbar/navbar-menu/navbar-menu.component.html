@@ -1,0 +1,30 @@
+@for(menu of menuService.pagesMenu;track menu){
+<div class="dropdown relative inline-block">
+  @if (menu.items.length === 1) {
+  <!-- Single item: navigate directly (no dropdown) -->
+  <a
+    [routerLink]="menu.items[0].route || '/'"
+    routerLinkActive="text-primary-foreground border-b-2"
+    [routerLinkActiveOptions]="{ exact: false }"
+    [ngClass]="menu.active ? 'text-primary-foreground' : 'text-white hover:text-white'"
+    class="mr-2 inline-flex cursor-pointer p-4 text-sm font-medium">
+    <span>{{ menu.group }}</span>
+  </a>
+  } @else if (menu.items.length > 1) {
+  <!-- Multi item: show dropdown -->
+  <button
+    [ngClass]="
+      menu.selected || menu.active
+        ? 'text-primary-foreground cursor-pointer border-b-2'
+        : 'cursor-pointer text-white hover:text-white'
+    "
+    class="mr-2 inline-flex p-4 text-sm font-medium">
+    <span>{{ menu.group }}</span>
+  </button>
+  <div
+    class="dropdown-content absolute top-[100%] z-10 min-w-[200px] origin-top-left cursor-pointer"
+    navbar-submenu
+    [submenu]="menu.items"></div>
+  }
+</div>
+}

@@ -1,0 +1,96 @@
+<div class="bg-gray-950 min-h-screen p-6">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <div class="flex items-center justify-between">
+      <div class="flex-1">
+        <h3 class="text-2xl font-semibold text-gray-100">Role Permissions</h3>
+      </div>
+    </div>
+  </div>
+  <!-- /Page Header -->
+
+  <!-- Role Header -->
+  <div class="mb-6 text-center">
+    <h2 class="text-lg font-medium text-gray-200">
+      Role Permission To:
+      <span class="text-primary font-semibold">{{ roleName }}</span>
+    </h2>
+  </div>
+  <!-- Permissions Card -->
+  <div class="bg-muted rounded-lg shadow-lg">
+    <div class="p-6">
+      <!-- Select All Checkbox -->
+      <div class="bg-gray-750 mb-6 rounded-lg p-4">
+        <label class="flex cursor-pointer items-center space-x-3">
+          <input
+            type="checkbox"
+            [checked]="isAllSelected()"
+            (change)="toggleSelectAll($event)"
+            class="h-4 w-4 rounded bg-gray-700 text-blue-500 focus:ring-2 focus:ring-blue-500" />
+          <span class="font-medium text-gray-200">Select All</span>
+        </label>
+      </div>
+
+      <!-- Permissions Grid -->
+      <div class="space-y-6">
+        <div *ngFor="let module of modulesWithPermissions" class="space-y-4">
+          <!-- Module Checkbox -->
+          <div class="pb-4">
+            <label class="flex cursor-pointer items-center space-x-3">
+              <input
+                type="checkbox"
+                [checked]="isModuleSelected(module.id)"
+                (change)="toggleModule(module.id, $event)"
+                class="h-4 w-4 rounded bg-gray-700 text-blue-500 focus:ring-2 focus:ring-blue-500" />
+              <span class="text-lg font-semibold text-gray-200">{{ module.moduleName }}</span>
+            </label>
+          </div>
+
+          <!-- Module Permissions Grid -->
+          <div class="ml-6">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div
+                *ngFor="let permission of module.permissions"
+                class="bg-gray-750 flex items-center space-x-3 rounded-lg p-3 transition-colors">
+                <input
+                  type="checkbox"
+                  [checked]="isPermissionSelected(permission.id)"
+                  (change)="togglePermission(permission.id, module.id, $event)"
+                  class="h-4 w-4 rounded bg-gray-700 text-blue-500 focus:ring-2 focus:ring-blue-500" />
+                <div class="flex flex-col">
+                  <span class="text-sm font-medium text-gray-300">{{ permission.description }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="py-8 text-center">
+        @if (modulesWithPermissions.length === 0) {
+        <p class="text-gray-400">No modules or permissions found.</p>
+        }
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="mt-8 flex justify-end space-x-3 pt-6">
+        <button
+          (click)="savePermissions()"
+          [disabled]="isSaving"
+          class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white">
+          @if (!isSaving) {
+          <span>SAVE</span>
+          } @if (isSaving) {
+          <div class="h-4 w-4 animate-spin rounded-full"></div>
+          }
+        </button>
+
+        <button
+          (click)="cancel()"
+          class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white">
+          <span>CANCEL</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

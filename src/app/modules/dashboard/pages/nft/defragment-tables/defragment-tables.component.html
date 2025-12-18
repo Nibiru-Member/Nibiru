@@ -1,0 +1,104 @@
+<div
+  class="flex max-h-[70vh] w-[850px] max-w-full flex-col rounded-md border border-gray-700 bg-gray-900 text-[13px] text-gray-100 shadow-lg">
+  <!-- HEADER -->
+  <div class="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
+    <div class="font-semibold text-gray-100">Fregmentation Detail Table</div>
+    <button
+      type="button"
+      class="flex h-6 w-6 items-center justify-center rounded text-gray-300 hover:bg-gray-700"
+      aria-label="Close"
+      (click)="close()">
+      ✕
+    </button>
+  </div>
+
+  <!-- BODY -->
+  <div class="flex min-h-0 flex-1 flex-col gap-3 px-3 pt-3 pb-2">
+    <!-- Detail table: fills remaining height and scrolls -->
+    <div class="min-h-0 flex-1 overflow-auto">
+      <table class="w-full border border-gray-700 bg-gray-800 text-[13px]">
+        <thead class="bg-gray-700 text-gray-200">
+          <tr>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Table Name</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Database Name</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Fragmentation %</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Fragment Count</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Index</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Index Type</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Recommended Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (item of tableData; track item) {
+          <tr class="cursor-default bg-gray-700 transition-colors">
+            <td class="truncate border-t border-gray-700 px-2 py-1">
+              {{ item.tableName }}
+            </td>
+            <td class="border-t border-gray-700 px-2 py-1 text-center">
+              {{ item.databaseName }}
+            </td>
+            <td class="truncate border-t border-gray-700 px-2 py-1 text-gray-300">
+              {{ item.fragmentationPercent | number: '1.1-2' }}%
+            </td>
+            <td class="truncate border-t border-gray-700 px-2 py-1 text-gray-300">
+              {{ item.fragmentCount }}
+            </td>
+            <td class="truncate border-t border-gray-700 px-2 py-1 text-gray-300">
+              {{ item.indexName }}
+            </td>
+            <td class="truncate border-t border-gray-700 px-2 py-1 text-gray-300">
+              {{ item.indexType }}
+            </td>
+            <td class="truncate border-t border-gray-700 px-2 py-1 text-gray-300">
+              {{ item.recommendedAction }}
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary title -->
+    <div class="ml-1 font-semibold text-gray-100">Fragmentation Summary Table</div>
+
+    <!-- Summary table: small fixed-ish height with its own scroll if needed -->
+    <div class="max-h-48 overflow-auto">
+      <table class="w-full border border-gray-700 bg-gray-800 text-[13px]">
+        <thead class="bg-gray-700 text-gray-200">
+          <tr>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Analysis Time</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Avg. Fragmentation</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Rebuild Indexes</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Recognize Indexes</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Maximum Fragmentation</th>
+            <th class="border-b border-gray-600 px-2 py-1 text-left font-normal">Total Indexes</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr class="cursor-default bg-gray-700 transition-colors">
+            <td class="truncate border-t border-gray-700 px-2 py-1">
+              {{ summaryData.analysisTime | date: 'dd-MM-yyyy hh:mm a' }}
+            </td>
+            <td class="truncate border-t border-gray-700 px-2 py-1 text-gray-300">
+              {{ summaryData.averageFragmentation | number: '1.1-2' }}%
+            </td>
+            <td class="truncate border-t border-gray-700 px-2 py-1 text-gray-300">
+              {{ summaryData.indexesNeedingRebuild }}
+            </td>
+            <td class="truncate border-t border-gray-700 px-2 py-1 text-gray-300">
+              {{ summaryData.indexesNeedingReorganize }}
+            </td>
+            <td class="truncate border-t border-gray-700 px-2 py-1 text-gray-300">
+              {{ summaryData.maximumFragmentation | number: '1.1-2' }}%
+            </td>
+            <td class="truncate border-t border-gray-700 px-2 py-1 text-gray-300">
+              {{ summaryData.totalFragmentedIndexes }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

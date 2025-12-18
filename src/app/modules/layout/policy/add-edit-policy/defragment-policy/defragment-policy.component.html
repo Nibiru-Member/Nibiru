@@ -1,0 +1,147 @@
+<div class="custom-scroll max-h-[500px] overflow-y-auto pr-2">
+  <div>
+    <h3 class="mb-1 text-sm font-medium">Backup</h3>
+
+    <label class="ml-2 flex cursor-pointer select-none items-center space-x-2">
+      <input
+        type="checkbox"
+        class="form-checkbox text-primary mb-2 h-4 w-4"
+        [(ngModel)]="isBackup"
+        (change)="onIsBackupChange($event)" />
+      <span class="mb-2 text-sm">Backup</span>
+    </label>
+  </div>
+
+  <!-- NEW INDEX CHECKBOXES -->
+  <h3 class="mb-1 mt-4">Index and MDF</h3>
+  <div class="mb-6 ml-2 grid grid-cols-3 gap-4">
+    <label class="gap-2">
+      <input type="checkbox" [(ngModel)]="isIndex" (change)="onIsIndexChange($event)" />
+      <span class="ml-2">INDEX</span>
+    </label>
+
+    <label class="gap-2">
+      <input type="checkbox" [(ngModel)]="isMdf" (change)="onIsMdfChange($event)" />
+      <span class="ml-2">MDF</span>
+    </label>
+
+    <label class="gap-2">
+      <input type="checkbox" [(ngModel)]="isIndexMdf" (change)="onIsIndexMdfChange($event)" />
+      <span class="ml-2">INDEX + MDF</span>
+    </label>
+  </div>
+  <!-- OPTIMIZE -->
+  <h3 class="mb-1 mt-4">Optimize Index Settings</h3>
+  <div class="mb-4 ml-2 grid grid-cols-2 gap-4">
+    <label class="gap-2">
+      <input
+        type="radio"
+        name="optimize"
+        value="reorganize"
+        [(ngModel)]="optimizeOption"
+        (change)="onOptimizeOptionChange($event)" />
+      <span class="ml-2">Reorganize</span>
+    </label>
+
+    <label class="gap-2">
+      <input
+        type="radio"
+        name="optimize"
+        value="rebuild"
+        [(ngModel)]="optimizeOption"
+        (change)="onOptimizeOptionChange($event)" />
+      <span class="ml-2">Rebuild</span>
+    </label>
+  </div>
+
+  <div class="mb-6 grid grid-cols-2 gap-4">
+    <!-- Update Statistics -->
+    <div>
+      <label class="mb-1">Update Statistics:</label>
+      <select [(ngModel)]="updateStatistics" (change)="onUpdateStatisticsChange($event)" class="mt-2">
+        <option value="" disabled>Select</option>
+        <option value="never">Never</option>
+        <option value="before-analysis-refresh">Before Analysis Refresh</option>
+        <option value="before-optimization">Before Optimization</option>
+      </select>
+    </div>
+
+    <!-- Recompile SP -->
+    <div>
+      <label class="mb-1">Recompile Stored Procedures:</label>
+      <select [(ngModel)]="recompileProcedures" (change)="onRecompileProceduresChange($event)" class="mt-2">
+        <option value="" disabled>Select</option>
+        <option value="never">Never</option>
+        <option value="always">Always</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- STATISTICS METHOD -->
+  <div class="mb-6">
+    <label class="input-label">Statistics Method:</label>
+    <select [(ngModel)]="statisticsMethod" [disabled]="!statisticsMethodEnabled" class="mt-2 disabled:opacity-40">
+      <option value="" disabled>Select Statistics Method</option>
+      <option value="fullscan">Fullscan</option>
+      <option value="sample-percent">Sample Percent</option>
+      <option value="sample-percentage">Sample Percentage</option>
+      <option value="sample-rows">Sample Rows</option>
+      <option value="resample">Resample</option>
+    </select>
+  </div>
+
+  <!-- NORECOMPUTE -->
+  <label class="mb-6 ml-2 gap-2">
+    <input type="checkbox" [(ngModel)]="useNoRecompute" />
+    <span class="ml-2">Use NORECOMPUTE option</span>
+  </label>
+  <!-- AUTOMATE -->
+  <h3 class="mt-4 mb-1">Automate</h3>
+
+  <div class="ml-2 grid grid-cols-2 gap-4">
+    <label class="flex cursor-pointer items-center gap-2">
+      <input
+        type="radio"
+        name="automate"
+        [value]="true"
+        [(ngModel)]="isAutomate"
+        (change)="onIsAutomateChange($event)" />
+      <span>Yes</span>
+    </label>
+
+    <label class="flex cursor-pointer items-center gap-2">
+      <input
+        type="radio"
+        name="automate"
+        [value]="false"
+        [(ngModel)]="isAutomate"
+        (change)="onIsAutomateChange($event)" />
+      <span>No</span>
+    </label>
+  </div>
+
+  <!-- FILL FACTOR -->
+  <h3 class="mt-2 mb-1">Fill Factor</h3>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <label class="mt-2">Current Value:</label>
+      <input
+        type="text"
+        [(ngModel)]="fillFactorCurrent"
+        (input)="onFillFactorCurrentChange($event)"
+        class="input-field mt-2"
+        placeholder="Enter current value" />
+    </div>
+
+    <div>
+      <label class="input-label">New Value:</label>
+      <input
+        type="text"
+        [(ngModel)]="fillFactorNew"
+        (input)="onFillFactorNewChange($event)"
+        class="input-field mt-2"
+        placeholder="Enter new value" />
+    </div>
+  </div>
+</div>

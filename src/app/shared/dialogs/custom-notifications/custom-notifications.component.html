@@ -1,0 +1,81 @@
+<div class="bg-muted relative mx-auto w-[30vw] max-w-2xl p-6">
+    <!-- Close Button -->
+    <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-xl font-semibold text-gray-100">CUSTOM NOTIFICATIONS</h2>
+
+        <button type="button" (click)="closeDialog()"
+            class="cursor-pointer text-gray-400 transition hover:text-gray-200" aria-label="Close">
+            <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+        </button>
+    </div>
+
+    <form [formGroup]="notificationForm" (ngSubmit)="onSubmit()" novalidate
+        class="space-y-5 border-t border-gray-700 pt-6">
+        <!-- Alert Name -->
+        <div class="flex flex-col space-y-2">
+            <label for="alertName" class="font-medium text-gray-200">Alert name:</label>
+            <div>
+                <input id="alertName" type="text" formControlName="alertName" placeholder="Enter alert name"
+                    class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+        </div>
+
+        <!-- Set a Value -->
+        <div class="flex flex-col space-y-2">
+            <label class="font-medium text-gray-200">Set a Value:</label>
+            <div class="relative">
+                <input type="text" formControlName="value" placeholder="Enter value"
+                    class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
+            </div>
+        </div>
+
+        <!-- Email Dropdown -->
+        <div class="flex flex-col space-y-2">
+            <label for="email" class="font-medium text-gray-200">Email:</label>
+            <div class="relative">
+                <select id="email" formControlName="email"
+                    class="w-full appearance-none rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="" disabled selected>-- Choose an email --</option>
+                    <option *ngFor="let email of emailOptions" [value]="email">{{ email }}</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <svg-icon
+                        [src]="'assets/icons/heroicons/solid/chevron-down.svg' "
+                        [svgClass]="'h-3 w-3 text-gray-300'"></svg-icon>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Enable Email Toggle -->
+        <div class="flex items-center justify-between">
+            <label class="font-medium text-gray-200">Enable Email</label>
+            <div class="flex items-center">
+                <button type="button" (click)="toggleEmail()"
+                    class="relative inline-flex h-7 w-14 cursor-pointer items-center rounded-full transition-colors duration-300"
+                    [ngClass]="notificationForm.get('enableEmail')?.value ? 'bg-primary' : 'bg-gray-600'">
+                    <span
+                        class="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-300"
+                        [ngStyle]="{
+                transform: notificationForm.get('enableEmail')?.value ? 'translateX(28px)' : 'translateX(0px)'
+              }">
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end space-x-4 border-t border-gray-700 pt-6">
+            <button type="button"
+                class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+                (click)="closeDialog()">
+                CANCEL
+            </button>
+            <button type="submit" [disabled]="notificationForm.invalid"
+                class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white">
+                CREATE
+            </button>
+        </div>
+    </form>
+    </div>

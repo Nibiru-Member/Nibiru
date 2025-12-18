@@ -1,0 +1,87 @@
+<div class="bg-muted mx-auto my-3 max-w-4xl rounded-lg p-6 text-gray-200">
+  <table class="min-w-full">
+    <thead>
+      <tr class="bg-muted text-left text-sm tracking-wider text-white">
+        <th class="w-10 px-6 py-3"></th>
+        <th class="px-6 py-3">Name</th>
+        <th class="px-6 py-3">Email</th>
+        <th class="w-24 px-6 py-3 text-right">Action</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (user of users; track user; let i = $index) {
+      <ng-container>
+        <!-- Main Row -->
+        <tr
+          class="cursor-pointer border-b border-gray-600 transition-colors hover:bg-gray-700"
+          (click)="toggleExpand(i)">
+          <!-- Chevron -->
+          <td class="px-6 py-3">
+            @if (expandedIndex !== i) {
+            <svg-icon src="assets/icons/heroicons/solid/chevron-down.svg" [svgClass]="'h-4 w-4 mx-auto'"> </svg-icon>
+            } @if (expandedIndex === i) {
+            <svg-icon src="assets/icons/heroicons/solid/chevron-up.svg" [svgClass]="'h-4 w-4 mx-auto'"> </svg-icon>
+            }
+          </td>
+
+          <!-- Avatar + Name -->
+          <td class="flex items-center space-x-3 px-6 py-3">
+            <img [src]="user.avatar" alt="User avatar" class="h-10 w-10 rounded-full object-cover" />
+            <span>{{ user.name }}</span>
+          </td>
+
+          <!-- Email -->
+          <td class="px-6 py-3 text-gray-300">{{ user.email }}</td>
+
+          <!-- Actions (stop row toggle when clicking these) -->
+          <td class="flex justify-end space-x-3 px-6 py-3 text-right">
+            <svg-icon
+              src="assets/icons/heroicons/outline/pencil.svg"
+              [svgClass]="'h-4 w-4 cursor-pointer'"
+              (click)="$event.stopPropagation(); onEdit(user)">
+            </svg-icon>
+
+            <svg-icon
+              src="assets/icons/heroicons/outline/trash.svg"
+              [svgClass]="'h-4 w-4 cursor-pointer'"
+              (click)="$event.stopPropagation(); onDelete(user)">
+            </svg-icon>
+          </td>
+        </tr>
+
+        <!-- Expanded Details Row -->
+        @if (expandedIndex === i) {
+        <tr class="bg-gray-950 text-sm text-gray-400">
+          <td></td>
+          <td colspan="3" class="px-10 py-4">
+            <table class="min-w-full rounded-lg">
+              <tbody>
+                <tr class="border-muted border-b hover:bg-gray-700">
+                  <td class="w-1/4 px-4 py-2 font-medium text-gray-300">Role</td>
+                  <td class="px-4 py-2 text-gray-400">{{ user.role || 'Database Security Admin' }}</td>
+                </tr>
+                <tr class="border-muted border-b">
+                  <td class="px-4 py-2 font-medium text-gray-300">Servers</td>
+                  <td class="px-4 py-2 text-gray-400">
+                    <ul class="list-inside list-disc space-y-1">
+                      @for (server of user.servers || ['Server 1', 'Server 2']; track server) {
+                      <li>{{ server }}</li>
+                      }
+                    </ul>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-2 font-medium text-gray-300">Database</td>
+                  <td class="px-4 py-2 text-gray-400">{{ user.database || 'Database 1' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+        }
+      </ng-container>
+      }
+    </tbody>
+  </table>
+</div>

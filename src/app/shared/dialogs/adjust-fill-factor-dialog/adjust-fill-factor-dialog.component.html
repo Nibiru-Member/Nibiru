@@ -1,0 +1,111 @@
+<div class="bg-muted relative mx-auto w-[70vw] max-w-2xl p-6">
+    <!-- Header -->
+    <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-xl font-semibold text-gray-100">ADJUST FILL FACTOR</h2>
+
+        <button type="button" (click)="closeDialog()"
+            class="cursor-pointer text-gray-400 transition hover:text-gray-200" aria-label="Close">
+            <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+        </button>
+    </div>
+
+    <!-- Main Content - Single Row Flex Layout -->
+    <div class="gap-8 ">
+        <div class="flex-1 mb-5">
+            <h3 class="text-lg font-semibold text-gray-200 mb-4">History</h3>
+
+            <div class="overflow-x-auto rounded-lg border border-gray-700">
+                <table class="min-w-full divide-y divide-gray-700">
+                    <thead class="bg-gray-950">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                Index</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                Started</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                Action</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                Frag %</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                Fill Factor %</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                Frag Change</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-gray-950 divide-y divide-gray-700">
+                        <tr *ngFor="let record of historyData" class="hover:bg-gray-750">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ record.index }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ record.started }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ record.action }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ record.fragPercent }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ record.fillFactorPercent }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm"
+                                [ngClass]="getFragChangeClass(record.fragChange)">
+                                {{ record.fragChange }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="space-y-8 mb-4">
+            <!-- Adjust Values Section -->
+            <div class="flex justify-around items-start gap-10">
+                <!-- Adjust Values Section -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-200">Adjust Values</h3>
+            
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-gray-300">Current Value:</span>
+                            <span class="text-gray-200">100%</span>
+                        </div>
+            
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-gray-300">New Value:</span>
+                            <div class="relative">
+                                <input type="number" [(ngModel)]="newValue" name="newValue" placeholder="Enter new value"
+                                    class="w-32 rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Run Action Section -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-200">Run Action</h3>
+            
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="font-medium text-gray-300">Rebuild:</span>
+                        </div>
+            
+                        <div class="flex items-center space-x-2">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" [(ngModel)]="rebuildOnline" name="rebuildOnline"
+                                    class="rounded border-gray-700 bg-gray-800 text-blue-500 focus:ring-blue-500" />
+                                <span class="ml-2 text-gray-300">Online</span>
+                            </label>
+                            <span class="text-green-500">✔️</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+              
+            <!-- Buttons -->
+            <div class="flex justify-end space-x-4 pt-4">
+                <button type="button"
+                    class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+                    (click)="closeDialog()">
+                    CANCEL
+                </button>
+                <button type="button" (click)="onSave()"
+                    class="bg-primary flex-none cursor-pointer rounded-md px-6 py-2 text-white">
+                    SAVE
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,16 @@
+<div class="flex items-center space-x-1 text-xs font-semibold uppercase sm:text-sm">
+  <ng-container *ngFor="let crumb of crumbs; let i = index; let last = last">
+    <div
+      class="hover:bg-primary/80 relative flex cursor-pointer items-center bg-[#2d2d2d] px-4 py-2 transition-colors"
+      [ngClass]="{ 'rounded-l-md': i === 0, 'rounded-r-md': last }"
+      (click)="i < crumbs.length - 1 ? onCrumbClick(i) : null"
+      title="{{ crumb }}">
+      <span [class.text-white]="last" [class.text-gray-200]="!last">{{ crumb }}</span>
+      @if (last) {
+      <span
+        class="absolute right-[-10px] top-0 h-0 w-0 border-y-[16px] border-l-[10px] border-y-transparent border-l-[#2d2d2d]">
+      </span>
+      }
+    </div>
+  </ng-container>
+</div>

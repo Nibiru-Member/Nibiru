@@ -1,0 +1,332 @@
+<header class="bg-muted mb-6 flex flex-col items-center justify-between space-y-3 sm:flex-row sm:space-y-0">
+  <p class="p-5 text-sm font-semibold tracking-widest text-white">Module</p>
+
+  <nav class="space-x-2 px-3">
+    <!-- Export -->
+    <button
+      class="flex-none cursor-pointer rounded-md bg-gray-700 px-4 py-2.5 text-sm text-white hover:text-white"
+      (click)="exportCSV()">
+      Export
+    </button>
+
+    <!-- Add Module -->
+    <button
+      class="bg-primary hover:text-foreground flex-none cursor-pointer rounded-md px-4 py-2.5 text-white"
+      (click)="onAddEditModule()">
+      Add Module
+    </button>
+  </nav>
+</header>
+
+<div class="bg-muted my-3 mx-auto max-w-6xl rounded-lg p-6 text-gray-200">
+  <!-- Modules Tables -->
+  @if (!isLoading) {
+  <table class="min-w-full">
+    <thead>
+      <tr class="bg-muted text-left text-sm tracking-wider text-white">
+        <th class="w-8 px-4 py-3"></th>
+
+        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('moduleName')">
+          Name @if (sortColumn === 'moduleName' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'moduleName' &&
+          sortDirection === 'desc') { ▼ }
+        </th>
+
+        <th class="px-6 py-3 text-[#e7000b]">Description</th>
+        <th class="px-6 py-3 text-[#e7000b]">Status</th>
+        <th class="w-24 px-6 py-3 text-right text-[#e7000b]">Action</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- Modules -->
+      @for (module of pagedModules; track module.id) {
+
+      <!-- Row -->
+      <tr
+        class="cursor-pointer border-b border-gray-600 transition-colors hover:bg-gray-700"
+        (click)="toggleModuleExpansion(module.id)">
+        <td class="px-4 py-3">
+          <svg-icon
+            [src]="
+              expandedModuleId === module.id
+                ? 'assets/icons/heroicons/solid/chevron-up.svg'
+                : 'assets/icons/heroicons/solid/chevron-down.svg'
+            "
+            [svgClass]="'h-4 w-4 text-gray-400'">
+          </svg-icon>
+        </td>
+
+        <td class="space-x-3 px-6 py-3">{{ module.moduleName }}</td>
+
+        <td class="px-6 py-3">{{ module.description || 'No description' }}</td>
+
+        <td class="px-6 py-3">
+          <span [class]="getStatusClass(module.isActive)">
+            {{ module.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </td>
+
+        <td class="flex justify-end space-x-3 px-6 py-3 text-right">
+          <div class="relative inline-block text-left">
+            <button
+              class="module-menu-button rounded-md bg-gray-700 px-2 py-1"
+              (click)="$event.stopPropagation(); toggleMenu('module-' + module.id)">
+              <svg-icon
+                src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                [svgClass]="'h-5 w-5 cursor-pointer'">
+              </svg-icon>
+            </button>
+
+            @if (openedMenu === 'module-' + module.id) {
+            <div
+              @dropdownAnimation
+              class="module-menu-dropdown absolute right-0 z-20 mt-2 w-40 rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+              <div class="py-2 text-sm text-gray-200">
+                <div
+                  class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                  (click)="$event.stopPropagation(); onAddEditModule(module); closeMenu()">
+                  <svg-icon src="assets/icons/heroicons/outline/pencil.svg" [svgClass]="'h-4 w-4 text-blue-400'">
+                  </svg-icon>
+                  <span>Edit</span>
+                </div>
+
+                <div
+                  class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                  (click)="$event.stopPropagation(); openConfirmationDialog(module.id); closeMenu()">
+                  <svg-icon src="assets/icons/heroicons/outline/trash.svg" [svgClass]="'h-4 w-4 text-red-400'">
+                  </svg-icon>
+                  <span>Delete</span>
+                </div>
+
+                <div
+                  class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                  (click)="$event.stopPropagation(); onAddEditPermission(module.id); closeMenu()">
+                  <svg-icon src="assets/icons/heroicons/outline/plus.svg" [svgClass]="'h-4 w-4'"> </svg-icon>
+                  <span>Add Permission</span>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+        </td>
+      </tr>
+
+      <!-- Expanded Permissions Section -->
+      @if (expandedModuleId === module.id) {
+      <tr class="bg-gray-950 text-sm text-gray-400">
+        <td colspan="5" class="px-4 py-4">
+          <div class="ml-8">
+            <div class="mb-4 flex items-center justify-between">
+              <h3 class="bg-gray-950 text-lg font-semibold text-gray-100">Module Permissions</h3>
+
+              <button
+                class="bg-primary hover:text-foreground flex-none cursor-pointer rounded-md px-4 py-2 text-sm text-white"
+                (click)="$event.stopPropagation(); onAddEditPermission(module.id)">
+                Add Permission
+              </button>
+            </div>
+
+            <table class="bg-gray-950 min-w-full rounded-lg">
+              <thead>
+                <tr class="text-left text-sm tracking-wider text-gray-300">
+                  <th class="px-6 py-3 text-[#e7000b]">Permission</th>
+                  <th class="px-6 py-3 text-[#e7000b]">Description</th>
+                  <th class="px-6 py-3 text-[#e7000b]">Status</th>
+                  <th class="w-24 px-6 py-3 text-right text-[#e7000b]">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (permission of permissionState[module.id].permissions ; track permission.id) {
+
+                <tr class="hover:bg-gray-700">
+                  <td class="px-6 py-3">{{ permission.action }}</td>
+                  <td class="px-6 py-3">{{ permission.description || 'No description' }}</td>
+
+                  <td class="px-6 py-3">
+                    <span [class]="getStatusClass(permission.isActive)">
+                      {{ permission.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+
+                  <td class="flex justify-end space-x-3 px-4 py-2">
+                    <div class="relative inline-block text-left">
+                      <button
+                        class="permission-menu-button rounded-md bg-gray-700 px-2 py-1"
+                        (click)="$event.stopPropagation(); toggleMenu('perm-' + module.id + '-' + permission.id)">
+                        <svg-icon
+                          src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                          [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
+                      </button>
+
+                      @if (openedMenu === 'perm-' + module.id + '-' + permission.id) {
+                      <div
+                        @dropdownAnimation
+                        class="permission-menu-dropdown absolute right-0 z-20 mt-2 w-40 rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+                        <div class="py-2 text-sm text-gray-200">
+                          <div
+                            class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                            (click)="$event.stopPropagation(); onAddEditPermission(module.id, permission); closeMenu()">
+                            <svg-icon
+                              src="assets/icons/heroicons/outline/pencil.svg"
+                              [svgClass]="'h-4 w-4 text-blue-400'"></svg-icon>
+                            <span>Edit</span>
+                          </div>
+
+                          <div
+                            class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                            (click)="
+                              $event.stopPropagation();
+                              openPermissionConfirmationDialog(permission.id, module.id);
+                              closeMenu()
+                            ">
+                            <svg-icon
+                              src="assets/icons/heroicons/outline/trash.svg"
+                              [svgClass]="'h-4 w-4 text-red-400'"></svg-icon>
+                            <span>Delete</span>
+                          </div>
+                        </div>
+                      </div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+                } @if (!(permissionState[module.id].permissions.length)) {
+                <tr>
+                  <td colspan="4" class="px-4 py-4 text-center text-gray-400">No permissions found.</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+
+            <!-- Permissions Pagination -->
+            <div class="mt-4 flex items-center justify-between pt-2 text-gray-300">
+              <p class="text-sm">
+                Showing
+                <span class="font-semibold">
+                  {{ (permissionState[module.id].page - 1) * permissionState[module.id].pageSize + 1 }}
+                </span>
+                to
+                <span class="font-semibold">{{ permissionEndRecord(module.id) }}</span>
+                of
+                <span class="font-semibold">{{ permissionState[module.id].totalRecords }}</span>
+                permissions
+              </p>
+
+              <div class="flex items-center space-x-2">
+                <button
+                  class="rounded-md bg-gray-700 px-3 py-2"
+                  [disabled]="permissionState[module.id].page === 1"
+                  (click)="goToFirstPermission(module.id)">
+                  First
+                </button>
+
+                <button
+                  class="rounded-md bg-gray-700 px-3 py-2"
+                  [disabled]="permissionState[module.id].page === 1"
+                  (click)="changePermissionPage(module.id, permissionState[module.id].page - 1)">
+                  ‹ Prev
+                </button>
+
+                @for (p of permissionState[module.id].pages ; track p) {
+                <button
+                  class="rounded-md px-3 py-2"
+                  [ngClass]="
+                    p === permissionState[module.id].page ? 'bg-primary text-white' : 'bg-gray-700 text-gray-200'
+                  "
+                  (click)="changePermissionPage(module.id, p)">
+                  {{ p }}
+                </button>
+                }
+
+                <button
+                  class="rounded-md bg-gray-700 px-3 py-2"
+                  [disabled]="permissionState[module.id].page === permissionState[module.id].totalPages"
+                  (click)="changePermissionPage(module.id, permissionState[module.id].page + 1)">
+                  Next ›
+                </button>
+
+                <button
+                  class="rounded-md bg-gray-700 px-3 py-2"
+                  [disabled]="permissionState[module.id].page === permissionState[module.id].totalPages"
+                  (click)="goToLastPermission(module.id)">
+                  Last
+                </button>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+      } }
+    </tbody>
+  </table>
+  }
+
+  <!-- No Modules -->
+  @if (modules.length === 0 && !isLoading) {
+  <div class="items-center">
+    <div class="ml-10 mt-10 text-center text-white">No Modules found. Click "Add Module" to create one.</div>
+  </div>
+  }
+
+  <!-- Modules Pagination -->
+  @if (moduleTotalRecords > 0) {
+  <div class="mt-6 flex items-center justify-between border-t border-none pt-4 text-gray-300">
+    <p class="text-sm">
+      Showing
+      <span class="font-semibold">{{ (modulePage - 1) * modulePageSize + 1 }}</span>
+      to
+      <span class="font-semibold">{{ moduleEndRecord }}</span>
+      of
+      <span class="font-semibold">{{ moduleTotalRecords }}</span>
+      modules
+    </p>
+
+    <div class="flex items-center space-x-2">
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="modulePage === 1"
+        (click)="goToFirstModule()">
+        First
+      </button>
+
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="modulePage === 1"
+        (click)="changeModulePage(modulePage - 1)">
+        ‹ Prev
+      </button>
+
+      @for (p of modulePages; track p) {
+      <button
+        class="rounded-md px-3 py-2 text-sm"
+        [ngClass]="p === modulePage ? 'bg-primary text-white' : 'bg-gray-700 text-gray-200'"
+        (click)="changeModulePage(p)">
+        {{ p }}
+      </button>
+      }
+
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="modulePage === moduleTotalPages"
+        (click)="changeModulePage(modulePage + 1)">
+        Next ›
+      </button>
+
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="modulePage === moduleTotalPages"
+        (click)="goToLastModule()">
+        Last
+      </button>
+    </div>
+  </div>
+  }
+</div>
+
+<!-- Loader -->
+@if (isLoading) {
+<div class="absolute inset-0 z-40 flex items-center justify-center bg-black/40">
+  <div class="border-t-primary h-12 w-12 animate-spin rounded-full border-4 border-gray-300"></div>
+</div>
+}

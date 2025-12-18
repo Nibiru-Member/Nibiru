@@ -1,0 +1,56 @@
+<div class="bg-muted relative mx-auto w-[30vw] max-w-2xl p-6">
+    <!-- Header -->
+    <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-xl font-semibold text-gray-100">ADJUST THRESHOLD</h2>
+
+        <button type="button" (click)="closeDialog()"
+            class="cursor-pointer text-gray-400 transition hover:text-gray-200" aria-label="Close">
+            <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+        </button>
+    </div>
+
+    <div>
+        <div class="mb-6 flex items-center justify-between">
+            <label class="flex items-center space-x-2 text-sm">
+                <input type="checkbox" class="checkbox checkbox-sm"
+                    class="accent-red-500" />
+                <span class="text-gray-100">Fragmentation</span>
+            </label>
+            <div class="flex space-x-4 text-sm">
+                <span class="text-gray-100">New Value:</span>
+                <input type="text"
+                    class="bg-gray-950 w-16 rounded-md border border-gray-600 p-1 text-center" />
+            </div>
+        </div>
+    
+        <input type="range" min="0" max="100" 
+            [class.accent-gray-500]="false" [class.accent-red-500]="true"
+            class="w-full" />
+    
+        <div class="mt-8 mb-6 flex items-center justify-between">
+            <label class="flex items-center space-x-2 text-sm">
+                <input type="checkbox" class="checkbox checkbox-sm" class="accent-red-500" />
+                <span class="text-gray-100">Scan Density</span>
+            </label>
+            <div class="flex space-x-4 text-sm">
+                <span class="text-gray-100">New Value</span>
+                <input type="text"
+                    class="bg-gray-950 w-16 rounded-md border border-gray-600 p-1 text-center" />
+            </div>
+        </div>
+    
+        <input type="range" min="0" max="100"
+            [class.accent-gray-500]="false" [class.accent-red-500]="true" class="w-full" />
+        </div>
+        <div class="flex justify-end space-x-4 pt-4">
+            <button type="button"
+                class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+                (click)="closeDialog()">
+                CANCEL
+            </button>
+            <button type="submit" 
+                class="bg-primary flex-none cursor-pointer rounded-md px-6 py-2 text-white disabled:opacity-50 disabled:cursor-not-allowed">
+                SAVE
+            </button>
+        </div>
+    </div>

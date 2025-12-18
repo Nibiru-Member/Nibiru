@@ -1,0 +1,49 @@
+<div class="bg-muted h-[400px] w-[900px] rounded-lg p-0 text-white shadow-lg">
+  <div class="flex items-center justify-between p-4">
+    <h2 class="text-lg font-semibold">Backup List</h2>
+
+    <button type="button" (click)="closeDialog()" class="cursor-pointer text-gray-400 transition hover:text-gray-200">
+      <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    </button>
+  </div>
+  <div class="custom-scrollbar h-[250px] overflow-y-auto">
+    <table class="w-full border-collapse text-sm">
+      <thead class="sticky top-0 z-10 bg-[#222]">
+        <tr class="border-b border-gray-600 text-xs uppercase text-gray-400">
+          <th class="p-2 text-left text-[#e7000b]">Database Name</th>
+          <th class="p-2 text-left text-[#e7000b]">Backup File Name</th>
+          <th class="p-2 text-left text-[#e7000b]">Backup Full Path</th>
+          <th class="p-2 text-left text-[#e7000b]">Start Time</th>
+          <th class="p-2 text-left text-[#e7000b]">End Time</th>
+          <th class="p-2 text-left text-[#e7000b]">Attached Time</th>
+          <th class="p-2 text-left text-[#e7000b]">Detached Time</th>
+          <th class="p-2 text-left text-[#e7000b]">Status</th>
+          <th class="p-2 text-left text-[#e7000b]">MDF File Name</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let item of listData" class="text-gray-200 hover:bg-gray-700">
+          <td class="p-2">{{ item?.databaseName }}</td>
+          <td class="p-2">{{ item?.backupFileName }}</td>
+          <td class="p-2">{{ item?.backupFullPath }}</td>
+          <td class="p-2">{{ item?.startTime }}</td>
+          <td class="p-2">{{ item?.endTime }}</td>
+          <td class="p-2">{{ item?.attachedTime }}</td>
+          <td class="p-2">{{ item?.detachedTime }}</td>
+          <td class="p-2">{{ item?.status }}</td>
+          <td class="p-2">{{ item?.mdfFileName }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex items-center justify-end border-t border-gray-700 px-6 py-4">
+    <button
+      type="button"
+      class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+      (click)="closeDialog()">
+      CLOSE
+    </button>
+  </div>
+</div>

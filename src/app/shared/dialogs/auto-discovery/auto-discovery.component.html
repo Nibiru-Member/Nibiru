@@ -1,0 +1,81 @@
+<div class="bg-muted w-[500px] p-6 text-white shadow-2xl">
+  <!-- Header -->
+  <div class="flex items-center justify-between border-b border-gray-700 pb-3">
+    <h2 class="text-lg font-semibold">AUTODISCOVERY</h2>
+    <button class="text-gray-400 transition hover:text-white" (click)="closeDialog()">
+      <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="mt-4">
+    <p class="mb-4 text-sm text-gray-300">Select the SQL Servers to connect</p>
+
+    <!-- Loading -->
+    @if (isLoading) {
+    <div class="flex items-center justify-center py-6 text-gray-400">
+      <svg
+        class="mr-2 h-5 w-5 animate-spin text-white"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      Fetching servers...
+    </div>
+    }
+
+    <!-- Server List -->
+    @if (!isLoading && sqlServers.length > 0) {
+    <div class="bg-muted space-y-2 rounded-xl p-4">
+      @for (server of sqlServers; track server.name) {
+      <div class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition hover:bg-gray-700">
+        <input
+          type="checkbox"
+          [(ngModel)]="server.selected"
+          (change)="updateSelectionCount()"
+          class="h-4 w-4 rounded border-gray-600 text-orange-500 focus:ring-orange-500" />
+        <span class="text-sm text-gray-200">{{ server.name }}</span>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- No servers -->
+    @if (!isLoading && sqlServers.length === 0) {
+    <div class="mt-6 text-center text-gray-400">No servers found.</div>
+    }
+
+    <!-- Select all + count -->
+    @if (!isLoading && sqlServers.length) {
+    <div class="mt-4 flex items-center justify-between text-sm text-gray-300">
+      <label class="flex cursor-pointer items-center gap-2">
+        <input
+          type="checkbox"
+          [(ngModel)]="selectAll"
+          (change)="toggleAll()"
+          class="h-4 w-4 rounded border-gray-600 text-orange-500 focus:ring-orange-500" />
+        <span>Select all</span>
+      </label>
+      <span>{{ selectedCount }} Selected</span>
+    </div>
+    }
+  </div>
+
+  <!-- Footer -->
+  <div class="mt-6 flex justify-end gap-3">
+    <button
+      class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+      (click)="closeDialog()">
+      Cancel
+    </button>
+
+    <button
+      class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white"
+      [disabled]="selectedCount === 0 || isLoading"
+      (click)="connect()">
+      {{ isLoading ? 'Connecting...' : 'Connect' }}
+    </button>
+  </div>
+</div>

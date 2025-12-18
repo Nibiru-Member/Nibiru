@@ -1,0 +1,179 @@
+<header class="bg-muted mb-6 flex flex-col items-center justify-between space-y-3 sm:flex-row sm:space-y-0">
+  <p class="p-5 text-sm font-semibold tracking-widest text-white">Accounts</p>
+
+  <nav class="space-x-2 px-3">
+    <button
+      class="flex-none cursor-pointer rounded-md bg-gray-700 px-4 py-2.5 text-sm text-white hover:text-white"
+      (click)="exportAccountsCSV()">
+      Export
+    </button>
+
+    <button
+      class="bg-primary hover:text-foreground flex-none cursor-pointer rounded-md px-4 py-2.5 text-white"
+      (click)="onAddEditAccount()">
+      Add Account
+    </button>
+  </nav>
+</header>
+
+<div class="bg-muted height-[500px] my-3 mx-auto max-w-6xl rounded-lg p-6 text-gray-200">
+  <!-- SEARCH -->
+  <div class="mb-4 flex items-center justify-end">
+    <div class="relative w-80">
+      <input
+        [(ngModel)]="searchText"
+        (input)="debouncedSearch()"
+        type="text"
+        placeholder="Search"
+        class="w-full rounded-md bg-gray-800 py-2 pl-10 pr-4 text-sm text-gray-300 outline-none" />
+
+      <svg-icon
+        src="assets/icons/heroicons/outline/magnifying-glass.svg"
+        [svgClass]="'absolute left-3 top-2.5 h-4 w-4 text-gray-400'">
+      </svg-icon>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <table class="min-w-full">
+    <thead>
+      <tr class="bg-muted text-left text-sm tracking-wider text-white">
+        <th class="px-6 py-3 text-[#e7000b]">Action</th>
+
+        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('companyName')">
+          Company @if (sortColumn === 'companyName' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'companyName'
+          && sortDirection === 'desc') { ▼ }
+        </th>
+
+        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('email')">
+          Email @if (sortColumn === 'email' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'email' &&
+          sortDirection === 'desc') { ▼ }
+        </th>
+
+        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('phone1')">
+          Phone @if (sortColumn === 'phone1' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'phone1' &&
+          sortDirection === 'desc') { ▼ }
+        </th>
+
+        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('website')">
+          Website @if (sortColumn === 'website' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'website' &&
+          sortDirection === 'desc') { ▼ }
+        </th>
+
+        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('licenseType')">
+          License @if (sortColumn === 'licenseType' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'licenseType'
+          && sortDirection === 'desc') { ▼ }
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- EMPTY STATE -->
+      @if (!isLoading && filteredAndSortedAccounts.length === 0) {
+      <tr>
+        <td colspan="6" class="px-4 py-8 text-center text-gray-400">No accounts found.</td>
+      </tr>
+      }
+
+      <!-- DATA ROWS -->
+      @for (acc of filteredAndSortedAccounts; let i = $index; track acc.accountId) {
+      <tr class="border-b border-gray-600 transition-colors hover:bg-gray-700">
+        <!-- ACTION DROPDOWN -->
+        <td class="px-6 py-3">
+          <div class="relative inline-block text-left">
+            <button class="role-menu-button rounded-md bg-gray-700 px-2 py-1" (click)="toggleMenu(i)">
+              <svg-icon
+                src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
+            </button>
+
+            @if (openedMenu === i) {
+            <div
+              @dropdownAnimation
+              class="role-menu-dropdown absolute right-0 z-20 mt-2 w-36 rounded-md border border-gray-700 bg-gray-800 shadow-lg">
+              <div class="py-2 text-sm text-gray-200">
+                <div
+                  class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                  (click)="$event.stopPropagation(); onAddEditAccount(acc); closeMenu()">
+                  <svg-icon src="assets/icons/heroicons/outline/pencil.svg" [svgClass]="'h-4 w-4'"></svg-icon>
+                  <span>Edit</span>
+                </div>
+
+                <div
+                  class="flex cursor-pointer items-center space-x-2 px-4 py-2 hover:bg-gray-700"
+                  (click)="$event.stopPropagation(); onDeleteAccount(acc.accountId); closeMenu()">
+                  <svg-icon
+                    src="assets/icons/heroicons/outline/trash.svg"
+                    [svgClass]="'h-4 w-4 text-red-400'"></svg-icon>
+                  <span>Delete</span>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+        </td>
+
+        <!-- DATA COLUMNS -->
+        <td class="cursor-pointer space-x-3 px-6 py-3 font-medium text-blue-400 hover:text-blue-300">
+          <a [routerLink]="['/account/account-Detail', acc.accountId]">{{ acc.companyName }}</a>
+        </td>
+
+        <td class="px-6 py-3">{{ acc.email }}</td>
+        <td class="px-6 py-3">{{ acc.phone1 }}</td>
+        <td class="px-6 py-3">{{ acc.website }}</td>
+        <td class="px-6 py-3">{{ acc.licenseType }}</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+
+  <!-- PAGINATION -->
+  <div class="mt-6 flex items-center justify-between border-t border-none pt-4 text-gray-300">
+    <p class="text-sm">Showing {{ (page - 1) * pageSize + 1 }} to {{ endRecord }} of {{ totalRecords }} accounts</p>
+
+    <div class="flex items-center space-x-2">
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="page === 1"
+        (click)="goToFirst()">
+        First
+      </button>
+
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="page === 1"
+        (click)="changePage(page - 1)">
+        ‹ Prev
+      </button>
+
+      @for (p of paginationPages; track p) {
+      <button
+        class="rounded-md px-3 py-2 text-sm"
+        [ngClass]="p === page ? 'bg-primary text-white' : 'bg-gray-700 text-gray-200'"
+        (click)="changePage(p)">
+        {{ p }}
+      </button>
+      }
+
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="page === totalPages"
+        (click)="changePage(page + 1)">
+        Next ›
+      </button>
+
+      <button
+        class="rounded-md bg-gray-700 px-3 py-2 text-sm disabled:opacity-40"
+        [disabled]="page === totalPages"
+        (click)="goToLast()">
+        Last
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (isLoading) {
+<div class="absolute inset-0 z-40 flex items-center justify-center bg-black/40">
+  <div class="border-t-primary h-12 w-12 animate-spin rounded-full border-4 border-gray-300"></div>
+</div>
+}

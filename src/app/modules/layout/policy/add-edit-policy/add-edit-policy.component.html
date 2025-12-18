@@ -1,0 +1,100 @@
+<div class="bg-muted w-[950px] rounded-lg p-0 text-white shadow-lg">
+  <div class="flex items-center justify-between border-b border-gray-700 p-4">
+    <h2 class="text-lg font-semibold">
+      {{ isEditMode ? 'Edit Policy' : 'New Policy' }}
+    </h2>
+    <button type="button" (click)="closeDialog()" class="cursor-pointer text-gray-400 hover:text-gray-200">
+      <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+    </button>
+  </div>
+
+  <div class="flex justify-between border-b border-gray-700 text-sm font-medium">
+    <ng-container *ngFor="let tab of tabs; let i = index">
+      <div
+        class="flex-1 cursor-pointer py-2 text-center"
+        (click)="isEditMode && (activeTab = i)"
+        [ngClass]="{
+          'bg-primary border-b-2 border-white text-white': activeTab === i,
+          'bg-muted text-white/70 hover:text-white': activeTab !== i,
+          'cursor-not-allowed opacity-50': !isEditMode && !completedTabs[i - 1] && i > activeTab
+        }">
+        {{ tab }}
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="p-6">
+    <app-general-policy
+      *ngIf="activeTab === 0"
+      [(category)]="category"
+      [(server)]="server"
+      [(newCategory)]="newCategory"
+      [owner]="owner"></app-general-policy>
+
+    <app-target-policy *ngIf="activeTab === 1" [(selectedItems)]="selectedItems"> </app-target-policy>
+
+    <app-threshold-policy
+      *ngIf="activeTab === 2"
+      [(fragmentation)]="fragmentation"
+      [(scanDensity)]="scanDensity"></app-threshold-policy>
+
+    <app-filter-policy
+      *ngIf="activeTab === 3"
+      [(pageCountMin)]="pageCountMin"
+      [(pageCountMax)]="pageCountMax"
+      [(primaryIndexSorting)]="primaryIndexSorting">
+    </app-filter-policy>
+
+    <app-defragment-policy
+      *ngIf="activeTab === 4"
+      [(optimizeOption)]="optimizeOption"
+      [(updateStatistics)]="updateStatistics"
+      [(recompileProcedures)]="recompileProcedures"
+      [(fillFactorCurrent)]="fillFactorCurrent"
+      [(fillFactorNew)]="fillFactorNew"></app-defragment-policy>
+
+    <app-schedule-policy
+      *ngIf="activeTab === 5"
+      [(isSchedule)]="isSchedule"
+      [(scheduleType)]="scheduleType"
+      [(startTime)]="startTime"
+      [(selectedDays)]="selectedDays"
+      [(restrictionStart)]="restrictionStart"
+      [(restrictionEnd)]="restrictionEnd">
+    </app-schedule-policy>
+
+    <!-- Other tabs... -->
+
+    <!-- Resource Check tab (index 6) -->
+    <app-resource-check *ngIf="activeTab === 6" #resourceCheckComp [policyId]="policyId" [userId]="getUserId()">
+    </app-resource-check>
+
+    <app-notification-policy *ngIf="activeTab === 7" [(emailAlerts)]="emailAlerts"></app-notification-policy>
+  </div>
+
+  <div class="flex items-center justify-between border-t border-gray-700 px-6 py-4">
+    <div></div>
+    <div class="flex items-center">
+      <button
+        *ngIf="activeTab > 0"
+        (click)="previousStep()"
+        class="mr-4 rounded border border-gray-600 px-6 py-2 text-gray-300 hover:bg-gray-800">
+        PREVIOUS
+      </button>
+
+      <button
+        *ngIf="activeTab < tabs.length - 1"
+        (click)="nextStep()"
+        class="bg-primary rounded-md px-4 py-2.5 text-white hover:bg-red-600 disabled:opacity-60">
+        {{ 'NEXT STEP' }}
+      </button>
+
+      <button
+        *ngIf="activeTab === tabs.length - 1"
+        (click)="onDone()"
+        class="bg-primary rounded-md px-4 py-2.5 text-white hover:bg-red-600">
+        {{ isEditMode ? 'SAVE CHANGES' : 'DONE' }}
+      </button>
+    </div>
+  </div>
+</div>
