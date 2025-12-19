@@ -38,29 +38,29 @@
   <table class="min-w-full">
     <thead>
       <tr class="bg-muted text-left text-sm tracking-wider text-white">
-        <th class="px-6 py-3 text-[#e7000b]">Action</th>
+        <th class="px-6 py-3 text-primary">Action</th>
 
-        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('companyName')">
+        <th class="cursor-pointer px-6 py-3 text-primary" (click)="sortBy('companyName')">
           Company @if (sortColumn === 'companyName' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'companyName'
           && sortDirection === 'desc') { ▼ }
         </th>
 
-        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('email')">
+        <th class="cursor-pointer px-6 py-3 text-primary" (click)="sortBy('email')">
           Email @if (sortColumn === 'email' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'email' &&
           sortDirection === 'desc') { ▼ }
         </th>
 
-        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('phone1')">
+        <th class="cursor-pointer px-6 py-3 text-primary" (click)="sortBy('phone1')">
           Phone @if (sortColumn === 'phone1' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'phone1' &&
           sortDirection === 'desc') { ▼ }
         </th>
 
-        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('website')">
+        <th class="cursor-pointer px-6 py-3 text-primary" (click)="sortBy('website')">
           Website @if (sortColumn === 'website' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'website' &&
           sortDirection === 'desc') { ▼ }
         </th>
 
-        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('licenseType')">
+        <th class="cursor-pointer px-6 py-3 text-primary" (click)="sortBy('licenseType')">
           License @if (sortColumn === 'licenseType' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'licenseType'
           && sortDirection === 'desc') { ▼ }
         </th>

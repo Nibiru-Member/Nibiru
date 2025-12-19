@@ -160,12 +160,12 @@
     --foreground: #0C1420;
     --card: #F1F5F9;
     --card-foreground: #000000;
-    --primary: #e7000b;
+    --primary: #f13039;
     --secondary: #1ab82a;
     --primary-foreground: #FFFFFF;
     --muted: #CFD9E5;
     --muted-foreground: #64748B;
-    --destructive: #CC0033;
+    --destructive: #f13039;
     --destructive-foreground: #FAFAFA;
     --border: #E2E8F0;
   }

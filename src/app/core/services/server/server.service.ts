@@ -77,6 +77,10 @@ export class ServerService {
     return this.httpService.get(`/api/Server/GetServerConnectionByServerNam/${serverName}`, this.options);
   }
 
+  deleteUserServerList(userId: string, connectionId: string): Observable<BaseResponse> {
+    return this.httpService.put(`/api/Server/DeleteUserServerList?userId=${userId}&ConnectionID=${connectionId}`, {}, this.options);
+  }
+
   GetDiskStorage(serverName: string, UserName: string, Password: string): Observable<any> {
     return this.httpService.get(
       `/api/Dashboard/GetDiskStorage?ServerName=${serverName}&UserName=${UserName}&Password=${Password}`,

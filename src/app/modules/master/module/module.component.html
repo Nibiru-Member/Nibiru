@@ -26,14 +26,14 @@
       <tr class="bg-muted text-left text-sm tracking-wider text-white">
         <th class="w-8 px-4 py-3"></th>
 
-        <th class="cursor-pointer px-6 py-3 text-[#e7000b]" (click)="sortBy('moduleName')">
+        <th class="cursor-pointer px-6 py-3 text-primary" (click)="sortBy('moduleName')">
           Name @if (sortColumn === 'moduleName' && sortDirection === 'asc') { ▲ } @if (sortColumn === 'moduleName' &&
           sortDirection === 'desc') { ▼ }
         </th>
 
-        <th class="px-6 py-3 text-[#e7000b]">Description</th>
-        <th class="px-6 py-3 text-[#e7000b]">Status</th>
-        <th class="w-24 px-6 py-3 text-right text-[#e7000b]">Action</th>
+        <th class="px-6 py-3 text-primary">Description</th>
+        <th class="px-6 py-3 text-primary">Status</th>
+        <th class="w-24 px-6 py-3 text-right text-primary">Action</th>
       </tr>
     </thead>
 
@@ -129,10 +129,10 @@
             <table class="bg-gray-950 min-w-full rounded-lg">
               <thead>
                 <tr class="text-left text-sm tracking-wider text-gray-300">
-                  <th class="px-6 py-3 text-[#e7000b]">Permission</th>
-                  <th class="px-6 py-3 text-[#e7000b]">Description</th>
-                  <th class="px-6 py-3 text-[#e7000b]">Status</th>
-                  <th class="w-24 px-6 py-3 text-right text-[#e7000b]">Action</th>
+                  <th class="px-6 py-3 text-primary">Permission</th>
+                  <th class="px-6 py-3 text-primary">Description</th>
+                  <th class="px-6 py-3 text-primary">Status</th>
+                  <th class="w-24 px-6 py-3 text-right text-primary">Action</th>
                 </tr>
               </thead>
 

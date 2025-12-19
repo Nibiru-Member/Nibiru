@@ -1,8 +1,7 @@
-<div class="bg-muted relative mx-auto w-[30vw] max-w-2xl p-6">
+<div class="bg-muted relative mx-auto w-[600px] max-w-2xl p-6">
   <!-- Close Button -->
-  <div class="mb-6 flex items-center justify-between">
+  <div class="mb-4 flex items-center justify-between">
     <h2 class="text-xl font-semibold text-gray-100">CONNECT TO SERVER</h2>
-
     <button
       type="button"
       (click)="closeDialog()"
@@ -12,114 +11,194 @@
     </button>
   </div>
 
-  <form [formGroup]="serverForm" (ngSubmit)="onSubmit()" novalidate class="space-y-5 border-t border-gray-700 pt-6">
-    <!-- Server Type -->
-    <div class="flex items-center space-x-4">
-      <label for="serverType" class="w-1/3 font-medium text-gray-200">Server Type:</label>
-      <div class="w-2/3">
-        <input
-          id="serverType"
-          formControlName="serverType"
-          type="text"
-          class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 focus:outline-none"
-          value="SQL"
-          readonly />
+  <!-- Loading Spinner at Top - For Connecting to Server -->
+  @if (isConnecting) {
+    <div class="mb-4 flex flex-col items-center justify-center rounded border border-green-500 bg-gray-800 px-4 py-4 shadow-lg">
+      <div class="flex items-center">
+        <svg
+          class="mr-3 h-6 w-6 animate-spin text-green-400"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <span class="text-sm font-medium text-gray-200">Connecting to server...</span>
       </div>
+      <!-- Fallback message if spinner doesn't work -->
+      <p class="mt-2 text-xs text-gray-400">Please wait while we establish the connection...</p>
     </div>
+  }
 
-    <!-- Servers -->
-    <div class="flex items-center space-x-4">
-      <label for="serverName" class="w-1/3 font-medium text-gray-200">Servers:</label>
-      <div class="w-2/3">
-        <input
-          id="serverName"
-          type="text"
-          formControlName="serverName"
-          placeholder="Enter Servers"
-          class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
+  <!-- History Tab -->
+  <div class="mb-4 border-b border-gray-700">
+    <button
+      type="button"
+      class="px-4 py-2 text-sm font-medium text-blue-400 border-b-2 border-blue-400"
+      [class.text-gray-300]="activeTab !== 'history'"
+      [class.border-transparent]="activeTab !== 'history'">
+      History
+    </button>
+  </div>
+
+  <!-- Recent Connections Section -->
+  <div class="mb-6">
+    <h3 class="mb-3 text-sm font-medium text-gray-200">Recent Connections</h3>
+    <div class="max-h-48 overflow-y-auto rounded border border-gray-700 bg-gray-800">
+      @if (!isLoadingConnections && recentConnections.length === 0) {
+        <div class="p-4 text-center text-sm text-gray-400">No recent connections</div>
+      } @else if (!isLoadingConnections) {
+        @for (connection of recentConnections; track connection.connectionID) {
+          <div
+            class="flex cursor-pointer items-center justify-between gap-3 px-4 py-2.5 transition hover:bg-gray-700"
+            [class.bg-gray-700]="selectedConnection?.connectionID === connection.connectionID"
+            (click)="selectConnection(connection)">
+            <div class="flex items-center gap-3 flex-1">
+              <svg-icon
+                src="assets/icons/heroicons/outline/server.svg"
+                [svgClass]="'h-5 w-5 text-gray-400'"></svg-icon>
+              <span class="text-sm text-gray-200">{{ getConnectionDisplayName(connection) }}</span>
+            </div>
+            @if (selectedConnection?.connectionID === connection.connectionID) {
+              <button
+                type="button"
+                (click)="deleteConnection(connection, $event)"
+                class="ml-auto cursor-pointer text-red-400 transition hover:text-red-300"
+                aria-label="Delete connection">
+                <svg-icon src="assets/icons/heroicons/outline/trash.svg" [svgClass]="'h-5 w-5'"></svg-icon>
+              </button>
+            }
+          </div>
+        }
+      }
     </div>
+  </div>
 
-    <!-- Autodiscover -->
-    <div class="flex items-center justify-end">
-      <input
-        id="autodiscover"
-        type="checkbox"
-        formControlName="autodiscover"
-        (change)="onConnect()"
-        class="h-4 w-4 cursor-pointer rounded border border-white bg-gray-800 text-blue-600 focus:ring-blue-500" />
-      <label for="autodiscover" class="ml-2 cursor-pointer select-none text-gray-300">
-        Autodiscover your SQL Servers
-      </label>
-    </div>
-
-    <!-- Authentication Type -->
-    <div class="flex items-center space-x-4 border-t border-gray-700 pt-6">
-      <label for="authenticationType" class="w-1/3 font-medium text-gray-200">Authentication:</label>
-      <div class="w-2/3">
-        <select
-          id="authenticationType"
-          formControlName="authenticationType"
-          class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="" disabled class="text-gray-400">Select authentication type</option>
-          <option value="WA">Window Authentication</option>
-          <option value="SQLSA">SQL Server Authentication</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Username -->
-    <div class="flex items-center space-x-4">
-      <label for="username" class="w-1/3 font-medium text-gray-200">Username:</label>
-      <div class="w-2/3">
-        <input
-          id="username"
-          autocomplete="off"
-          type="text"
-          formControlName="username"
-          placeholder="Enter username"
-          class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-    </div>
-
-    <!-- Password -->
-    <div class="flex items-center space-x-4">
-      <label for="password" class="w-1/3 font-medium text-gray-200">Password:</label>
-      <div class="w-2/3">
-        <input
-          id="password"
-          autocomplete="new-password"
-          type="password"
-          formControlName="password"
-          placeholder="Enter password"
-          class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-    </div>
-
-    <!-- Remember Password -->
-    <div class="flex items-center justify-end space-x-2">
-      <input
-        id="rememberPassword"
-        type="checkbox"
-        formControlName="rememberPassword"
-        class="h-4 w-4 cursor-pointer rounded border border-white bg-gray-800 text-blue-600 focus:ring-blue-500" />
-      <span class="text-gray-300">Remember Password</span>
-    </div>
-
-    <!-- Buttons -->
-    <div class="flex justify-end space-x-4 border-t border-gray-700 pt-6">
+  <!-- Connection Properties / Connection String Tabs -->
+  <div class="mb-4 border-b border-gray-700">
+    <div class="flex gap-1">
       <button
         type="button"
-        class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
-        (click)="closeDialog()">
-        CANCEL
-      </button>
-      <button
-        type="submit"
-        [disabled]="serverForm.invalid"
-        class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white">
-        CONNECT
+        class="px-4 py-2 text-sm font-medium transition"
+        [class.text-blue-400]="activePropertiesTab === 'properties'"
+        [class.border-b-2]="activePropertiesTab === 'properties'"
+        [class.border-blue-400]="activePropertiesTab === 'properties'"
+        (click)="activePropertiesTab = 'properties'">
+        Connection Properties
       </button>
     </div>
-  </form>
+  </div>
+
+  <!-- Connection Properties Tab Content -->
+  @if (activePropertiesTab === 'properties') {
+    <form [formGroup]="serverForm" (ngSubmit)="onSubmit()" novalidate class="space-y-4">
+      <!-- Server Name -->
+      <div class="flex items-center space-x-4">
+        <label for="serverName" class="w-1/3 font-medium text-gray-200">Server Name:</label>
+        <div class="w-2/3">
+          <input
+            id="serverName"
+            type="text"
+            formControlName="serverName"
+            (input)="onFormChange()"
+            placeholder="Enter server name"
+            class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+      </div>
+
+      <!-- Authentication -->
+      <div class="flex items-center space-x-4">
+        <label for="authenticationType" class="w-1/3 font-medium text-gray-200">Authentication:</label>
+        <div class="w-2/3">
+          <select
+            id="authenticationType"
+            formControlName="authenticationType"
+            (change)="onFormChange()"
+            class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="WA">Windows Authentication</option>
+            <option value="SQLSA">SQL Server Authentication</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Username -->
+      <div class="flex items-center space-x-4">
+        <label for="username" class="w-1/3 font-medium text-gray-200">User Name:</label>
+        <div class="w-2/3">
+          <input
+            id="username"
+            autocomplete="off"
+            type="text"
+            formControlName="username"
+            (input)="onFormChange()"
+            [disabled]="serverForm.get('authenticationType')?.value === 'WA'"
+            placeholder="Enter username"
+            class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="flex items-center space-x-4">
+        <label for="password" class="w-1/3 font-medium text-gray-200">Password:</label>
+        <div class="w-2/3">
+          <input
+            id="password"
+            autocomplete="new-password"
+            type="password"
+            formControlName="password"
+            (input)="onFormChange()"
+            [disabled]="serverForm.get('authenticationType')?.value === 'WA'"
+            placeholder="Enter password"
+            class="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" />
+        </div>
+      </div>
+
+      <!-- Remember Password -->
+      <div class="flex items-center justify-end space-x-2">
+        <input
+          id="rememberPassword"
+          type="checkbox"
+          formControlName="rememberPassword"
+          class="h-4 w-4 cursor-pointer rounded border border-white bg-gray-800 text-blue-600 focus:ring-blue-500" />
+        <span class="text-gray-300">Remember Password</span>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex justify-end space-x-4 border-t border-gray-700 pt-4">
+        <button
+          type="button"
+          class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+          (click)="resetForm()">
+          Reset
+        </button>
+        <button
+          type="submit"
+          [disabled]="serverForm.invalid || isConnecting"
+          class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white disabled:opacity-50 disabled:cursor-not-allowed">
+          @if (isConnecting) {
+            <span class="flex items-center">
+              <svg
+                class="mr-2 h-4 w-4 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+              Connecting...
+            </span>
+          } @else {
+            Connect
+          }
+        </button>
+        <button
+          type="button"
+          class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+          (click)="closeDialog()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  }
+
 </div>
