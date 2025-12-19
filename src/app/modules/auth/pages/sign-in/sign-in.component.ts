@@ -72,7 +72,7 @@ export class SignInComponent implements OnInit {
           const userData = res.data;
           localStorage.setItem('authObj', JSON.stringify(userData));
           localStorage.setItem('bearerToken', userData?.token);
-          localStorage.setItem('AutoDiscoveryOpened', 'false');
+          localStorage.setItem('ServerDialogOpened', 'false');
           this._toast.success(res.message);
           this._router.navigate(['/dashboard/admin']);
         } else {

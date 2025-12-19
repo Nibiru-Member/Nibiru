@@ -26,7 +26,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthResponse } from 'src/app/core/models/auth.model';
 import { AuthService } from 'src/app/core/services/auth/auth.service';
-import { AutoDiscoveryComfirmationComponent } from 'src/app/shared/dialogs/auto-discovery/auto-discovery-comfirmation/auto-discovery-comfirmation.component';
+import { ServerComponent } from 'src/app/shared/dialogs/server/server.component';
 import { MatDialog } from '@angular/material/dialog';
 import { DynamicBreadcrumbComponent } from 'src/app/shared/components/dynamic-breadcrumb/dynamic-breadcrumb.component';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -359,10 +359,11 @@ export class NftComponent implements OnInit, OnDestroy {
     const authUser = JSON.parse(localStorage.getItem('authObj') || '{}');
     this.authUser = authUser;
     this.ServerList = authUser.serverList || [];
-    const hasOpenedDiscovery = localStorage.getItem('AutoDiscoveryOpened') === 'true';
-    if (!hasOpenedDiscovery && this.ServerList) {
-      const dialogRef = this.dialog.open(AutoDiscoveryComfirmationComponent, { disableClose: true });
-      localStorage.setItem('AutoDiscoveryOpened', 'true');
+    // Open Connect to Server dialog directly on login
+    const hasOpenedServerDialog = localStorage.getItem('ServerDialogOpened') === 'true';
+    if (!hasOpenedServerDialog) {
+      const dialogRef = this.dialog.open(ServerComponent, { disableClose: true });
+      localStorage.setItem('ServerDialogOpened', 'true');
       dialogRef.afterClosed().subscribe(() => {});
     }
     this.loadMdfFiles(this.selectedPeriod);
