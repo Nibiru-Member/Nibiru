@@ -1,0 +1,51 @@
+/* Resize handle styles */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.resize-handle.resizing {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.resize-handle-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover .resize-handle-line,
+.resize-handle.resizing .resize-handle-line {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+/* Prevent text selection while resizing */
+nav.resizing {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Prevent transition during resize for smooth dragging */
+nav.resizing {
+  transition: none;
+}
+

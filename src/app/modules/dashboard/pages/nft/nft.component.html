@@ -1,25 +1,10 @@
 <header class="bg-muted mb-3 flex flex-col items-center justify-between space-y-3 sm:flex-row sm:space-y-0">
-  <p class="p-5 text-sm tracking-widest text-white"><app-dynamic-breadcrumb></app-dynamic-breadcrumb></p>
-  <nav class="space-x-2 px-3">
-    <button
-      class="cursor-pointer rounded-md px-4 py-1 text-white transition-colors"
-      [ngClass]="{ 'bg-primary shadow-md': selectedPeriod === 'DAILY', 'bg-gray-700': selectedPeriod !== 'DAILY' }"
-      (click)="selectPeriod('DAILY')">
-      DAILY
-    </button>
-    <button
-      class="cursor-pointer rounded-md px-4 py-1 text-white transition-colors"
-      [ngClass]="{ 'bg-primary shadow-md': selectedPeriod === 'WEEKLY', 'bg-gray-700': selectedPeriod !== 'WEEKLY' }"
-      (click)="selectPeriod('WEEKLY')">
-      WEEKLY
-    </button>
-    <button
-      class="cursor-pointer rounded-md px-4 py-1 text-white transition-colors"
-      [ngClass]="{ 'bg-primary shadow-md': selectedPeriod === 'MONTHLY', 'bg-gray-700': selectedPeriod !== 'MONTHLY' }"
-      (click)="selectPeriod('MONTHLY')">
-      MONTHLY
-    </button>
-  </nav>
+  <div class="w-full">
+    <app-dynamic-breadcrumb 
+      [selectedPeriod]="selectedPeriod"
+      (periodChange)="selectPeriod($event)">
+    </app-dynamic-breadcrumb>
+  </div>
 </header>
 
 @if (!serverState.getConnection() || !serverState.isDatabaseListLoaded()) {

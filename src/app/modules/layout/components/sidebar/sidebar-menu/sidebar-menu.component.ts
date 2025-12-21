@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MatDialog } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, Subscription, of } from 'rxjs';
 import { take, finalize, catchError } from 'rxjs/operators';
 
@@ -29,7 +30,7 @@ interface DatabaseObject {
 @Component({
   selector: 'app-sidebar-menu',
   standalone: true,
-  imports: [CommonModule, AngularSvgIconModule],
+  imports: [CommonModule, AngularSvgIconModule, MatTooltipModule],
   templateUrl: './sidebar-menu.component.html',
   styleUrls: ['./sidebar-menu.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -413,7 +414,7 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
   }
 
   // ----------------------------
-  // 6) Expand tree to breadcrumb hierarchy index
+  // 6) Expand tree to breadcrumb hierarchy index and select the node
   // ----------------------------
   expandToHierarchy(levelIndex: number): void {
     const hierarchy = this.serverState.getHierarchy();
@@ -422,6 +423,7 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
     const serverNode = this.treeData[0];
     let currentNode: TreeNode | undefined = serverNode;
 
+    // Expand tree to the target level
     for (let i = 1; i <= levelIndex; i++) {
       const label = hierarchy[i];
       if (!label) break;
@@ -447,6 +449,8 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
                   if (foundChild) {
                     foundChild.expanded = true;
                     currentNode = foundChild;
+                    // After loading, select the node at the target level
+                    this.selectNodeAtLevel(levelIndex, hierarchy);
                   }
                 }
                 this.cdr.markForCheck();
@@ -460,7 +464,128 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
       child.expanded = true;
       currentNode = child;
     }
+
+    // Select the node at the target level to trigger dashboard updates
+    this.selectNodeAtLevel(levelIndex, hierarchy);
     this.cdr.markForCheck();
+  }
+
+  // ----------------------------
+  // 6a) Select node at specific hierarchy level (triggers dashboard updates)
+  // ----------------------------
+  private selectNodeAtLevel(levelIndex: number, hierarchy: string[]): void {
+    if (levelIndex < 0 || levelIndex >= hierarchy.length) return;
+
+    const serverNode = this.treeData[0];
+    if (!serverNode) return;
+
+    // Find the node at the target level
+    let currentNode: TreeNode | undefined = serverNode;
+    for (let i = 1; i <= levelIndex; i++) {
+      const label = hierarchy[i];
+      if (!label) return;
+      const child: TreeNode | undefined = (currentNode?.children || []).find((c) => c.name === label);
+      if (!child) return;
+      currentNode = child;
+    }
+
+    if (!currentNode) return;
+
+    // If it's a database node, select it
+    if (currentNode.icon === 'database') {
+      const parts = hierarchy.slice(0, levelIndex + 1);
+      this.serverState.setSelectedDatabase(currentNode.name, { updateHierarchy: false });
+      this.serverState.setHierarchy(parts);
+      // Clear table and index selections when selecting a database
+      this.serverState.setSelectedTableName(null);
+      this.serverState.setSelectedIndexName(null);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // If it's a table node (selectable), select it
+    if (this.isTableNode(currentNode) && !this.isIndexOrKeyNode(currentNode)) {
+      // Build full path
+      const fullPath = currentNode.fullPath || this.computeFullPathForNode(currentNode);
+      const parts = fullPath ? fullPath.split('\\').filter((p) => p !== '') : [];
+      
+      const serverName = this.currentConnection?.server;
+      const dbName = this.serverState.getSelectedDatabase();
+      if (serverName) {
+        if (parts[0] !== serverName) parts.unshift(serverName);
+        if (dbName && !parts.includes(dbName)) parts.splice(1, 0, dbName);
+      }
+
+      this.serverState.setHierarchy(parts);
+
+      // Extract table name from path
+      const normalizedParts = parts.map((p) => p.trim());
+      const lcParts = normalizedParts.map((p) => p.toLowerCase());
+      const tablesPos = lcParts.findIndex((p) => p === 'tables');
+      
+      let tableName: string | null = null;
+      if (tablesPos >= 0 && normalizedParts.length > tablesPos + 1) {
+        tableName = normalizedParts[tablesPos + 1];
+      }
+
+      if (tableName) {
+        this.serverState.setSelectedTableName(tableName);
+        this.serverState.setSelectedIndexName(null); // Clear index when selecting table
+      }
+
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // If it's a leaf node (like an index), select it
+    if (currentNode.isLeaf) {
+      const fullPath = currentNode.fullPath || this.computeFullPathForNode(currentNode);
+      const parts = fullPath ? fullPath.split('\\').filter((p) => p !== '') : [];
+      
+      const serverName = this.currentConnection?.server;
+      const dbName = this.serverState.getSelectedDatabase();
+      if (serverName) {
+        if (parts[0] !== serverName) parts.unshift(serverName);
+        if (dbName && !parts.includes(dbName)) parts.splice(1, 0, dbName);
+      }
+
+      this.serverState.setHierarchy(parts);
+
+      // Extract table and index names from path (same logic as toggleNode)
+      const normalizedParts = parts.map((p) => p.trim());
+      const lcParts = normalizedParts.map((p) => p.toLowerCase());
+
+      let tableName: string | null = null;
+      let indexName: string | null = null;
+
+      const tablesPos = lcParts.findIndex((p) => p === 'tables');
+      if (tablesPos >= 0 && normalizedParts.length > tablesPos + 1) {
+        tableName = normalizedParts[tablesPos + 1];
+        const indexesPos = lcParts.findIndex((p, idx) => idx > tablesPos && (p === 'indexes' || p === 'index'));
+        if (indexesPos >= 0 && normalizedParts.length > indexesPos + 1) {
+          indexName = normalizedParts[indexesPos + 1];
+        }
+      }
+
+      if (tableName) {
+        this.serverState.setSelectedTableName(tableName);
+      } else {
+        this.serverState.setSelectedTableName(null);
+      }
+
+      if (indexName) {
+        this.serverState.setSelectedIndexName(indexName);
+        // Trigger index refresh for dashboard
+        const db = this.serverState.getSelectedDatabase();
+        if (db) {
+          this.serverState.triggerIndexRefresh();
+        }
+      } else {
+        this.serverState.setSelectedIndexName(null);
+      }
+
+      this.cdr.markForCheck();
+    }
   }
 
   // ----------------------------
@@ -615,6 +740,91 @@ export class SidebarMenuComponent implements OnInit, OnDestroy {
   // trackBy for ngFor performance
   trackByName(_: number, item: TreeNode) {
     return item?.fullPath || item?.name;
+  }
+
+  /**
+   * Check if a node is a table (selectable)
+   * Tables are identified by icon 'table' or by being in a path that includes 'tables'
+   */
+  isTableNode(node: TreeNode): boolean {
+    if (!node) return false;
+    
+    // Check by icon
+    if (node.icon === 'table') return true;
+    
+    // Check by fullPath if available
+    if (node.fullPath) {
+      const lowerPath = node.fullPath.toLowerCase();
+      // Check if path contains 'tables' and the node name is after 'tables' folder
+      const parts = node.fullPath.split('\\').map(p => p.toLowerCase());
+      const tablesIndex = parts.findIndex(p => p === 'tables');
+      if (tablesIndex >= 0 && parts.length > tablesIndex + 1) {
+        // Check if this node is the one right after 'tables'
+        const nodeIndex = parts.findIndex(p => p === node.name.toLowerCase());
+        if (nodeIndex === tablesIndex + 1) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * Check if a node is an index, key, or column (not selectable)
+   * Indexes, keys, and columns should not show the selectable indicator
+   * This includes both folder nodes (like "Indexes", "Keys", "Columns") and leaf nodes (individual items)
+   */
+  isIndexOrKeyNode(node: TreeNode): boolean {
+    if (!node) return false;
+    
+    const lowerName = node.name.toLowerCase();
+    
+    // Check if node name is exactly "Indexes", "Keys", or "Columns" (folder nodes)
+    if (lowerName === 'indexes' || lowerName === 'index' || lowerName === 'keys' || lowerName === 'key' || lowerName === 'columns' || lowerName === 'column') {
+      return true;
+    }
+    
+    // Check by fullPath if available
+    if (node.fullPath) {
+      const lowerPath = node.fullPath.toLowerCase();
+      // Check if path contains 'indexes' or 'index' folder
+      if (lowerPath.includes('\\indexes\\') || lowerPath.includes('\\index\\')) {
+        return true;
+      }
+      // Check if path contains 'keys' folder
+      if (lowerPath.includes('\\keys\\')) {
+        return true;
+      }
+      // Check if path contains 'columns' folder
+      if (lowerPath.includes('\\columns\\') || lowerPath.includes('\\column\\')) {
+        return true;
+      }
+    }
+    
+    // Check by icon (if indexes/keys/columns have specific icons)
+    if (node.icon === 'key' || node.icon === 'constraint' || node.icon === 'document-duplicate') {
+      // document-duplicate is often used for columns
+      // But we need to be careful - check if it's actually in a columns folder
+      if (node.icon === 'document-duplicate' && node.fullPath) {
+        const lowerPath = node.fullPath.toLowerCase();
+        if (lowerPath.includes('\\columns\\') || lowerPath.includes('\\column\\')) {
+          return true;
+        }
+      } else if (node.icon === 'key' || node.icon === 'constraint') {
+        return true;
+      }
+    }
+    
+    // Check node name for common index/key/column patterns
+    if (lowerName.includes('index') || lowerName.includes('key') || lowerName.includes('constraint') || lowerName.includes('column')) {
+      // But exclude if it's a table (tables can have 'index' in name)
+      if (!this.isTableNode(node)) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   ngOnDestroy(): void {

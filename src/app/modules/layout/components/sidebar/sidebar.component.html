@@ -1,6 +1,7 @@
 <nav
-  [ngClass]="menuService.showSideBar ? 'w-[210px] xl:w-[280px]' : 'w-[70px]'"
-  class="hidden h-full flex-col justify-between bg-black transition-all duration-300 lg:flex">
+  [style.width]="getSidebarWidth()"
+  class="hidden h-full flex-col justify-between bg-black transition-all duration-300 lg:flex relative"
+  [class.resizing]="isResizing">
   <div class="overflow-hidden">
     <!-- Logo -->
     <div [ngClass]="menuService.showSideBar ? 'justify-between' : 'justify-center'" class="mb-2 flex h-9 items-center">
@@ -27,4 +28,14 @@
       <app-sidebar-menu></app-sidebar-menu>
     </div>
   </div>
+  
+  <!-- Resize Handle -->
+  @if(menuService.showSideBar) {
+  <div
+    class="resize-handle"
+    (mousedown)="onResizeStart($event)"
+    [class.resizing]="isResizing">
+    <div class="resize-handle-line"></div>
+  </div>
+  }
 </nav>

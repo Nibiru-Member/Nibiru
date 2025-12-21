@@ -12,6 +12,12 @@ export class MenuService implements OnDestroy {
   private _showMobileMenu = signal(false);
   private _pagesMenu = signal<MenuItem[]>([]);
   private _subscription = new Subscription();
+  
+  // Sidebar width management
+  private readonly DEFAULT_SIDEBAR_WIDTH = 280; // Default width in pixels
+  private readonly MIN_SIDEBAR_WIDTH = 210; // Minimum width in pixels
+  private readonly MAX_SIDEBAR_WIDTH = 500; // Maximum width in pixels
+  private _sidebarWidth = signal<number>(this.getStoredWidth());
 
   constructor(private router: Router) {
     /** Set dynamic menu */
@@ -41,6 +47,36 @@ export class MenuService implements OnDestroy {
 
   get showSideBar() {
     return this._showSidebar();
+  }
+
+  get sidebarWidth() {
+    return this._sidebarWidth();
+  }
+
+  get minSidebarWidth() {
+    return this.MIN_SIDEBAR_WIDTH;
+  }
+
+  get maxSidebarWidth() {
+    return this.MAX_SIDEBAR_WIDTH;
+  }
+
+  private getStoredWidth(): number {
+    const stored = localStorage.getItem('sidebarWidth');
+    if (stored) {
+      const width = parseInt(stored, 10);
+      if (width >= this.MIN_SIDEBAR_WIDTH && width <= this.MAX_SIDEBAR_WIDTH) {
+        return width;
+      }
+    }
+    return this.DEFAULT_SIDEBAR_WIDTH;
+  }
+
+  public setSidebarWidth(width: number): void {
+    // Clamp width between min and max
+    const clampedWidth = Math.max(this.MIN_SIDEBAR_WIDTH, Math.min(this.MAX_SIDEBAR_WIDTH, width));
+    this._sidebarWidth.set(clampedWidth);
+    localStorage.setItem('sidebarWidth', clampedWidth.toString());
   }
   get showMobileMenu() {
     return this._showMobileMenu();

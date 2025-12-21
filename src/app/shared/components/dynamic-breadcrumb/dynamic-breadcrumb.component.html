@@ -1,16 +1,35 @@
-<div class="flex items-center space-x-1 text-xs font-semibold uppercase sm:text-sm">
-  <ng-container *ngFor="let crumb of crumbs; let i = index; let last = last">
-    <div
-      class="hover:bg-primary/80 relative flex cursor-pointer items-center bg-[#2d2d2d] px-4 py-2 transition-colors"
-      [ngClass]="{ 'rounded-l-md': i === 0, 'rounded-r-md': last }"
-      (click)="i < crumbs.length - 1 ? onCrumbClick(i) : null"
-      title="{{ crumb }}">
-      <span [class.text-white]="last" [class.text-gray-200]="!last">{{ crumb }}</span>
-      @if (last) {
-      <span
-        class="absolute right-[-10px] top-0 h-0 w-0 border-y-[16px] border-l-[10px] border-y-transparent border-l-[#2d2d2d]">
-      </span>
-      }
+<div class="breadcrumb-wrapper">
+  <div class="breadcrumb-container">
+    <!-- Breadcrumb Crumbs (left side) -->
+    <ng-container *ngIf="hasCrumbs()">
+      <ng-container *ngFor="let crumb of crumbs; let i = index; let last = last">
+        <div 
+          class="breadcrumb-segment" 
+          [class.active]="isActive(i)"
+          (click)="!last && onCrumbClick(i)"
+          [title]="crumb">
+          <div class="segment-content">
+            <span class="segment-text">{{ crumb }}</span>
+          </div>
+        </div>
+      </ng-container>
+    </ng-container>
+    
+    <!-- Period Buttons (right side) -->
+    <div class="period-separator" *ngIf="hasCrumbs()"></div>
+    <div class="period-buttons-container">
+      <ng-container *ngFor="let period of periods; let i = index; let last = last">
+        <div 
+          class="breadcrumb-segment period-segment" 
+          [class.active]="isPeriodActive(period)"
+          [class.period-first]="i === 0"
+          (click)="selectPeriod(period)"
+          [title]="period">
+          <div class="segment-content">
+            <span class="segment-text">{{ period }}</span>
+          </div>
+        </div>
+      </ng-container>
     </div>
-  </ng-container>
+  </div>
 </div>
