@@ -302,16 +302,16 @@ export class ServerComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (dbRes: any) => {
-          try {
-            const dbs = dbRes?.data?.databases || [];
-            if (dbs.length) {
-              this.toast.success(`${dbs.length} databases found.`);
-            } else {
-              this.toast.warning('Connected but no databases found.');
-            }
-            this.dialogRef.close();
-          } catch (error) {
-            console.error('Error handling database response:', error);
+        try {
+          const dbs = dbRes?.data?.databases || [];
+          if (dbs.length) {
+            this.toast.success(`${dbs.length} databases found.`);
+          } else {
+            this.toast.warning('Connected but no databases found.');
+          }
+          this.dialogRef.close();
+        } catch (error) {
+          console.error('Error handling database response:', error);
             this.isConnecting = false;
             this.cdr.detectChanges();
           }

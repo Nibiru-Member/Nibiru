@@ -1,0 +1,351 @@
+.breadcrumb-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  background-color: #1f2937; /* dark gray background */
+  border-top: 2px solid #dc2626; /* red top border */
+  padding: 0.5rem 0;
+  scrollbar-width: none; /* Firefox - hide scrollbar */
+  -ms-overflow-style: none; /* IE and Edge - hide scrollbar */
+}
+
+.breadcrumb-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera - hide scrollbar */
+}
+
+.breadcrumb-container {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: fit-content;
+  width: 100%;
+}
+
+/* Period buttons container - single control with rounded corners and border */
+.period-buttons-container {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  overflow: visible;
+  padding: 0;
+  border-radius: 0.375rem; /* Rounded corners for entire control */
+  box-shadow: 
+    inset 0 1px 2px rgba(0, 0, 0, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2); /* Inner shadow for embossed/recessed look */
+  background-color: #1f2937; /* Dark grey background for the control */
+  border: 1px solid #6b7280; /* Visible border */
+}
+
+/* Separator between breadcrumb and period buttons */
+.period-separator {
+  flex: 1;
+  min-width: 1rem;
+  max-width: 2rem;
+}
+
+.breadcrumb-segment {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background-color: #374151; /* dark gray for inactive */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transform: translateY(0);
+  z-index: 1;
+  border-left: 1px solid rgba(107, 114, 128, 0.3); /* Subtle left border to identify item start */
+}
+
+.breadcrumb-segment:first-child {
+  clip-path: polygon(0% 0%, calc(100% - 20px) 0%, 100% 50%, calc(100% - 20px) 100%, 0% 100%);
+  margin-left: 0;
+  margin-right: -20px;
+  padding-right: 20px;
+  z-index: 1;
+  transform: translateY(0) rotate(0deg);
+  border-left: none; /* No left border on first item */
+}
+
+.breadcrumb-segment:first-child.active {
+  clip-path: polygon(0% 0%, calc(100% - 20px) 0%, 100% 50%, calc(100% - 20px) 100%, 0% 100%);
+  transform: translateY(0) rotate(0deg);
+}
+
+.breadcrumb-segment:first-child:hover {
+  transform: translateY(-2px) rotate(0deg);
+}
+
+.breadcrumb-segment:first-child.active:hover {
+  transform: translateY(-2px) rotate(0deg);
+}
+
+.breadcrumb-segment:first-child .segment-content {
+  padding-left: 1.5rem;
+}
+
+.breadcrumb-segment:not(:first-child):not(.last-segment) {
+  margin-left: -20px;
+  padding-left: 20px;
+  margin-right: -20px;
+  padding-right: 20px;
+  clip-path: polygon(0% 0%, 20px 50%, 0% 100%, calc(100% - 20px) 100%, 100% 50%, calc(100% - 20px) 0%);
+}
+
+.breadcrumb-segment.active {
+  background-color: #374151; /* Same dark gray as inactive - no red background */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  z-index: 1; /* Same z-index as inactive */
+  border-left: 1px solid rgba(107, 114, 128, 0.3); /* Subtle left border to identify item start */
+}
+
+.breadcrumb-segment.active:hover {
+  z-index: 25; /* Even higher z-index when active segment is hovered */
+}
+
+/* Hover effects only for non-period segments */
+.breadcrumb-segment:not(.period-segment):hover {
+  background-color: #dc2626; /* Primary red background color like second image */
+  box-shadow: 
+    0 8px 16px rgba(220, 38, 38, 0.5), 
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    0 2px 4px rgba(220, 38, 38, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15); /* Shadow like second image */
+  transform: translateY(-2px) scale(1.01); /* Very minimal scale */
+  z-index: 30; /* Higher z-index on hover to appear on top and hide other items */
+  min-width: fit-content;
+  position: relative;
+  border-left: 1px solid rgba(220, 38, 38, 0.5); /* Subtle red left border on hover */
+}
+
+/* Active hover effects only for non-period segments */
+.breadcrumb-segment.active:not(.period-segment):hover {
+  background-color: #dc2626; /* Primary red background color like second image */
+  box-shadow: 
+    0 8px 16px rgba(220, 38, 38, 0.6), 
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    0 2px 4px rgba(220, 38, 38, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15); /* Shadow like second image */
+  transform: translateY(-2px) scale(1.01); /* Very minimal scale */
+  z-index: 30; /* Higher z-index on hover to appear on top */
+  min-width: fit-content;
+  position: relative;
+  border-left: 1px solid rgba(255, 255, 255, 0.3); /* Subtle white left border on hover */
+}
+
+.breadcrumb-segment.last-segment {
+  cursor: default;
+  clip-path: polygon(0% 0%, 20px 50%, 0% 100%, calc(100% - 20px) 100%, 100% 50%, calc(100% - 20px) 0%);
+  margin-right: -20px;
+  padding-right: 20px;
+  margin-left: -20px;
+  padding-left: 20px;
+}
+
+/* Period segments - seamless rectangular segments, no arrows */
+.breadcrumb-segment.period-segment {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  clip-path: none !important; /* No arrow shapes */
+  border-radius: 0 !important; /* No rounded corners on individual segments */
+  border: none !important; /* No borders between segments */
+  background-color: transparent; /* Transparent - will be set by active state */
+  box-shadow: none !important; /* Remove shadows */
+  flex: 1; /* Equal width segments */
+  position: relative;
+  transform: none !important; /* No transforms */
+}
+
+/* First period segment - rounded left corners to match container */
+.breadcrumb-segment.period-segment:first-child {
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+  clip-path: none !important; /* Ensure no arrow */
+}
+
+/* Last period segment - rounded right corners to match container, no arrow */
+.breadcrumb-segment.period-segment:last-child {
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  clip-path: none !important; /* Ensure no arrow */
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Active period segment - vibrant red background */
+.breadcrumb-segment.period-segment.active {
+  background-color: #dc2626; /* Vibrant red background */
+  z-index: 10; /* Above inactive segments */
+  box-shadow: 
+    inset 0 1px 2px rgba(0, 0, 0, 0.2),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.1); /* Subtle inner shadow */
+}
+
+.breadcrumb-segment.period-segment.active .segment-text {
+  color: #ffffff; /* Bright white text for active */
+  font-weight: 600;
+  text-transform: uppercase;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Inactive period segment - dark grey background */
+.breadcrumb-segment.period-segment:not(.active) {
+  background-color: #374151; /* Dark grey background for inactive */
+}
+
+.breadcrumb-segment.period-segment:not(.active) .segment-text {
+  color: #9ca3af; /* Lighter grey text for inactive */
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Period segment hover - white text on hover */
+.breadcrumb-segment.period-segment:hover {
+  background-color: inherit; /* Keep current background */
+  transform: none; /* No transform */
+  box-shadow: none; /* No shadow */
+  opacity: 0.9; /* Slight opacity change on hover */
+}
+
+.breadcrumb-segment.period-segment:hover .segment-text {
+  color: #ffffff !important; /* White text on hover */
+}
+
+.breadcrumb-segment.period-segment.active:hover {
+  background-color: #dc2626; /* Keep red background */
+  transform: none;
+  box-shadow: none;
+  opacity: 1; /* Full opacity for active */
+}
+
+.breadcrumb-segment.period-segment.active:hover .segment-text {
+  color: #ffffff !important; /* White text on hover for active */
+}
+
+/* Period segment content padding */
+.breadcrumb-segment.period-segment .segment-content {
+  padding: 0.75rem 1.5rem;
+  width: 100%;
+  text-align: center;
+}
+
+.segment-content {
+  padding: 0.75rem 2rem;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.breadcrumb-segment.last-segment .segment-content {
+  padding-right: 1.5rem;
+}
+
+.segment-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #d1d5db; /* light gray text for inactive */
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+/* General breadcrumb text (not period segments) */
+.breadcrumb-segment:not(.period-segment):not(.active) .segment-text {
+  color: #9ca3af; /* lighter gray for inactive */
+  text-transform: uppercase;
+}
+
+.breadcrumb-segment:not(.period-segment).active .segment-text {
+  text-transform: uppercase;
+  color: #ffffff; /* white text - same as inactive */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: 600; /* Same weight as inactive */
+}
+
+/* Hover text effects only for non-period segments */
+.breadcrumb-segment:not(.period-segment):hover .segment-text {
+  color: #ffffff; /* white text on hover */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 8px rgba(255, 255, 255, 0.2);
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+
+.breadcrumb-segment:not(.period-segment).active:hover .segment-text {
+  color: #ffffff; /* keep white on hover for active */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 8px rgba(255, 255, 255, 0.2);
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+
+/* Period segment text hover - keep current color */
+.breadcrumb-segment.period-segment:hover .segment-text {
+  color: inherit; /* Keep current text color */
+  transform: none; /* No scale on hover */
+  transition: all 0.3s ease;
+}
+
+.segment-arrow {
+  display: none; /* Hide the arrow div, using clip-path instead */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .breadcrumb-wrapper {
+    padding: 0.4rem 0;
+  }
+
+  .segment-content {
+    padding: 0.6rem 1.5rem;
+  }
+
+  .segment-text {
+    font-size: 0.75rem;
+  }
+
+  .segment-arrow {
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+    margin-right: -8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .segment-content {
+    padding: 0.5rem 1.25rem;
+  }
+
+  .segment-text {
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+  }
+
+  .segment-arrow {
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
+    margin-right: -7px;
+  }
+}
+
+@media (max-width: 480px) {
+  .segment-content {
+    padding: 0.45rem 1rem;
+  }
+
+  .segment-text {
+    font-size: 0.65rem;
+  }
+
+  .segment-arrow {
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    margin-right: -6px;
+  }
+}

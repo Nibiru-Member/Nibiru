@@ -38,7 +38,9 @@
   <div class="tree-level">
     <div
       class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
-      (click)="toggleNode(serverNode, $event)">
+      (click)="toggleNode(serverNode, $event)"
+      [matTooltip]="serverNode.name"
+      matTooltipPosition="right">
       <div class="mr-1 flex w-5 items-center justify-center">
         @if (serverNode.children && serverNode.children.length > 0) {
         <button class="text-gray-400 hover:text-white" (click)="toggleNode(serverNode, $event)">
@@ -61,7 +63,7 @@
         [svgClass]="'h-4 w-4 mr-2 ' + getIconColor(serverNode.icon)"></svg-icon>
 
       @if (menuService.showSideBar) {
-      <span class="truncate text-sm text-white">{{ serverNode.name }}</span>
+      <span class="truncate text-sm text-white flex-1">{{ serverNode.name }}</span>
       }
     </div>
 
@@ -72,7 +74,9 @@
       <div class="tree-level">
         <div
           class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
-          (click)="toggleNode(databaseNode, $event)">
+          (click)="toggleNode(databaseNode, $event)"
+          [matTooltip]="databaseNode.name"
+          matTooltipPosition="right">
           <div class="mr-1 flex w-5 items-center justify-center">
             @if ((databaseNode.children && databaseNode.children.length > 0) || databaseNode.icon === 'database') {
             <button class="text-gray-400 hover:text-white" (click)="toggleNode(databaseNode, $event)">
@@ -106,7 +110,9 @@
           <div class="tree-level">
             <div
               class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
-              (click)="toggleNode(mainFolderNode, $event)">
+              (click)="toggleNode(mainFolderNode, $event)"
+              [matTooltip]="mainFolderNode.name"
+              matTooltipPosition="right">
               <div class="mr-1 flex w-5 items-center justify-center">
                 @if (mainFolderNode.children && mainFolderNode.children.length > 0) {
                 <button class="text-gray-400 hover:text-white" (click)="toggleNode(mainFolderNode, $event)">
@@ -137,7 +143,9 @@
               <div class="tree-level">
                 <div
                   class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
-                  (click)="toggleNode(subFolderNode, $event)">
+                  (click)="toggleNode(subFolderNode, $event)"
+                  [matTooltip]="subFolderNode.name"
+                  matTooltipPosition="right">
                   <div class="mr-1 flex w-5 items-center justify-center">
                     @if (subFolderNode.children && subFolderNode.children.length > 0) {
                     <button class="text-gray-400 hover:text-white" (click)="toggleNode(subFolderNode, $event)">
@@ -168,7 +176,9 @@
                   <div class="tree-level">
                     <div
                       class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
-                      (click)="toggleNode(functionTypeNode, $event)">
+                      (click)="toggleNode(functionTypeNode, $event)"
+                      [matTooltip]="functionTypeNode.name"
+                      matTooltipPosition="right">
                       <div class="mr-1 flex w-5 items-center justify-center">
                         @if (functionTypeNode.children && functionTypeNode.children.length > 0) {
                         <button class="text-gray-400 hover:text-white" (click)="toggleNode(functionTypeNode, $event)">
@@ -199,7 +209,9 @@
                       <div class="tree-level">
                         <div
                           class="flex cursor-pointer items-center rounded py-1 transition-colors hover:bg-gray-800"
-                          (click)="toggleNode(itemNode, $event)">
+                          (click)="toggleNode(itemNode, $event)"
+                          [matTooltip]="itemNode.name"
+                          matTooltipPosition="right">
                           <div class="mr-1 flex w-5 items-center justify-center">
                             @if (itemNode.children && itemNode.children.length > 0) {
                             <button class="text-gray-400 hover:text-white" (click)="toggleNode(itemNode, $event)">
