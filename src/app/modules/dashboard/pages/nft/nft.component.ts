@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { ServerStateService } from 'src/app/core/services/server-state.service';
 import { ToasterService } from 'src/app/core/services/toaster/toaster.service';
 import { EMPTY, Subscription, forkJoin, of } from 'rxjs';
@@ -127,6 +127,10 @@ export class NftComponent implements OnInit, OnDestroy {
   showDashboard = false;
   openMenuIndex: number | null = null;
   openSubMenu: string | null = null;
+  openMdfMenuIndex: number | null = null;
+  openMdfSubMenu: string | null = null;
+  mdfMenuPosition: { x: number; y: number } | null = null;
+  indexMenuPosition: { x: number; y: number } | null = null;
   activityModuleName: any;
   noFragmentation: any;
   ServerHealthStatus: any;
@@ -244,17 +248,17 @@ export class NftComponent implements OnInit, OnDestroy {
     }
 
     // ✅ STEP 1: Open Confirmation Dialog
-    const confirmDialogRef = this.dialog.open(BackupConfirmationComponent, {
-      disableClose: true,
-      data: {},
-    });
+    // const confirmDialogRef = this.dialog.open(BackupConfirmationComponent, {
+    //   disableClose: true,
+    //   data: {},
+    // });
 
-    confirmDialogRef.afterClosed().subscribe((confirmResult: boolean) => {
-      // ✅ If user CANCELS → STOP HERE
-      if (!confirmResult) {
-        console.log('Backup cancelled by user.');
-        return;
-      }
+    // confirmDialogRef.afterClosed().subscribe((confirmResult: boolean) => {
+    //   // ✅ If user CANCELS → STOP HERE
+    //   if (!confirmResult) {
+    //     console.log('Backup cancelled by user.');
+    //     return;
+    //   }
 
       // ✅ STEP 2: Open Backup Path Dialog
       const backupDialogRef = this.dialog.open(DialogBackupComponent, {
@@ -306,7 +310,7 @@ export class NftComponent implements OnInit, OnDestroy {
             console.error('Defragment flow failed', err);
           },
         });
-    });
+    // });
   }
 
   getStatusTitle(status: string): string {
@@ -408,13 +412,98 @@ export class NftComponent implements OnInit, OnDestroy {
     this.loadActivityHistory();
   }
 
-  toggleMenu(i: number) {
-    this.openMenuIndex = this.openMenuIndex === i ? null : i;
+  toggleMenu(i: number, event?: MouseEvent) {
+    if (this.openMenuIndex === i) {
+      this.openMenuIndex = null;
+      this.openSubMenu = null;
+      this.indexMenuPosition = null;
+      return;
+    }
+    
+    this.openMenuIndex = i;
     this.openSubMenu = null;
+    
+    if (event) {
+      const button = event.currentTarget as HTMLElement;
+      const rect = button.getBoundingClientRect();
+      
+      this.indexMenuPosition = {
+        x: rect.left,
+        y: rect.bottom + 4
+      };
+    }
+  }
+
+  toggleMdfMenu(index: number, row: any, event?: MouseEvent) {
+    if (this.openMdfMenuIndex === index) {
+      this.closeMdfMenu();
+      return;
+    }
+    
+    this.openMdfMenuIndex = index;
+    this.openMdfSubMenu = null;
+    this.menu.row = row;
+    
+    if (event) {
+      const button = event.currentTarget as HTMLElement;
+      const rect = button.getBoundingClientRect();
+      
+      this.mdfMenuPosition = {
+        x: rect.left,
+        y: rect.bottom + 4
+      };
+    }
+  }
+
+  closeMdfMenu() {
+    this.openMdfMenuIndex = null;
+    this.openMdfSubMenu = null;
+    this.menu.row = null;
+    this.mdfMenuPosition = null;
   }
 
   toggleSubMenu(menu: string) {
     this.openSubMenu = this.openSubMenu === menu ? null : menu;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    
+    // Check if click is on menu button - don't close if so
+    const isButtonClick = target.closest('.role-menu-button') !== null;
+    if (isButtonClick) {
+      return;
+    }
+    
+    // Check if click is inside a fixed menu
+    let element: HTMLElement | null = target;
+    let isMenuClick = false;
+    while (element && element !== document.body) {
+      const classList = element.classList;
+      if (classList.contains('fixed') && classList.contains('z-[99999]')) {
+        isMenuClick = true;
+        break;
+      }
+      element = element.parentElement;
+    }
+    
+    // Don't close if clicking on menu
+    if (isMenuClick) {
+      return;
+    }
+    
+    // Close MDF menu if clicking outside
+    if (this.openMdfMenuIndex !== null) {
+      this.closeMdfMenu();
+    }
+    
+    // Close Index Statistics menu if clicking outside
+    if (this.openMenuIndex !== null) {
+      this.openMenuIndex = null;
+      this.openSubMenu = null;
+      this.indexMenuPosition = null;
+    }
   }
 
   // Reset dashboard when connection removed or DB invalid

@@ -1,10 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { ServerStateService } from 'src/app/core/services/server-state.service';
 import { ServerService } from 'src/app/core/services/server/server.service';
 import { ToasterService } from 'src/app/core/services/toaster/toaster.service';
+import { FileBrowserDialogComponent } from '../file-browser-dialog/file-browser-dialog.component';
+import { Overlay } from '@angular/cdk/overlay';
 
 @Component({
   selector: 'app-back-destination-dialog',
@@ -17,6 +19,8 @@ export class BackDestinationDialogComponent {
   private serverState = inject(ServerStateService);
   private serverApi = inject(ServerService);
   private toast = inject(ToasterService);
+  private dialog = inject(MatDialog);
+  private overlay = inject(Overlay);
   data = inject(MAT_DIALOG_DATA, { optional: true });
   backupPath = ''; // free text / helper path
   loadingDrives = false;
@@ -60,6 +64,7 @@ export class BackDestinationDialogComponent {
     if (!conn || !this.selectedDrive || !this.selectServer) return;
 
     this.loadingFolders = true;
+    console.log(this.selectedDrive, 'selectedDrive');
     this.serverApi
       .GetBasicDriveFolderTreeForDropdown(this.selectServer, conn.username, conn.password, this.selectedDrive)
       .subscribe({
@@ -108,10 +113,32 @@ export class BackDestinationDialogComponent {
   }
 
   browseFile() {
-    // here you can open your custom "browse folders" dialog
-    // and set this.fileName from the result.
-    // For now, just leave as a stub.
-    console.log('Browse file clicked');
+    const dialogRef = this.dialog.open(FileBrowserDialogComponent, {
+      width: '600px',
+      maxHeight: '80vh',
+      disableClose: true,
+      data: {
+        serverName: this.selectServer,
+        databaseName: this.selectedDatabase,
+        initialPath: this.backupPath || (this.selectedDrive && this.selectedFolder ? `${this.selectedFolder}\\` : ''),
+      },
+      scrollStrategy: this.overlay.scrollStrategies.block(),
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.fileName) {
+        this.backupPath = result.fileName;
+        // Update drive and folder if path is set
+        if (this.backupPath) {
+          const pathParts = this.backupPath.split('\\');
+          if (pathParts.length > 0) {
+            const driveLetter = pathParts[0].charAt(0);
+            this.selectedDrive = driveLetter;
+            this.onDriveChange();
+          }
+        }
+      }
+    });
   }
 
   save() {

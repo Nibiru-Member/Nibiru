@@ -61,14 +61,22 @@
         </div>
       </div>
 
-      <!-- Backup Path -->
+      <!-- File name -->
       <div>
-        <label class="block text-sm font-medium text-white">Backup Path</label>
-        <input
-          type="text"
-          class="mt-1 w-full rounded-md border-gray-300 p-2 text-sm"
-          placeholder="Auto-generated or enter manually..."
-          [(ngModel)]="backupPath" />
+        <label class="block text-sm font-medium text-white">File name:</label>
+        <div class="mt-1 flex gap-2">
+          <input
+            type="text"
+            class="flex-1 rounded-md border border-gray-600 bg-gray-900 px-2 py-1 text-sm text-white"
+            placeholder="Enter backup file path..."
+            [(ngModel)]="backupPath" />
+          <button
+            type="button"
+            class="rounded-md border border-gray-600 bg-gray-700 px-3 py-1 text-sm hover:bg-gray-600"
+            (click)="browseFile()">
+            ...
+          </button>
+        </div>
       </div>
       @if (errorMessage) {
       <div class="text-white-400 text-left">{{ errorMessage }}</div>

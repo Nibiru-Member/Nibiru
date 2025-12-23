@@ -47,6 +47,39 @@ export class DialogBackupComponent {
 
   backupPath = ''; // free text / helper path
 
+  // Tabs
+  activeTab: 'general' | 'media' | 'backup' = 'general';
+
+  // Media Options
+  overwriteMedia: 'append' | 'overwrite' = 'append';
+  appendToExistingBackupSet = true;
+  initializeMediaSet = false;
+  mediaSetNameRequired = false;
+  mediaSetName = '';
+  mediaSetDescriptionRequired = false;
+  mediaSetDescription = '';
+
+  // Reliability
+  verifyBackupWhenFinished = false;
+  performChecksumBeforeWriting = false;
+  continueOnError = false;
+
+  // Transaction Log
+  truncateTransactionLog = false;
+  backupTailOfLog = false;
+
+  // Expiration
+  expirationOption: 'never' | 'after' | 'on' = 'never';
+  expirationDays = 0;
+  expirationDate = '';
+
+  // Backup Options
+  compressionOption: 'default' | 'compress' | 'noCompress' = 'default';
+  encryptBackup = false;
+  encryptionAlgorithm: 'AES128' | 'AES192' | 'AES256' | 'TripleDES' = 'AES128';
+  encryptionCertificate = '';
+  verifyBackup = false;
+
   loadingServers = false;
   loadingDatabases = false;
   loadingDrives = false;
@@ -80,6 +113,11 @@ export class DialogBackupComponent {
 
     if (this.data?.location) {
       this.backupPath = this.data.location;
+      // Add initial destination if location is provided
+      if (this.backupPath) {
+        this.destinations.push({ fullPath: this.backupPath });
+        this.selectedDestinationIndex = 0;
+      }
     }
 
     console.log('Backup dialog data:', this.data);
@@ -214,6 +252,17 @@ export class DialogBackupComponent {
   }
 
   // --------------------------------------------------
+  // BACKUP TYPE CHANGE HANDLER
+  // --------------------------------------------------
+  onBackupTypeChange(backupType: string) {
+    this.selectedBackupType = backupType;
+    // Disable copy-only backup for Differential backups
+    if (backupType === 'Differential') {
+      this.copyOnly = false;
+    }
+  }
+
+  // --------------------------------------------------
   // PATH BUILDER (optional helper)
   // --------------------------------------------------
   updateBackupPath() {
@@ -300,12 +349,35 @@ export class DialogBackupComponent {
       databaseName: this.selectedDatabase,
       backupPath: finalPath,
       backupType: this.selectedBackupType,
-      // these extra fields are available if API wants them later:
+      // SSMS-style fields
       recoveryModel: this.recoveryModel,
       copyOnly: this.copyOnly,
       backupComponent: this.backupComponent,
       fileGroupName: this.fileGroupName || null,
       backupDeviceType: this.backupDeviceType,
+      // Media options
+      overwriteMedia: this.overwriteMedia,
+      appendToExistingBackupSet: this.appendToExistingBackupSet,
+      initializeMediaSet: this.initializeMediaSet,
+      mediaSetName: this.mediaSetNameRequired ? this.mediaSetName : null,
+      mediaSetDescription: this.mediaSetDescriptionRequired ? this.mediaSetDescription : null,
+      // Reliability
+      verifyBackupWhenFinished: this.verifyBackupWhenFinished,
+      performChecksumBeforeWriting: this.performChecksumBeforeWriting,
+      continueOnError: this.continueOnError,
+      // Transaction log
+      truncateTransactionLog: this.truncateTransactionLog,
+      backupTailOfLog: this.backupTailOfLog,
+      // Expiration
+      expirationOption: this.expirationOption,
+      expirationDays: this.expirationOption === 'after' ? this.expirationDays : null,
+      expirationDate: this.expirationOption === 'on' ? this.expirationDate : null,
+      // Backup options
+      compressionOption: this.compressionOption,
+      encryptBackup: this.encryptBackup,
+      encryptionAlgorithm: this.encryptBackup ? this.encryptionAlgorithm : null,
+      encryptionCertificate: this.encryptBackup ? this.encryptionCertificate : null,
+      verifyBackup: this.verifyBackup,
     };
 
     this.saving = true;
@@ -328,16 +400,31 @@ export class DialogBackupComponent {
   }
 
   openDestinationDialog() {
+    const conn = this.serverState.getConnection();
     const dialogRef = this.dialog.open(BackDestinationDialogComponent, {
       width: '520px',
       disableClose: true,
-      data: { fileName: this.backupPath }, // optional
+      data: { 
+        fileName: this.backupPath,
+        serverName: this.selectedServer || conn?.server || '',
+        databaseName: this.selectedDatabase,
+      },
       scrollStrategy: this.overlay.scrollStrategies.block(),
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result?.fileName) {
-        this.backupPath = result.fileName; // or wherever you store it
+      if (result?.backupPath) {
+        // Add to destinations list
+        const path = result.backupPath.trim();
+        const exists = this.destinations.some(d => d.fullPath === path);
+        if (!exists) {
+          this.destinations.push({ fullPath: path });
+          this.selectedDestinationIndex = this.destinations.length - 1;
+        } else {
+          // Select existing destination
+          this.selectedDestinationIndex = this.destinations.findIndex(d => d.fullPath === path);
+        }
+        this.backupPath = ''; // Clear the input
       }
     });
   }

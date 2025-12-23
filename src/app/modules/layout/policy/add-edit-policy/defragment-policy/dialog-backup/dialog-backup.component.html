@@ -1,8 +1,8 @@
 <div
-  class="flex max-h-[80vh] w-[900px] max-w-full flex-col rounded-md border border-gray-700 bg-gray-900 text-[13px] text-gray-100 shadow-lg">
+  class="flex max-h-[85vh] w-[900px] max-w-full flex-col rounded-md border border-gray-700 bg-gray-900 text-[13px] text-gray-100 shadow-lg">
   <!-- HEADER BAR -->
   <div class="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
-    <div class="font-semibold">
+    <div class="font-semibold text-[13px]">
       Back Up Database @if (selectedDatabase) {
       <span> - {{ selectedDatabase }}</span>
       }
@@ -19,95 +19,458 @@
     </div>
   </div>
 
+  <!-- TABS -->
+  <div class="flex border-b border-gray-700 bg-gray-800">
+    <button
+      type="button"
+      (click)="activeTab = 'general'"
+      [class.bg-gray-900]="activeTab === 'general'"
+      [class.border-b-2]="activeTab === 'general'"
+      [class.border-primary]="activeTab === 'general'"
+      [class.text-white]="activeTab === 'general'"
+      [class.text-gray-400]="activeTab !== 'general'"
+      class="px-4 py-2 text-[13px] font-medium transition hover:bg-gray-700">
+      General
+    </button>
+    <button
+      type="button"
+      (click)="activeTab = 'media'"
+      [class.bg-gray-900]="activeTab === 'media'"
+      [class.border-b-2]="activeTab === 'media'"
+      [class.border-primary]="activeTab === 'media'"
+      [class.text-white]="activeTab === 'media'"
+      [class.text-gray-400]="activeTab !== 'media'"
+      class="px-4 py-2 text-[13px] font-medium transition hover:bg-gray-700">
+      Media Options
+    </button>
+    <button
+      type="button"
+      (click)="activeTab = 'backup'"
+      [class.bg-gray-900]="activeTab === 'backup'"
+      [class.border-b-2]="activeTab === 'backup'"
+      [class.border-primary]="activeTab === 'backup'"
+      [class.text-white]="activeTab === 'backup'"
+      [class.text-gray-400]="activeTab !== 'backup'"
+      class="px-4 py-2 text-[13px] font-medium transition hover:bg-gray-700">
+      Backup Options
+    </button>
+  </div>
+
   <!-- BODY (scrollable) -->
-
   <div class="flex-1 space-y-4 overflow-y-auto bg-gray-900 px-5 py-4">
-    <!-- SOURCE -->
-    <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
-      <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200">Source</div>
+    <!-- GENERAL TAB -->
+    @if (activeTab === 'general') {
+    <div class="space-y-4">
+      <!-- SOURCE -->
+      <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+        <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200 uppercase">Source</div>
 
-      <!-- Database -->
-      <div class="grid grid-cols-[140px,1fr] items-center">
-        <label>Database:</label>
-        <input
-          type="text"
-          class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px]"
-          [(ngModel)]="selectedDatabase" />
+        <!-- Database -->
+        <div class="grid grid-cols-[140px,1fr] items-center gap-2">
+          <label class="text-[13px]">Database:</label>
+          <input
+            type="text"
+            class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white focus:border-primary focus:outline-none"
+            [(ngModel)]="selectedDatabase" />
+        </div>
+
+        <!-- Recovery model -->
+        <div class="grid grid-cols-[140px,1fr] items-center gap-2">
+          <label class="text-[13px]">Recovery model:</label>
+          <input
+            type="text"
+            class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-gray-400"
+            [value]="recoveryModel"
+            readonly />
+        </div>
+
+        <!-- Backup type -->
+        <div class="grid grid-cols-[140px,1fr] items-center gap-2">
+          <label class="text-[13px]">Backup type:</label>
+          <select
+            class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+            [(ngModel)]="selectedBackupType"
+            (ngModelChange)="onBackupTypeChange($event)">
+            <option *ngFor="let t of backupTypes" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+
+        <!-- Copy-only backup -->
+        <div class="grid grid-cols-[140px,1fr] items-center gap-2">
+          <label></label>
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              [(ngModel)]="copyOnly"
+              [disabled]="selectedBackupType === 'Differential'" />
+            <span [class.text-gray-500]="selectedBackupType === 'Differential'">Copy-only backup</span>
+          </label>
+        </div>
       </div>
 
-      <!-- Backup type -->
-      <div class="grid grid-cols-[140px,1fr] items-center">
-        <label>Backup type:</label>
-        <select
-          class="w-full rounded border border-gray-600 bg-gray-900 px-2 py-1 text-[13px]"
-          [(ngModel)]="selectedBackupType">
-          <option *ngFor="let t of backupTypes" [value]="t">{{ t }}</option>
-        </select>
-      </div>
-    </div>
+      <!-- DESTINATION -->
+      <div class="flex flex-col space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+        <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200 uppercase">Destination</div>
 
-    <!-- DESTINATION -->
-    <div class="flex flex-col space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
-      <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200">Destination</div>
+        <!-- Back up to -->
+        <div class="grid grid-cols-[140px,1fr] items-center gap-2">
+          <label class="text-[13px]">Back up to:</label>
+          <select
+            class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+            [(ngModel)]="backupDeviceType">
+            <option value="Disk">Disk</option>
+            <option value="Url">URL</option>
+          </select>
+        </div>
 
-      <!-- Back up to -->
-      <div class="grid grid-cols-[140px,1fr] items-center">
-        <label>Back up to:</label>
-        <select
-          class="w-full rounded border border-gray-600 bg-gray-900 px-2 py-1 text-[13px]"
-          [(ngModel)]="backupDeviceType">
-          <option value="Disk">Disk</option>
-          <option value="Url">URL</option>
-        </select>
-      </div>
-
-      <!-- Destination list + buttons -->
-      <div class="mt-1 flex items-start gap-2">
-        <!-- destination text area = height of 3 buttons -->
-        <div class="flex h-[85px] flex-1 overflow-x-auto overflow-y-auto rounded border border-gray-600 bg-gray-900">
-          <div class="min-w-max">
-            <div class="cursor-default whitespace-nowrap bg-blue-900/60 px-2 py-[2px] text-[12px] text-white">
-              {{ data.location }}
+        <!-- Destination list + buttons -->
+        <div class="mt-1 flex items-start gap-2">
+          <!-- destination list box -->
+          <div class="flex h-[85px] flex-1 overflow-x-auto overflow-y-auto rounded border border-gray-600 bg-gray-900">
+            <div class="min-w-full w-full">
+              @if (destinations.length === 0) {
+              <div class="cursor-default whitespace-nowrap px-2 py-[2px] text-[12px] text-gray-500">
+                (No backup destinations selected)
+              </div>
+              } @else {
+              <div
+                *ngFor="let dest of destinations; let i = index"
+                (click)="selectedDestinationIndex = i"
+                class="cursor-default whitespace-nowrap px-2 py-[2px] text-[12px] transition"
+                [ngClass]="{
+                  'bg-blue-900/60 text-white': selectedDestinationIndex === i,
+                  'text-gray-300 hover:bg-gray-800': selectedDestinationIndex !== i
+                }">
+                {{ dest.fullPath }}
+              </div>
+              }
             </div>
-            <!-- <div
-              *ngFor="let dest of destinations; let i = index"
-              (click)="selectedDestinationIndex = i"
-              class="cursor-default whitespace-nowrap px-2 py-[2px] text-[12px]"
-              [ngClass]="{
-                'bg-blue-900/60 text-white': selectedDestinationIndex === i
-              }">
-              {{ dest.fullPath }}
-            </div> -->
+          </div>
+
+          <!-- buttons stacked on the right -->
+          <div class="flex w-[90px] flex-col gap-1">
+            <button
+              type="button"
+              class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600"
+              (click)="openDestinationDialog()">
+              Add...
+            </button>
+
+            <button
+              type="button"
+              class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              [disabled]="selectedDestinationIndex === -1 || destinations.length === 0"
+              (click)="onRemoveDestination()">
+              Remove
+            </button>
+
+            <button
+              type="button"
+              class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              [disabled]="selectedDestinationIndex === -1 || destinations.length === 0"
+              (click)="onDestinationContents()">
+              Contents
+            </button>
           </div>
         </div>
+      </div>
+    </div>
+    }
 
-        <!-- buttons stacked on the right -->
-        <div class="flex w-[90px] flex-col gap-1">
-          <button
-            type="button"
-            class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600"
-            (click)="openDestinationDialog()">
-            Add...
-          </button>
+    <!-- MEDIA OPTIONS TAB -->
+    @if (activeTab === 'media') {
+    <div class="space-y-4">
+      <!-- OVERWRITE MEDIA -->
+      <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+        <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200 uppercase">Overwrite media</div>
 
-          <button
-            type="button"
-            class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600 disabled:opacity-40"
-            [disabled]="selectedDestinationIndex === -1"
-            (click)="onRemoveDestination()">
-            Remove
-          </button>
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="radio"
+              name="overwriteMedia"
+              value="append"
+              [(ngModel)]="overwriteMedia"
+              class="h-4 w-4 text-primary" />
+            <span>Back up to the existing media set</span>
+          </label>
+          <div class="ml-6 space-y-1">
+            <label class="flex items-center gap-2 text-[13px]">
+              <input
+                type="checkbox"
+                class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+                [(ngModel)]="appendToExistingBackupSet" />
+              <span>Append to the existing backup set</span>
+            </label>
+          </div>
 
-          <button
-            type="button"
-            class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600 disabled:opacity-40"
-            [disabled]="selectedDestinationIndex === -1"
-            (click)="onDestinationContents()">
-            Contents
-          </button>
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="radio"
+              name="overwriteMedia"
+              value="overwrite"
+              [(ngModel)]="overwriteMedia"
+              class="h-4 w-4 text-primary" />
+            <span>Overwrite all existing backup sets</span>
+          </label>
+          <div class="ml-6 space-y-1">
+            <label class="flex items-center gap-2 text-[13px]">
+              <input
+                type="checkbox"
+                class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+                [(ngModel)]="initializeMediaSet" />
+              <span>Initialize backup set</span>
+            </label>
+            <div class="ml-6 space-y-1">
+              <label class="flex items-center gap-2 text-[13px]">
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+                  [(ngModel)]="mediaSetNameRequired" />
+                <span>Media set name:</span>
+              </label>
+              @if (mediaSetNameRequired) {
+              <input
+                type="text"
+                class="ml-6 h-[26px] w-full max-w-md rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+                [(ngModel)]="mediaSetName"
+                placeholder="Enter media set name" />
+              }
+            </div>
+            <div class="ml-6 space-y-1">
+              <label class="flex items-center gap-2 text-[13px]">
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+                  [(ngModel)]="mediaSetDescriptionRequired" />
+                <span>Media set description:</span>
+              </label>
+              @if (mediaSetDescriptionRequired) {
+              <input
+                type="text"
+                class="ml-6 h-[26px] w-full max-w-md rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+                [(ngModel)]="mediaSetDescription"
+                placeholder="Enter media set description" />
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RELIABILITY -->
+      <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+        <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200 uppercase">Reliability</div>
+
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+              [(ngModel)]="verifyBackupWhenFinished" />
+            <span>Verify backup when finished</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+              [(ngModel)]="performChecksumBeforeWriting" />
+            <span>Perform checksum before writing to media</span>
+          </label>
+          <div class="ml-6 space-y-1">
+            <label class="flex items-center gap-2 text-[13px]">
+              <input
+                type="checkbox"
+                class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+                [(ngModel)]="continueOnError" />
+              <span>Continue on error</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSACTION LOG -->
+      <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+        <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200 uppercase">Transaction log</div>
+
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+              [(ngModel)]="truncateTransactionLog" />
+            <span>Truncate the transaction log</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+              [(ngModel)]="backupTailOfLog" />
+            <span>Back up the tail of the log</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- EXPIRATION -->
+      <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+        <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200 uppercase">Expiration</div>
+
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="radio"
+              name="expiration"
+              value="never"
+              [(ngModel)]="expirationOption"
+              class="h-4 w-4 text-primary" />
+            <span>Backup set will never expire</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="radio"
+              name="expiration"
+              value="after"
+              [(ngModel)]="expirationOption"
+              class="h-4 w-4 text-primary" />
+            <span>Backup set expires:</span>
+          </label>
+          @if (expirationOption === 'after') {
+          <div class="ml-6 flex items-center gap-2">
+            <input
+              type="number"
+              class="h-[26px] w-20 rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+              [(ngModel)]="expirationDays"
+              min="0" />
+            <span class="text-[13px]">days</span>
+          </div>
+          }
+
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="radio"
+              name="expiration"
+              value="on"
+              [(ngModel)]="expirationOption"
+              class="h-4 w-4 text-primary" />
+            <span>Backup set expires on:</span>
+          </label>
+          @if (expirationOption === 'on') {
+          <input
+            type="date"
+            class="ml-6 h-[26px] w-48 rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+            [(ngModel)]="expirationDate" />
+          }
         </div>
       </div>
     </div>
+    }
+
+    <!-- BACKUP OPTIONS TAB -->
+    @if (activeTab === 'backup') {
+    <div class="space-y-4">
+      <!-- COMPRESSION -->
+      <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+        <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200 uppercase">Compression</div>
+
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="radio"
+              name="compression"
+              value="default"
+              [(ngModel)]="compressionOption"
+              class="h-4 w-4 text-primary" />
+            <span>Use the default server setting</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="radio"
+              name="compression"
+              value="compress"
+              [(ngModel)]="compressionOption"
+              class="h-4 w-4 text-primary" />
+            <span>Compress backup</span>
+          </label>
+
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="radio"
+              name="compression"
+              value="noCompress"
+              [(ngModel)]="compressionOption"
+              class="h-4 w-4 text-primary" />
+            <span>Do not compress backup</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- ENCRYPTION -->
+      <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+        <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200 uppercase">Encryption</div>
+
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+              [(ngModel)]="encryptBackup" />
+            <span>Encrypt backup</span>
+          </label>
+
+          @if (encryptBackup) {
+          <div class="ml-6 space-y-2">
+            <div class="grid grid-cols-[140px,1fr] items-center gap-2">
+              <label class="text-[13px]">Algorithm:</label>
+              <select
+                class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+                [(ngModel)]="encryptionAlgorithm">
+                <option value="AES128">AES 128</option>
+                <option value="AES192">AES 192</option>
+                <option value="AES256">AES 256</option>
+                <option value="TripleDES">Triple DES</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-[140px,1fr] items-center gap-2">
+              <label class="text-[13px]">Certificate or Asymmetric key:</label>
+              <select
+                class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+                [(ngModel)]="encryptionCertificate">
+                <option value="">(Select certificate or key)</option>
+              </select>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- VERIFICATION -->
+      <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
+        <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200 uppercase">Verification</div>
+
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-[13px]">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-600 bg-gray-900 text-primary"
+              [(ngModel)]="verifyBackup" />
+            <span>Verify backup when finished</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- ERROR MESSAGE -->
+    @if (errorMessage) {
+    <div class="rounded border border-red-600 bg-red-900/20 px-4 py-2 text-sm text-red-300">
+      {{ errorMessage }}
+    </div>
+    }
   </div>
 
   <!-- FOOTER -->
@@ -120,8 +483,13 @@
     <button
       (click)="save()"
       [disabled]="saving"
-      class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white">
-      OK
+      class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white disabled:opacity-50 disabled:cursor-not-allowed">
+      @if (saving) {
+      <span>Backing up...</span>
+      } @else {
+      <span>OK</span>
+      }
     </button>
   </div>
 </div>
+

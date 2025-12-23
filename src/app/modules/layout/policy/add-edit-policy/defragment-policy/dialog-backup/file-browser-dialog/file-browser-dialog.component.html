@@ -1,0 +1,216 @@
+<div
+  class="flex max-h-[80vh] w-[600px] max-w-full flex-col rounded-md border border-gray-700 bg-gray-900 text-[13px] text-gray-100 shadow-lg">
+  <!-- HEADER -->
+  <div class="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
+    <div class="font-semibold text-[13px]">Locate Database Files</div>
+    <button
+      type="button"
+      (click)="closeDialog()"
+      class="flex h-6 w-6 items-center justify-center rounded hover:bg-gray-700"
+      aria-label="Close">
+      ✕
+    </button>
+  </div>
+
+  <!-- BODY -->
+  <div class="flex flex-1 flex-col overflow-hidden">
+    <!-- File Tree View (Top Section) -->
+    <div class="flex-1 overflow-y-auto border-b border-gray-700 bg-white p-2">
+      <div class="space-y-0.5">
+        @for (drive of folderTree; track drive.fullPath) {
+        <div>
+          <!-- Drive/Folder -->
+          <div
+            class="flex items-center gap-1 px-2 py-1 rounded hover:bg-blue-100 cursor-pointer text-[13px] text-gray-900"
+            (click)="selectFolder(drive)">
+            <button
+              type="button"
+              (click)="toggleFolder(drive); $event.stopPropagation()"
+              class="w-5 h-5 flex items-center justify-center text-sm font-bold text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0"
+              [class.text-blue-600]="drive.expanded"
+              [attr.aria-expanded]="drive.expanded"
+              [attr.aria-label]="drive.expanded ? 'Collapse' : 'Expand'">
+              @if (drive.expanded) {
+              <span class="text-[12px]">▼</span>
+              } @else {
+              <span class="text-[12px]">▶</span>
+              }
+            </button>
+            <span>{{ drive.name }}</span>
+          </div>
+
+          <!-- Children (nested folders) -->
+          @if (drive.expanded) {
+          <div class="ml-6 space-y-0.5 mt-0.5">
+            @if (!drive.loaded) {
+            <div class="px-2 py-1 text-[12px] text-gray-500 flex items-center gap-2">
+              <div class="animate-spin rounded-full h-3 w-3 border-b border-blue-600"></div>
+              <span>Loading folders...</span>
+            </div>
+            } @else if (drive.children && drive.children.length > 0) {
+            @for (child of drive.children; track child.fullPath) {
+            <div class="folder-item">
+              <div
+                class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-blue-50 cursor-pointer text-[13px] text-gray-900 transition-colors"
+                [class.bg-blue-100]="selectedPath === child.fullPath"
+                (click)="selectFolder(child)">
+                <button
+                  type="button"
+                  (click)="toggleFolder(child); $event.stopPropagation()"
+                  class="w-5 h-5 flex items-center justify-center text-sm font-bold text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0"
+                  [class.text-blue-600]="child.expanded"
+                  [class.invisible]="!child.hasChildren && child.loaded"
+                  [attr.aria-expanded]="child.expanded"
+                  [attr.aria-label]="child.expanded ? 'Collapse' : 'Expand'">
+                  @if (child.expanded) {
+                  <span class="text-[12px]">▼</span>
+                  } @else {
+                  <span class="text-[12px]">▶</span>
+                  }
+                </button>
+                <span class="flex items-center gap-1.5 flex-1 min-w-0">
+                  <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>
+                  </svg>
+                  <span class="truncate">{{ child.name }}</span>
+                </span>
+              </div>
+
+              <!-- Nested children (recursive) -->
+              @if (child.expanded) {
+              <div class="ml-4 space-y-0.5">
+                @if (!child.loaded) {
+                <div class="px-2 py-1 text-[12px] text-gray-500 flex items-center gap-2">
+                  <div class="animate-spin rounded-full h-3 w-3 border-b border-blue-600"></div>
+                  <span>Loading...</span>
+                </div>
+                } @else if (child.children && child.children.length > 0) {
+                @for (grandchild of child.children; track grandchild.fullPath) {
+                <div>
+                  <div
+                    class="flex items-center gap-1 px-2 py-1 rounded hover:bg-blue-100 cursor-pointer text-[13px] text-gray-900"
+                    (click)="selectFolder(grandchild)">
+                    <button
+                      type="button"
+                      (click)="toggleFolder(grandchild); $event.stopPropagation()"
+                      class="w-5 h-5 flex items-center justify-center text-sm font-bold text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0"
+                      [class.text-blue-600]="grandchild.expanded"
+                      [class.invisible]="!grandchild.hasChildren && grandchild.loaded"
+                      [attr.aria-expanded]="grandchild.expanded"
+                      [attr.aria-label]="grandchild.expanded ? 'Collapse' : 'Expand'">
+                      @if (grandchild.expanded) {
+                      <span class="text-[12px]">▼</span>
+                      } @else {
+                      <span class="text-[12px]">▶</span>
+                      }
+                    </button>
+                    <span>{{ grandchild.name }}</span>
+                  </div>
+                  
+                  <!-- Deeper nesting (recursive) -->
+                  @if (grandchild.expanded) {
+                  <div class="ml-4 space-y-0.5">
+                    @if (!grandchild.loaded) {
+                    <div class="px-2 py-1 text-[12px] text-gray-500 flex items-center gap-2">
+                      <div class="animate-spin rounded-full h-3 w-3 border-b border-blue-600"></div>
+                      <span>Loading...</span>
+                    </div>
+                    } @else if (grandchild.children && grandchild.children.length > 0) {
+                    @for (greatGrandchild of grandchild.children; track greatGrandchild.fullPath) {
+                    <div
+                      class="flex items-center gap-1 px-2 py-1 rounded hover:bg-blue-100 cursor-pointer text-[13px] text-gray-900"
+                      (click)="selectFolder(greatGrandchild)">
+                      <button
+                        type="button"
+                        (click)="toggleFolder(greatGrandchild); $event.stopPropagation()"
+                        class="w-5 h-5 flex items-center justify-center text-sm font-bold text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0"
+                        [class.text-blue-600]="greatGrandchild.expanded"
+                        [class.invisible]="!greatGrandchild.hasChildren && greatGrandchild.loaded"
+                        [attr.aria-expanded]="greatGrandchild.expanded"
+                        [attr.aria-label]="greatGrandchild.expanded ? 'Collapse' : 'Expand'">
+                        @if (greatGrandchild.expanded) {
+                        <span class="text-[12px]">▼</span>
+                        } @else {
+                        <span class="text-[12px]">▶</span>
+                        }
+                      </button>
+                      <span>{{ greatGrandchild.name }}</span>
+                    </div>
+                    }
+                    }
+                  </div>
+                  }
+                </div>
+                }
+                }
+              </div>
+              }
+            </div>
+            }
+            } @else if (drive.loaded) {
+            <div class="px-2 py-1 text-[12px] text-gray-400 italic">
+              No folders found
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+
+      @if (loading) {
+      <div class="p-4 text-center text-gray-500 text-[13px]">Loading...</div>
+      }
+    </div>
+
+    <!-- Bottom Section: Path and File Selection -->
+    <div class="border-t border-gray-700 bg-gray-800 p-4 space-y-3">
+      <!-- Selected path -->
+      <div>
+        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Selected path:</label>
+        <input
+          type="text"
+          class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+          [(ngModel)]="selectedPath"
+          readonly />
+      </div>
+
+      <!-- Files of type -->
+      <div>
+        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Files of type:</label>
+        <select
+          class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+          [(ngModel)]="fileFilter">
+          <option value="Backup Files(*.bak;*.tm)">Backup Files(*.bak;*.tm)</option>
+          <option value="All Files(*.*)">All Files(*.*)</option>
+        </select>
+      </div>
+
+      <!-- File name -->
+      <div>
+        <label class="block text-[11px] font-semibold text-gray-300 mb-1">File name:</label>
+        <input
+          type="text"
+          class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+          [(ngModel)]="selectedFileName"
+          (ngModelChange)="onFileNameChange()"
+          placeholder="Enter file name" />
+      </div>
+
+      @if (errorMessage) {
+      <div class="text-sm text-red-400">{{ errorMessage }}</div>
+      }
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="flex justify-end gap-3 border-t border-gray-700 bg-gray-800 px-5 py-2">
+    <button
+      class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+      (click)="closeDialog()">
+      Cancel
+    </button>
+    <button (click)="save()" class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white">OK</button>
+  </div>
+</div>
+

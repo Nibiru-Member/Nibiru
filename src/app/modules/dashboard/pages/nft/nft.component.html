@@ -85,97 +85,18 @@
             </tr>
           </thead>
           <tbody class="bg-muted">
-            <tr *ngFor="let f of mdfFiles" class="transition-colors hover:bg-gray-700">
-              <!-- Action Column -->
-              <!-- inside *ngFor="let f of files" -->
-              <td class="px-6 py-3">
-                <div class="relative overflow-visible">
-                  <!-- Three-dots Button -->
-                  <button
-                    type="button"
-                    class="rounded-md bg-gray-700 px-2 py-1 hover:bg-gray-600"
-                    (click)="openMenu($event, f); $event.stopPropagation()">
-                    <svg-icon src="assets/icons/heroicons/outline/ellipsis-vertical1.svg" [svgClass]="'h-5 w-5'">
-                    </svg-icon>
+            @for (f of mdfFiles; track $index; let index = $index) {
+            <tr class="transition-colors hover:bg-gray-700">
+              <td class="px-6 py-3" (click)="$event.stopPropagation(); toggleMdfMenu(index, f, $event)">
+                <div class="relative inline-block text-center">
+                  <!-- BUTTON -->
+                  <button class="role-menu-button rounded-md bg-gray-700 px-2 py-1">
+                    <svg-icon
+                      src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
+                      [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
                   </button>
                 </div>
               </td>
-
-              <!-- GLOBAL CONTEXT MENU OVERLAY -->
-              @if (menu.visible) {
-              <div
-                class="fixed z-[99999] min-w-[180px] rounded-md border border-gray-700 bg-gray-800 shadow-lg"
-                [style.top.px]="menu.y"
-                [style.left.px]="menu.x"
-                (click)="$event.stopPropagation()"
-                (mouseleave)="closeMenu()">
-                <!-- ================= TASK (WITH SUBMENU) ================= -->
-                <div
-                  class="group relative flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700">
-                  <span class="text-sm text-white">Task</span>
-                  <span class="text-gray-400">▶</span>
-
-                  <!-- SUBMENU -->
-                  <div
-                    class="absolute left-full top-0 ml-1 hidden min-w-[190px] rounded-md border border-gray-700 bg-gray-900 shadow-md group-hover:block">
-                    <div
-                      class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
-                      (click)="onAttachDatabase(menu.row); closeMenu()">
-                      <span class="ml-2 text-sm text-white">Attach Database</span>
-                    </div>
-
-                    <div
-                      class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
-                      (click)="onDetachDatabase(menu.row); closeMenu()">
-                      <span class="ml-2 text-sm text-white">Detach Database</span>
-                    </div>
-
-                    <!-- Take Offline -->
-                    <div
-                      class="flex items-center px-4 py-2"
-                      [class.cursor-pointer]="!isOffline"
-                      [class.opacity-50]="isOffline"
-                      [class.pointer-events-none]="isOffline"
-                      [class.hover:bg-gray-700]="!isOffline"
-                      (click)="!isOffline && openCloseConnectionsDialog(menu.row, true); closeMenu()">
-                      <span class="ml-2 text-sm text-white">Take Offline</span>
-                    </div>
-
-                    <!-- Bring Online -->
-                    <div
-                      class="flex items-center px-4 py-2"
-                      [class.cursor-pointer]="isOffline"
-                      [class.opacity-50]="!isOffline"
-                      [class.pointer-events-none]="!isOffline"
-                      [class.hover:bg-gray-700]="isOffline"
-                      (click)="isOffline && openCloseConnectionsDialog(menu.row, false); closeMenu()">
-                      <span class="ml-2 text-sm text-white">Bring Online</span>
-                    </div>
-
-                    <!-- Backup -->
-                    <div
-                      class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
-                      (click)="backupMdfFile(menu.row); closeMenu()">
-                      <span class="ml-2 text-sm text-white">Backup</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- ================= INDEX REORG ================= -->
-                <div
-                  class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
-                  (click)="onIndexReorg(menu.row); closeMenu()">
-                  <span class="text-sm text-white">Index Reorg</span>
-                </div>
-
-                <!-- ================= REINDEX ================= -->
-                <div
-                  class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
-                  (click)="onReindex(menu.row); closeMenu()">
-                  <span class="text-sm text-white">Reindex</span>
-                </div>
-              </div>
-              }
 
               <td class="break-words px-3 py-2 font-medium">
                 <a (click)="openDetailedFragmentation(f)" class="cursor-pointer underline underline-offset-1">
@@ -197,9 +118,71 @@
                 {{ f.statusWithIndex }}
               </td>
             </tr>
+            }
+            
+            <!-- MDF Menu Overlay (Fixed Position) -->
+            @if (openMdfMenuIndex !== null && mdfMenuPosition) {
+            <div
+              class="fixed z-[99999] min-w-[180px] rounded-md border border-gray-700 bg-gray-800 shadow-lg"
+              [style.top.px]="mdfMenuPosition.y"
+              [style.left.px]="mdfMenuPosition.x"
+              (click)="$event.stopPropagation()">
+              <!-- ================= TASK (WITH SUBMENU) ================= -->
+              <div
+                class="group relative flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700">
+                <span class="text-sm text-white">Task</span>
+                <span class="text-gray-400">▶</span>
+
+                <!-- SUBMENU -->
+                <div
+                  class="absolute left-full top-0 ml-1 hidden min-w-[190px] rounded-md border border-gray-700 bg-gray-900 shadow-md group-hover:block">
+                  <div
+                    class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
+                    (click)="onAttachDatabase(menu.row); closeMdfMenu()">
+                    <span class="ml-2 text-sm text-white">Attach Database</span>
+                  </div>
+
+                  <div
+                    class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
+                    (click)="onDetachDatabase(menu.row); closeMdfMenu()">
+                    <span class="ml-2 text-sm text-white">Detach Database</span>
+                  </div>
+
+                  <!-- Take Offline -->
+                  <div
+                    class="flex items-center px-4 py-2"
+                    [class.cursor-pointer]="!isOffline"
+                    [class.opacity-50]="isOffline"
+                    [class.pointer-events-none]="isOffline"
+                    [class.hover:bg-gray-700]="!isOffline"
+                    (click)="!isOffline && openCloseConnectionsDialog(menu.row, true); closeMdfMenu()">
+                    <span class="ml-2 text-sm text-white">Take Offline</span>
+                  </div>
+
+                  <!-- Bring Online -->
+                  <div
+                    class="flex items-center px-4 py-2"
+                    [class.cursor-pointer]="isOffline"
+                    [class.opacity-50]="!isOffline"
+                    [class.pointer-events-none]="!isOffline"
+                    [class.hover:bg-gray-700]="isOffline"
+                    (click)="isOffline && openCloseConnectionsDialog(menu.row, false); closeMdfMenu()">
+                    <span class="ml-2 text-sm text-white">Bring Online</span>
+                  </div>
+                </div>
+              </div>
+              <!-- ================= BACKUP ================= -->
+              <div
+                class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
+                (click)="backupMdfFile(menu.row); closeMdfMenu()">
+                <span class="text-sm text-sm text-white">Backup</span>
+              </div>
+            </div>
+            }
+            
             @if (mdfFiles.length === 0) {
             <tr>
-              <td colspan="12" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
+              <td colspan="7" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
             </tr>
             }
           </tbody>
@@ -209,7 +192,6 @@
 
     <!-- INDEX STATISTICS -->
     <section
-      (click)="openMenuIndex = null; openSubMenu = null"
       class="bg-muted mb-8 max-h-[400px] rounded-lg shadow-lg">
       <div class="w-full bg-primary px-4 py-3 text-sm uppercase tracking-widest text-white">INDEX STATISTICS</div>
       <div class="p-3 max-h-[350px] overflow-y-auto" style="padding: 0px !important;">
@@ -234,7 +216,7 @@
           <tbody class="bg-muted">
             @for (f of indexFilesReviews; track index; let index = $index) {
             <tr class="cursor-pointer transition-colors hover:bg-gray-700">
-              <td class="px-6 py-3" (click)="$event.stopPropagation(); toggleMenu(index)">
+              <td class="px-6 py-3" (click)="$event.stopPropagation(); toggleMenu(index, $event)">
                 <div class="relative inline-block text-center">
                   <!-- BUTTON -->
                   <button class="role-menu-button rounded-md bg-gray-700 px-2 py-1">
@@ -242,47 +224,6 @@
                       src="assets/icons/heroicons/outline/ellipsis-vertical1.svg"
                       [svgClass]="'h-5 w-5 cursor-pointer'"></svg-icon>
                   </button>
-
-                  <!-- Main Dropdown -->
-                  @if ( openMenuIndex === index) {
-                  <div
-                    class="absolute left-0 z-50 mt-1 w-48 rounded bg-gray-800 text-white shadow-lg"
-                    (click)="$event.stopPropagation()">
-                    <button class="block w-full px-3 py-2 text-left hover:bg-gray-700">Adjust Threshold</button>
-                    <button class="block w-full px-3 py-2 text-left hover:bg-gray-700">Adjust Fill Factor</button>
-
-                    <!-- Submenu — Run Now -->
-                    <div class="relative">
-                      <button class="w-full px-3 py-2 text-left hover:bg-gray-700" (click)="toggleSubMenu('run')">
-                        <div class="group relative flex cursor-pointer items-center justify-between">
-                          <span class="text-sm text-white">Run Now</span>
-                          <span class="text-gray-400">▶</span>
-                        </div>
-                      </button>
-                      @if (openSubMenu === 'run'){
-                      <div class="absolute left-full top-0 z-50 w-40 rounded bg-gray-700 shadow-lg">
-                        <button class="block w-full px-3 py-2 text-left">Rebuild</button>
-                        <button class="block w-full px-3 py-2 text-left">ReIndex</button>
-                      </div>
-                      }
-                    </div>
-                    <!-- Submenu — Schedule -->
-                    <div class="relative">
-                      <button class="w-full px-3 py-2 text-left hover:bg-gray-700" (click)="toggleSubMenu('schedule')">
-                        <div class="group relative flex cursor-pointer items-center justify-between">
-                          <span class="text-sm text-white">Schedule</span>
-                          <span class="text-gray-400">▶</span>
-                        </div>
-                      </button>
-                      @if (openSubMenu === 'schedule'){
-                      <div class="absolute left-full top-0 z-50 w-56 rounded bg-gray-700 shadow-lg">
-                        <button class="block w-full px-3 py-2 text-left">Update Statistics</button>
-                        <button class="block w-full px-3 py-2 text-left">Recompile Stored Procedures</button>
-                      </div>
-                      }
-                    </div>
-                  </div>
-                  }
                 </div>
               </td>
               <td class="break-words px-3 py-2 font-medium">{{ f.table }}</td>
@@ -312,7 +253,52 @@
                 {{ f.defragmentationStatus }}
               </td>
             </tr>
-            } @if (indexFilesReviews.length === 0) {
+            }
+            
+            <!-- Index Statistics Menu Overlay (Fixed Position) -->
+            @if (openMenuIndex !== null && indexMenuPosition) {
+            <div
+              class="fixed z-[99999] w-48 rounded bg-gray-800 text-white shadow-lg"
+              [style.top.px]="indexMenuPosition.y"
+              [style.left.px]="indexMenuPosition.x"
+              (click)="$event.stopPropagation()">
+              <button class="block w-full px-3 py-2 text-left hover:bg-gray-700">Adjust Threshold</button>
+              <button class="block w-full px-3 py-2 text-left hover:bg-gray-700">Adjust Fill Factor</button>
+
+              <!-- Submenu — Run Now -->
+              <div class="relative">
+                <button class="w-full px-3 py-2 text-left hover:bg-gray-700" (click)="toggleSubMenu('run')">
+                  <div class="group relative flex cursor-pointer items-center justify-between">
+                    <span class="text-sm text-white">Run Now</span>
+                    <span class="text-gray-400">▶</span>
+                  </div>
+                </button>
+                @if (openSubMenu === 'run'){
+                <div class="absolute left-full top-0 z-50 w-40 rounded bg-gray-700 shadow-lg">
+                  <button class="block w-full px-3 py-2 text-left">Rebuild</button>
+                  <button class="block w-full px-3 py-2 text-left">ReIndex</button>
+                </div>
+                }
+              </div>
+              <!-- Submenu — Schedule -->
+              <div class="relative">
+                <button class="w-full px-3 py-2 text-left hover:bg-gray-700" (click)="toggleSubMenu('schedule')">
+                  <div class="group relative flex cursor-pointer items-center justify-between">
+                    <span class="text-sm text-white">Schedule</span>
+                    <span class="text-gray-400">▶</span>
+                  </div>
+                </button>
+                @if (openSubMenu === 'schedule'){
+                <div class="absolute left-full top-0 z-50 w-56 rounded bg-gray-700 shadow-lg">
+                  <button class="block w-full px-3 py-2 text-left">Update Statistics</button>
+                  <button class="block w-full px-3 py-2 text-left">Recompile Stored Procedures</button>
+                </div>
+                }
+              </div>
+            </div>
+            }
+            
+            @if (indexFilesReviews.length === 0) {
             <tr>
               <td colspan="13" class="px-3 py-2 text-center text-gray-400">No Record Found.</td>
             </tr>
