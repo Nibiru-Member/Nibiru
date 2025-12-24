@@ -70,7 +70,7 @@
           <label class="text-[13px]">Database:</label>
           <input
             type="text"
-            class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white focus:border-primary focus:outline-none"
+            class="space-y-2 w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white focus:border-primary focus:outline-none"
             [(ngModel)]="selectedDatabase" />
         </div>
 
@@ -79,7 +79,7 @@
           <label class="text-[13px]">Recovery model:</label>
           <input
             type="text"
-            class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-gray-400"
+            class="space-y-2 w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-gray-400"
             [value]="recoveryModel"
             readonly />
         </div>
@@ -88,7 +88,7 @@
         <div class="grid grid-cols-[140px,1fr] items-center gap-2">
           <label class="text-[13px]">Backup type:</label>
           <select
-            class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+            class="space-y-2 w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
             [(ngModel)]="selectedBackupType"
             (ngModelChange)="onBackupTypeChange($event)">
             <option *ngFor="let t of backupTypes" [value]="t">{{ t }}</option>
@@ -117,7 +117,7 @@
         <div class="grid grid-cols-[140px,1fr] items-center gap-2">
           <label class="text-[13px]">Back up to:</label>
           <select
-            class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+            class="space-y-2 w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
             [(ngModel)]="backupDeviceType">
             <option value="Disk">Disk</option>
             <option value="Url">URL</option>
@@ -152,14 +152,14 @@
           <div class="flex w-[90px] flex-col gap-1">
             <button
               type="button"
-              class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600"
+              class="space-y-2 rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600"
               (click)="openDestinationDialog()">
               Add...
             </button>
 
             <button
               type="button"
-              class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              class="space-y-2 rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
               [disabled]="selectedDestinationIndex === -1 || destinations.length === 0"
               (click)="onRemoveDestination()">
               Remove
@@ -167,7 +167,7 @@
 
             <button
               type="button"
-              class="h-[26px] rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              class="space-y-2 rounded border border-gray-600 bg-gray-700 px-2 text-left text-[12px] hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
               [disabled]="selectedDestinationIndex === -1 || destinations.length === 0"
               (click)="onDestinationContents()">
               Contents
@@ -233,7 +233,7 @@
               @if (mediaSetNameRequired) {
               <input
                 type="text"
-                class="ml-6 h-[26px] w-full max-w-md rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+                class="ml-6 space-y-2 w-full max-w-md rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
                 [(ngModel)]="mediaSetName"
                 placeholder="Enter media set name" />
               }
@@ -249,7 +249,7 @@
               @if (mediaSetDescriptionRequired) {
               <input
                 type="text"
-                class="ml-6 h-[26px] w-full max-w-md rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+                class="ml-6 space-y-2 w-full max-w-md rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
                 [(ngModel)]="mediaSetDescription"
                 placeholder="Enter media set description" />
               }
@@ -341,7 +341,7 @@
           <div class="ml-6 flex items-center gap-2">
             <input
               type="number"
-              class="h-[26px] w-20 rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+              class="space-y-2 w-20 rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
               [(ngModel)]="expirationDays"
               min="0" />
             <span class="text-[13px]">days</span>
@@ -360,7 +360,7 @@
           @if (expirationOption === 'on') {
           <input
             type="date"
-            class="ml-6 h-[26px] w-48 rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+            class="ml-6 space-y-2 w-48 rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
             [(ngModel)]="expirationDate" />
           }
         </div>
@@ -426,7 +426,7 @@
             <div class="grid grid-cols-[140px,1fr] items-center gap-2">
               <label class="text-[13px]">Algorithm:</label>
               <select
-                class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+                class="space-y-2 w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
                 [(ngModel)]="encryptionAlgorithm">
                 <option value="AES128">AES 128</option>
                 <option value="AES192">AES 192</option>
@@ -438,7 +438,7 @@
             <div class="grid grid-cols-[140px,1fr] items-center gap-2">
               <label class="text-[13px]">Certificate or Asymmetric key:</label>
               <select
-                class="h-[26px] w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
+                class="space-y-2 w-full rounded border border-gray-600 bg-gray-900 px-2 text-[13px] text-white"
                 [(ngModel)]="encryptionCertificate">
                 <option value="">(Select certificate or key)</option>
               </select>

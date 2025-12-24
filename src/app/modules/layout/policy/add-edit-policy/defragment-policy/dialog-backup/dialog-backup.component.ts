@@ -413,18 +413,32 @@ export class DialogBackupComponent {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
+      console.log('BackDestinationDialog closed, result received:', result);
+      
       if (result?.backupPath) {
         // Add to destinations list
         const path = result.backupPath.trim();
+        console.log('Adding path to destinations list:', path);
+        console.log('Current destinations before add:', this.destinations);
+        
         const exists = this.destinations.some(d => d.fullPath === path);
         if (!exists) {
           this.destinations.push({ fullPath: path });
           this.selectedDestinationIndex = this.destinations.length - 1;
+          console.log('Path added to destinations. New index:', this.selectedDestinationIndex);
         } else {
           // Select existing destination
           this.selectedDestinationIndex = this.destinations.findIndex(d => d.fullPath === path);
+          console.log('Path already exists. Selected index:', this.selectedDestinationIndex);
         }
+        
         this.backupPath = ''; // Clear the input
+        
+        // Force change detection to update the UI
+        this.cdr.detectChanges();
+        console.log('Destinations after add:', this.destinations);
+      } else {
+        console.log('No backupPath in result:', result);
       }
     });
   }

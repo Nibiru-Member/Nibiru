@@ -14,6 +14,8 @@ interface FolderNode {
   loaded: boolean;
   hasChildren: boolean; // Indicates if this node has children (for showing expand indicator)
   isDrive?: boolean; // Optional flag to identify drives
+  loading?: boolean; // Flag to prevent multiple simultaneous loads
+  checking?: boolean; // Flag to prevent multiple simultaneous checks
 }
 
 @Component({
@@ -35,6 +37,7 @@ export class FileBrowserDialogComponent {
   folderTree: FolderNode[] = [];
   selectedPath = '';
   selectedFileName = '';
+  baseFolderPath = ''; // Store the base folder path separately
   fileFilter = 'Backup Files(*.bak;*.tm)';
   loading = false;
   errorMessage = '';
@@ -46,6 +49,21 @@ export class FileBrowserDialogComponent {
     }
     if (this.data?.initialPath) {
       this.selectedPath = this.data.initialPath;
+      // Extract base folder path from initial path if it contains a filename
+      const path = this.data.initialPath;
+      const lastBackslash = path.lastIndexOf('\\');
+      if (lastBackslash !== -1) {
+        const afterBackslash = path.substring(lastBackslash + 1);
+        // Check if it looks like a filename (has extension)
+        if (afterBackslash.includes('.') && (afterBackslash.toLowerCase().endsWith('.bak') || afterBackslash.toLowerCase().endsWith('.tm'))) {
+          this.baseFolderPath = path.substring(0, lastBackslash + 1);
+          this.selectedFileName = afterBackslash;
+        } else {
+          this.baseFolderPath = path.endsWith('\\') ? path : path + '\\';
+        }
+      } else {
+        this.baseFolderPath = path.endsWith('\\') ? path : path + '\\';
+      }
     }
   }
 
@@ -84,20 +102,18 @@ export class FileBrowserDialogComponent {
       loaded: false,
       hasChildren: false, // Will be set after checking
       isDrive: true,
+      loading: false,
+      checking: false,
     }));
     
-    // After building tree, check each drive for children (without expanding)
-    this.folderTree.forEach((drive) => {
-      this.checkForChildren(drive);
-    });
   }
 
   toggleFolder(node: FolderNode) {
     if (!node.expanded) {
       node.expanded = true;
       this.cdr.detectChanges();
-      // Only load if not already loaded
-      if (!node.loaded && node.hasChildren) {
+      // Always try to load when expanding if not already loaded
+      if (!node.loaded && !node.loading) {
         this.loadFolderContents(node);
       }
     } else {
@@ -109,8 +125,13 @@ export class FileBrowserDialogComponent {
   // Check if a node has children (without loading them or expanding)
   // This only sets hasChildren flag, does NOT set loaded=true
   checkForChildren(node: FolderNode) {
+    // Prevent multiple simultaneous checks
+    if (node.checking) return;
+    
     const conn = this.serverState.getConnection();
     if (!conn || !this.serverName) return;
+
+    node.checking = true;
 
     // Normalize path to "C:\" format (single backslash)
     let pathToLoad = node.fullPath.replace(/\\+/g, '\\');
@@ -122,6 +143,8 @@ export class FileBrowserDialogComponent {
       .GetBasicDriveFolderTreeForDropdown(this.serverName, conn.username, conn.password, pathToLoad)
       .subscribe({
         next: (resp: any) => {
+          node.checking = false;
+          
           // Check for errors
           if (resp?.statusCode !== 200 || (resp?.message && resp.message.toLowerCase().includes('error'))) {
             node.hasChildren = false;
@@ -151,6 +174,7 @@ export class FileBrowserDialogComponent {
           this.cdr.detectChanges();
         },
         error: (err) => {
+          node.checking = false;
           node.hasChildren = false;
           this.cdr.detectChanges();
           console.error('Error checking for children:', err);
@@ -159,10 +183,14 @@ export class FileBrowserDialogComponent {
   }
 
   loadFolderContents(node: FolderNode) {
+    // Prevent multiple simultaneous loads
+    if (node.loading || node.loaded) return;
+    
     const conn = this.serverState.getConnection();
     if (!conn || !this.serverName) return;
 
     // Set loading state for this specific node
+    node.loading = true;
     node.loaded = false;
     this.cdr.detectChanges();
     
@@ -176,6 +204,8 @@ export class FileBrowserDialogComponent {
       .GetBasicDriveFolderTreeForDropdown(this.serverName, conn.username, conn.password, pathToLoad)
       .subscribe({
         next: (resp: any) => {
+          node.loading = false;
+          
           // Check for errors in response
           if (resp?.statusCode !== 200 || (resp?.message && resp.message.toLowerCase().includes('error'))) {
             this.errorMessage = resp?.message || 'Unable to load folder contents.';
@@ -198,18 +228,11 @@ export class FileBrowserDialogComponent {
             return;
           }
           
-          // Filter to get direct children only
-          const parentPath = node.fullPath.endsWith('\\') ? node.fullPath : node.fullPath + '\\';
-          const childFolders = folders.filter((f: any) => {
-            const folderPath = (f.fullPath || f.path || '').toString();
-            return folderPath.toLowerCase().startsWith(parentPath.toLowerCase()) && 
-                   folderPath.toLowerCase() !== node.fullPath.toLowerCase();
-          });
-          
+          // Use all folders returned by the API directly (no filtering needed)
           // Create child nodes
-          node.children = childFolders.map((f: any) => {
-            const fullPath = (f.fullPath || f.path || f.FullPath || '').toString();
-            let name = (f.name || f.folderName || f.Name || '').toString();
+          node.children = folders.map((f: any) => {
+            const fullPath = (f.fullPath || f.path || f.FullPath || '').toString().trim();
+            let name = (f.name || f.folderName || f.Name || '').toString().trim();
             
             // If no name, extract from fullPath
             if (!name && fullPath) {
@@ -225,18 +248,19 @@ export class FileBrowserDialogComponent {
               loaded: false,
               hasChildren: false, // Will be checked when user expands
               isDrive: false,
+              loading: false,
+              checking: false,
             };
           });
 
-          // After loading children, check each child for its own children
-          node.children.forEach((child) => {
-            this.checkForChildren(child);
-          });
+          // Set hasChildren based on actual children loaded
+          node.hasChildren = node.children.length > 0;
 
           node.loaded = true;
           this.cdr.detectChanges();
         },
         error: (err) => {
+          node.loading = false;
           this.errorMessage = 'Unable to load folder contents.';
           node.loaded = true;
           node.hasChildren = false;
@@ -248,16 +272,42 @@ export class FileBrowserDialogComponent {
 
 
   selectFolder(node: FolderNode) {
-    this.selectedPath = node.fullPath;
+    this.baseFolderPath = node.fullPath.endsWith('\\') ? node.fullPath : node.fullPath + '\\';
+    this.selectedPath = this.baseFolderPath;
     this.selectedFileName = '';
+    this.errorMessage = ''; // Clear error when selecting new folder
   }
 
   onFileNameChange() {
-    // Update selected path when user types filename
-    if (this.selectedPath && this.selectedFileName) {
-      const basePath = this.selectedPath.includes('.') ? this.selectedPath.substring(0, this.selectedPath.lastIndexOf('\\') + 1) : this.selectedPath;
-      const path = basePath.endsWith('\\') ? basePath : basePath + '\\';
-      this.selectedPath = path + this.selectedFileName;
+    // Clear error message when user types
+    this.errorMessage = '';
+    
+    // Ensure baseFolderPath is set (fallback to selectedPath if not set)
+    if (!this.baseFolderPath && this.selectedPath) {
+      // Extract base path from current selectedPath if it contains a filename
+      const lastBackslash = this.selectedPath.lastIndexOf('\\');
+      if (lastBackslash !== -1) {
+        const potentialBase = this.selectedPath.substring(0, lastBackslash + 1);
+        // Check if the part after last backslash looks like a filename (has extension)
+        const afterBackslash = this.selectedPath.substring(lastBackslash + 1);
+        if (afterBackslash.includes('.') && (afterBackslash.toLowerCase().endsWith('.bak') || afterBackslash.toLowerCase().endsWith('.tm'))) {
+          this.baseFolderPath = potentialBase;
+        } else {
+          this.baseFolderPath = this.selectedPath.endsWith('\\') ? this.selectedPath : this.selectedPath + '\\';
+        }
+      } else {
+        this.baseFolderPath = this.selectedPath.endsWith('\\') ? this.selectedPath : this.selectedPath + '\\';
+      }
+    }
+
+    // Update selected path based on filename
+    if (this.selectedFileName && this.selectedFileName.trim()) {
+      // User is typing a filename - append it to base path
+      const fileName = this.selectedFileName.trim();
+      this.selectedPath = this.baseFolderPath + fileName;
+    } else {
+      // User deleted the filename - reset to base folder path
+      this.selectedPath = this.baseFolderPath;
     }
   }
 
@@ -266,17 +316,58 @@ export class FileBrowserDialogComponent {
   }
 
   save() {
-    if (!this.selectedPath) {
+    // Clear previous error messages
+    this.errorMessage = '';
+
+    // Validation 1: Check if path is selected
+    if (!this.selectedPath || this.selectedPath.trim() === '') {
       this.errorMessage = 'Please select a path.';
+      this.cdr.detectChanges();
       return;
     }
 
-    // Ensure .bak extension if it's a file
-    if (this.selectedFileName && !this.selectedPath.toLowerCase().endsWith('.bak')) {
-      this.selectedPath = this.selectedPath + '.bak';
+    const trimmedPath = this.selectedPath.trim();
+    const trimmedFileName = (this.selectedFileName || '').trim();
+
+    // Determine the actual filename to validate
+    // Check if selectedPath already contains a filename (has an extension)
+    let fileNameToValidate = '';
+    let finalPath = trimmedPath;
+
+    // Check if path ends with .bak or .tm (filename already in path)
+    const lowerPath = trimmedPath.toLowerCase();
+    if (lowerPath.endsWith('.bak') || lowerPath.endsWith('.tm')) {
+      // Extract filename from path
+      const lastBackslash = trimmedPath.lastIndexOf('\\');
+      if (lastBackslash !== -1) {
+        fileNameToValidate = trimmedPath.substring(lastBackslash + 1);
+      } else {
+        fileNameToValidate = trimmedPath;
+      }
+    } else if (trimmedFileName) {
+      // Use the filename from input field
+      fileNameToValidate = trimmedFileName;
+      // Build full path
+      const basePath = trimmedPath.endsWith('\\') ? trimmedPath : trimmedPath + '\\';
+      finalPath = basePath + trimmedFileName;
+    } else {
+      // No filename provided
+      this.errorMessage = 'Please enter a file name.';
+      this.cdr.detectChanges();
+      return;
     }
 
-    this.dialogRef.close({ fileName: this.selectedPath });
+    // Validation 2: Check file extension (.bak or .tm)
+    const lowerFileName = fileNameToValidate.toLowerCase();
+    if (!lowerFileName.endsWith('.bak') && !lowerFileName.endsWith('.tm')) {
+      this.errorMessage = 'File name extension must be .bak or .tm';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // All validations passed, close dialog with the result
+    console.log('FileBrowserDialog closing with result:', { fileName: finalPath });
+    this.dialogRef.close({ fileName: finalPath });
   }
 
   // Recursive function to render folder tree

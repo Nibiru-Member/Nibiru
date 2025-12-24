@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
@@ -21,6 +21,7 @@ export class BackDestinationDialogComponent {
   private toast = inject(ToasterService);
   private dialog = inject(MatDialog);
   private overlay = inject(Overlay);
+  private cdr = inject(ChangeDetectorRef);
   data = inject(MAT_DIALOG_DATA, { optional: true });
   backupPath = ''; // free text / helper path
   loadingDrives = false;
@@ -38,7 +39,10 @@ export class BackDestinationDialogComponent {
   ngOnInit() {
     this.selectServer = this.data.serverName;
     this.selectedDatabase = this.data.databaseName;
-    this.loadDrives();
+    // Use setTimeout to defer loadDrives to next tick to avoid ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.loadDrives();
+    }, 0);
   }
 
   onDriveChange() {
@@ -64,6 +68,7 @@ export class BackDestinationDialogComponent {
     if (!conn || !this.selectedDrive || !this.selectServer) return;
 
     this.loadingFolders = true;
+    this.cdr.detectChanges();
     console.log(this.selectedDrive, 'selectedDrive');
     this.serverApi
       .GetBasicDriveFolderTreeForDropdown(this.selectServer, conn.username, conn.password, this.selectedDrive)
@@ -71,10 +76,12 @@ export class BackDestinationDialogComponent {
         next: (resp: any) => {
           this.folders = resp?.data || [];
           this.loadingFolders = false;
+          this.cdr.detectChanges();
         },
         error: (err) => {
           this.loadingFolders = false;
           this.errorMessage = 'Unable to load folders.';
+          this.cdr.detectChanges();
           console.error(err);
         },
       });
@@ -85,14 +92,17 @@ export class BackDestinationDialogComponent {
     if (!conn) return;
 
     this.loadingDrives = true;
+    this.cdr.detectChanges();
     this.serverApi.GetDiskDriveListForDropdown(this.selectServer, conn.username, conn.password).subscribe({
       next: (resp: any) => {
         this.drives = resp?.data || [];
         this.loadingDrives = false;
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.loadingDrives = false;
         this.errorMessage = 'Unable to load drives.';
+        this.cdr.detectChanges();
         console.error(err);
       },
     });
@@ -126,34 +136,80 @@ export class BackDestinationDialogComponent {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result?.fileName) {
-        this.backupPath = result.fileName;
-        // Update drive and folder if path is set
+      console.log('FileBrowserDialog closed, result received:', result);
+      console.log('Current backupPath before update:', this.backupPath);
+      
+      // Handle result - check both result.fileName and direct result string
+      let filePath = '';
+      if (result) {
+        if (typeof result === 'string') {
+          filePath = result;
+        } else if (result.fileName) {
+          filePath = result.fileName;
+        }
+      }
+      
+      if (filePath) {
+        console.log('Setting backupPath to:', filePath);
+        
+        // Copy the selected path to the File name field (backupPath)
+        this.backupPath = filePath;
+        this.fileName = filePath;
+        this.errorMessage = '';
+        
+        console.log('backupPath after assignment:', this.backupPath);
+        
+        // Update drive and folder if path is set (optional - for UI consistency)
         if (this.backupPath) {
           const pathParts = this.backupPath.split('\\');
-          if (pathParts.length > 0) {
-            const driveLetter = pathParts[0].charAt(0);
-            this.selectedDrive = driveLetter;
-            this.onDriveChange();
+          if (pathParts.length > 0 && pathParts[0]) {
+            const drivePart = pathParts[0];
+            // Extract drive letter (e.g., "C:" or "C:\")
+            const driveMatch = drivePart.match(/^([A-Za-z]):/);
+            if (driveMatch) {
+              this.selectedDrive = driveMatch[1] + ':';
+            }
           }
         }
+        
+        // Force change detection immediately
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
+        
+        // Also trigger in next tick to ensure UI updates
+        setTimeout(() => {
+          this.cdr.detectChanges();
+          console.log('Change detection triggered after timeout, backupPath:', this.backupPath);
+        }, 10);
+      } else {
+        console.log('Dialog closed without valid file path. Result:', result);
       }
     });
   }
 
   save() {
     this.errorMessage = '';
-    const cleanPath = this.backupPath.trim().toLowerCase();
-    if (!cleanPath.endsWith('.bak')) {
-      this.errorMessage = '.bak extension is required.';
+    const cleanPath = this.backupPath.trim();
+    
+    // Validation: Check if path is provided
+    if (!cleanPath) {
+      this.errorMessage = 'Please select a backup path.';
       return;
     }
+    
+    // Validation: Check file extension (.bak or .tm)
+    const lowerPath = cleanPath.toLowerCase();
+    if (!lowerPath.endsWith('.bak') && !lowerPath.endsWith('.tm')) {
+      this.errorMessage = 'File extension must be .bak or .tm';
+      return;
+    }
+    
     const payload: any = {
       databaseName: this.selectedDatabase,
-      backupPath: this.backupPath.trim(),
+      backupPath: cleanPath,
       server: this.selectServer,
     };
-    console.log(payload, 'updated Payload');
+    console.log('BackDestinationDialog closing with payload:', payload);
     this.dialogRef.close(payload);
   }
 }
