@@ -41,8 +41,9 @@ export class DialogDefagBackupComponent {
   destinations: { fullPath: string }[] = [];
   selectedDestinationIndex = -1;
 
-  mdfFiles: Array<{ location: string }> = [];
+  mdfFiles: Array<{ location: string; statusWithIndex?: string }> = [];
   location: string = '';
+  statusWithIndex: string | null = null;
 
   saving = false;
   authUser: any;
@@ -130,11 +131,19 @@ export class DialogDefagBackupComponent {
         if (mdfRes && mdfRes.success && Array.isArray(mdfRes.data)) {
           this.mdfFiles = mdfRes.data.map((m: any) => ({
             location: m.location,
+            statusWithIndex: m.statusWithIndex,
           }));
-          this.location = this.mdfFiles.length > 0 ? this.mdfFiles[0].location : '';
+          if (this.mdfFiles.length > 0) {
+            this.location = this.mdfFiles[0].location;
+            this.statusWithIndex = this.mdfFiles[0].statusWithIndex || null;
+          } else {
+            this.location = '';
+            this.statusWithIndex = null;
+          }
         } else {
           this.mdfFiles = [];
           this.location = '';
+          this.statusWithIndex = null;
         }
 
         this.cdr.markForCheck();
@@ -209,6 +218,7 @@ export class DialogDefagBackupComponent {
       databaseName: this.selectedDatabase,
       backupPath: this.backupPath.trim(),
       mdfFilePath: this.location,
+      statusWithIndex: this.statusWithIndex,
     };
 
     this.saving = true;

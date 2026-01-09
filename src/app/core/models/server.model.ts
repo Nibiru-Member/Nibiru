@@ -32,17 +32,3 @@ export interface attachDatabasePayload {
   mdfFilePath: string;
   ldfFilePath: string;
 }
-export interface DatabaseTableColunm {
-  server: string;
-  database: string;
-  table: string;
-  username: string;
-  password: string;
-}
-export interface DatabaseTableColunm {
-  server: string;
-  database: string;
-  table: string;
-  username: string;
-  password: string;
-}

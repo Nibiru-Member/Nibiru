@@ -289,6 +289,7 @@ export class ServerComponent implements OnInit, OnDestroy {
               innerConnectionID: this.innerConnectionId,
             };
             this.serverState.setConnection(connection);
+            this.serverState.setLinkedServerName(res.data.linkedServerName);
             this.isConnecting = false;
             this.cdr.detectChanges();
             this.closeDialog();

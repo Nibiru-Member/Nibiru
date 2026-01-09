@@ -1,0 +1,431 @@
+import { Component, inject, Inject, ViewEncapsulation } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { CommonModule } from '@angular/common';
+import { AngularSvgIconModule } from 'angular-svg-icon';
+import { NgxSliderModule, Options } from '@angular-slider/ngx-slider';
+
+export interface IndexSettingsData {
+  // Filters
+  objectReorgSizeMin: number;
+  objectReorgSizeMax: number;
+  objectReorgSizeCurrent: number;
+  objectRebuildSizeMin: number;
+  objectRebuildSizeMax: number;
+  objectRebuildSizeCurrent: number;
+  
+  ignoreThreshold: number;
+  reorganizeThreshold: number;
+  rebuildThreshold: number;
+  
+  // Object Scan
+  heap: boolean;
+  clustered: boolean;
+  nonClustered: boolean;
+  missingIndex: boolean;
+  clusteredColumnstore: boolean;
+  nonClusteredColumnstore: boolean;
+  ignoreReadOnlyFilegroups: boolean;
+  ignoreObjectPermissions: boolean;
+  ignoreHeapWithCompression: boolean;
+  onlyWhenRowsGreaterThan1000: boolean;
+  
+  // Indexes
+  fragmentationScanMode: string;
+  dataCompression: string;
+  fillFactor: number;
+  maxDop: number;
+  lobCompaction: boolean;
+  sortInTempdb: boolean;
+  padIndex: boolean;
+  online: boolean;
+  waitAtLowPriority: boolean;
+  maxDuration: number;
+  abortAfterWait: string;
+  statisticsSamplePercent: number;
+  statisticsNoRecompute: string;
+}
+
+@Component({
+  selector: 'app-index-settings',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, AngularSvgIconModule, NgxSliderModule],
+  templateUrl: './index-settings.component.html',
+  styleUrl: './index-settings.component.css',
+  encapsulation: ViewEncapsulation.None,
+})
+export class IndexSettingsComponent {
+  settingsForm: FormGroup;
+  private fb = inject(FormBuilder);
+
+  // Slider values for dual-range slider (bound to form)
+  get objectReorgSizeMinValue(): number {
+    return this.settingsForm.get('objectReorgSizeMin')?.value || 0;
+  }
+  set objectReorgSizeMinValue(value: number) {
+    this.settingsForm.patchValue({ objectReorgSizeMin: value }, { emitEvent: false });
+    this.ensureCurrentWithinRange();
+  }
+
+  get objectReorgSizeMaxValue(): number {
+    const value = this.settingsForm.get('objectReorgSizeMax')?.value;
+    // Ensure max value is within valid range
+    if (value === null || value === undefined) {
+      return 256; // Default to ceil value
+    }
+    return Math.max(Math.min(value, 256), 0); // Clamp between 0 and 256
+  }
+  set objectReorgSizeMaxValue(value: number) {
+    const clampedValue = Math.max(Math.min(value, 256), 0); // Clamp between 0 and 256
+    this.settingsForm.patchValue({ objectReorgSizeMax: clampedValue }, { emitEvent: false });
+    this.ensureMinLessThanMax();
+    this.ensureCurrentWithinRange();
+  }
+
+  // Slider value for single-range slider (current value)
+  get objectReorgSizeCurrentValue(): number {
+    const value = this.settingsForm.get('objectReorgSizeCurrent')?.value;
+    if (value === null || value === undefined) {
+      return 121; // Default value
+    }
+    // Ensure current value is within min-max range
+    const min = this.settingsForm.get('objectReorgSizeMin')?.value || 0;
+    const max = this.settingsForm.get('objectReorgSizeMax')?.value || 256;
+    return Math.max(Math.min(value, max), min);
+  }
+  set objectReorgSizeCurrentValue(value: number) {
+    // Clamp between min and max
+    const min = this.settingsForm.get('objectReorgSizeMin')?.value || 0;
+    const max = this.settingsForm.get('objectReorgSizeMax')?.value || 256;
+    const clampedValue = Math.max(Math.min(value, max), min);
+    this.settingsForm.patchValue({ objectReorgSizeCurrent: clampedValue }, { emitEvent: false });
+  }
+
+  // Slider options for single-range slider (current value - rerorg)
+  get objectReorgSizeCurrentSliderOptions(): Options {
+    const min = this.settingsForm.get('objectReorgSizeMin')?.value || 0;
+    const max = this.settingsForm.get('objectReorgSizeMax')?.value || 256;
+    return {
+      floor: Math.max(0, min),
+      ceil: Math.min(256, max),
+      step: 1,
+      getPointerColor: () => {
+        // Get primary color from CSS variable
+        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+      },
+      getSelectionBarColor: () => {
+        // Get primary color from CSS variable
+        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+      },
+      showTicks: false,
+      showTicksValues: false,
+      hidePointerLabels: true,
+      hideLimitLabels: true,
+      // Single pointer slider - no highValue
+    };
+  }
+
+  // Slider value for rebuild single-range slider (current value)
+  get objectRebuildSizeCurrentValue(): number {
+    const value = this.settingsForm.get('objectRebuildSizeCurrent')?.value;
+    if (value === null || value === undefined) {
+      return 8192; // Default value
+    }
+    // Ensure current value is within min-max range
+    const min = this.settingsForm.get('objectRebuildSizeMin')?.value || 512;
+    const max = this.settingsForm.get('objectRebuildSizeMax')?.value || 131072;
+    return Math.max(Math.min(value, max), min);
+  }
+  set objectRebuildSizeCurrentValue(value: number) {
+    // Clamp between min and max
+    const min = this.settingsForm.get('objectRebuildSizeMin')?.value || 512;
+    const max = this.settingsForm.get('objectRebuildSizeMax')?.value || 131072;
+    const clampedValue = Math.max(Math.min(value, max), min);
+    this.settingsForm.patchValue({ objectRebuildSizeCurrent: clampedValue }, { emitEvent: false });
+  }
+
+  // Slider options for rebuild single-range slider (current value)
+  get objectRebuildSizeCurrentSliderOptions(): Options {
+    const min = this.settingsForm.get('objectRebuildSizeMin')?.value || 512;
+    return {
+      floor: 512,
+      ceil: 131072,
+      step: 1,
+      getPointerColor: () => {
+        // Get primary color from CSS variable
+        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+      },
+      getSelectionBarColor: () => {
+        // Get primary color from CSS variable
+        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+      },
+      showTicks: false,
+      showTicksValues: false,
+      hidePointerLabels: true,
+      hideLimitLabels: true,
+      // Show selection bar from first point (min) to end
+      showSelectionBarFromValue: min,
+      showSelectionBarEnd: true,
+    };
+  }
+
+  // Slider options for dual-range slider
+  get objectReorgSizeSliderOptions(): Options {
+    const min = this.settingsForm.get('objectReorgSizeMin')?.value || 0;
+    return {
+      floor: 0,
+      ceil: 256,
+      step: 1,
+      getPointerColor: () => {
+        // Get primary color from CSS variable
+        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+      },
+      getSelectionBarColor: () => {
+        // Get primary color from CSS variable
+        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+      },
+      showTicks: false,
+      showTicksValues: false,
+      hidePointerLabels: true,
+      hideLimitLabels: true,
+      // Show selection bar from first point (min) - this will show from min to min pointer (no bar)
+      // Combined with showSelectionBarEnd, we'll extend from max to end
+      // We'll use CSS to extend the selection from min to end
+      showSelectionBarEnd: true,
+    };
+  }
+
+  // Fragmentation threshold slider values (dual-range)
+  get fragmentationThresholdMinValue(): number {
+    return this.settingsForm.get('ignoreThreshold')?.value || 15;
+  }
+  set fragmentationThresholdMinValue(value: number) {
+    const clampedValue = Math.max(Math.min(value, 100), 0);
+    const currentMax = this.settingsForm.get('reorganizeThreshold')?.value || 30;
+    const finalValue = Math.min(clampedValue, currentMax); // Ensure min doesn't exceed max
+    // First point changes ignoreThreshold and reorganize's first percentage (lower bound)
+    this.settingsForm.patchValue({ ignoreThreshold: finalValue }, { emitEvent: false });
+  }
+
+  get fragmentationThresholdMaxValue(): number {
+    return this.settingsForm.get('reorganizeThreshold')?.value || 30;
+  }
+  set fragmentationThresholdMaxValue(value: number) {
+    const clampedValue = Math.max(Math.min(value, 100), 0);
+    const currentMin = this.settingsForm.get('ignoreThreshold')?.value || 15;
+    const finalValue = Math.max(clampedValue, currentMin); // Ensure max doesn't go below min
+    // Second point updates reorganize's second percentage and rebuild percentage
+    this.settingsForm.patchValue({ 
+      reorganizeThreshold: finalValue,
+      rebuildThreshold: finalValue 
+    }, { emitEvent: false });
+  }
+
+  // Slider options for fragmentation threshold dual-range slider
+  get fragmentationThresholdSliderOptions(): Options {
+    return {
+      floor: 0,
+      ceil: 100,
+      step: 1,
+      getPointerColor: () => {
+        // Get primary color from CSS variable
+        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+      },
+      getSelectionBarColor: () => {
+        // Get primary color from CSS variable
+        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+      },
+      showTicks: false,
+      showTicksValues: false,
+      hidePointerLabels: true,
+      hideLimitLabels: true,
+      showSelectionBarEnd: true,
+    };
+  }
+
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: Partial<IndexSettingsData> | null,
+    public dialogRef: MatDialogRef<IndexSettingsComponent>
+  ) {
+    const defaultData: IndexSettingsData = {
+      objectReorgSizeMin: 6,
+      objectReorgSizeMax: 128, // Must be within ceil range (0-256)
+      objectReorgSizeCurrent: 121,
+      objectRebuildSizeMin: 512,
+      objectRebuildSizeMax: 131072,
+      objectRebuildSizeCurrent: 8192,
+      ignoreThreshold: 15,
+      reorganizeThreshold: 30,
+      rebuildThreshold: 30,
+      heap: true,
+      clustered: true,
+      nonClustered: true,
+      missingIndex: false,
+      clusteredColumnstore: true,
+      nonClusteredColumnstore: true,
+      ignoreReadOnlyFilegroups: true,
+      ignoreObjectPermissions: true,
+      ignoreHeapWithCompression: false,
+      onlyWhenRowsGreaterThan1000: false,
+      fragmentationScanMode: 'LIMITED',
+      dataCompression: 'DEFAULT',
+      fillFactor: 0,
+      maxDop: 0,
+      lobCompaction: true,
+      sortInTempdb: true,
+      padIndex: false,
+      online: false,
+      waitAtLowPriority: false,
+      maxDuration: 1,
+      abortAfterWait: 'NONE',
+      statisticsSamplePercent: 100,
+      statisticsNoRecompute: 'DEFAULT',
+      ...data
+    };
+
+    this.settingsForm = this.fb.group({
+      // Filters
+      objectReorgSizeMin: [defaultData.objectReorgSizeMin],
+      objectReorgSizeMax: [defaultData.objectReorgSizeMax],
+      objectReorgSizeCurrent: [defaultData.objectReorgSizeCurrent],
+      objectRebuildSizeMin: [defaultData.objectRebuildSizeMin],
+      objectRebuildSizeMax: [defaultData.objectRebuildSizeMax],
+      objectRebuildSizeCurrent: [defaultData.objectRebuildSizeCurrent],
+      ignoreThreshold: [defaultData.ignoreThreshold],
+      reorganizeThreshold: [defaultData.reorganizeThreshold],
+      rebuildThreshold: [defaultData.rebuildThreshold],
+      
+      // Object Scan
+      heap: [defaultData.heap],
+      clustered: [defaultData.clustered],
+      nonClustered: [defaultData.nonClustered],
+      missingIndex: [defaultData.missingIndex],
+      clusteredColumnstore: [defaultData.clusteredColumnstore],
+      nonClusteredColumnstore: [defaultData.nonClusteredColumnstore],
+      ignoreReadOnlyFilegroups: [defaultData.ignoreReadOnlyFilegroups],
+      ignoreObjectPermissions: [defaultData.ignoreObjectPermissions],
+      ignoreHeapWithCompression: [defaultData.ignoreHeapWithCompression],
+      onlyWhenRowsGreaterThan1000: [defaultData.onlyWhenRowsGreaterThan1000],
+      
+      // Indexes
+      fragmentationScanMode: [defaultData.fragmentationScanMode],
+      dataCompression: [defaultData.dataCompression],
+      fillFactor: [defaultData.fillFactor],
+      maxDop: [defaultData.maxDop],
+      lobCompaction: [defaultData.lobCompaction],
+      sortInTempdb: [defaultData.sortInTempdb],
+      padIndex: [defaultData.padIndex],
+      online: [defaultData.online],
+      waitAtLowPriority: [defaultData.waitAtLowPriority],
+      maxDuration: [defaultData.maxDuration],
+      abortAfterWait: [defaultData.abortAfterWait],
+      statisticsSamplePercent: [defaultData.statisticsSamplePercent],
+      statisticsNoRecompute: [defaultData.statisticsNoRecompute],
+    });
+  }
+
+  onDefaults() {
+    // Reset to default values
+    this.settingsForm.patchValue({
+      objectReorgSizeMin: 6,
+      objectReorgSizeMax: 128, // Must be within ceil range
+      objectReorgSizeCurrent: 121,
+      objectRebuildSizeMin: 512,
+      objectRebuildSizeMax: 131072,
+      objectRebuildSizeCurrent: 8192,
+      ignoreThreshold: 15,
+      reorganizeThreshold: 30,
+      rebuildThreshold: 30,
+      heap: true,
+      clustered: true,
+      nonClustered: true,
+      missingIndex: false,
+      clusteredColumnstore: true,
+      nonClusteredColumnstore: true,
+      ignoreReadOnlyFilegroups: true,
+      ignoreObjectPermissions: true,
+      ignoreHeapWithCompression: false,
+      onlyWhenRowsGreaterThan1000: false,
+      fragmentationScanMode: 'LIMITED',
+      dataCompression: 'DEFAULT',
+      fillFactor: 0,
+      maxDop: 0,
+      lobCompaction: true,
+      sortInTempdb: true,
+      padIndex: false,
+      online: false,
+      waitAtLowPriority: false,
+      maxDuration: 1,
+      abortAfterWait: 'NONE',
+      statisticsSamplePercent: 100,
+      statisticsNoRecompute: 'DEFAULT',
+    });
+  }
+
+  onOk() {
+    this.dialogRef.close(this.settingsForm.value);
+  }
+
+  onCancel() {
+    this.dialogRef.close();
+  }
+
+  formatSize(value: number): string {
+    if (value < 1024) {
+      return `${value} MB`;
+    } else {
+      return `${(value / 1024).toFixed(2)} GB`;
+    }
+  }
+
+  ensureMinLessThanMax() {
+    const min = this.settingsForm.get('objectReorgSizeMin')?.value || 0;
+    const max = this.settingsForm.get('objectReorgSizeMax')?.value || 256;
+    
+    // Clamp values to valid range
+    const clampedMin = Math.max(Math.min(min || 0, 256), 0);
+    const clampedMax = Math.max(Math.min(max || 256, 256), 0);
+    
+    if (clampedMin >= clampedMax) {
+      if (clampedMin >= clampedMax) {
+        this.settingsForm.patchValue({ objectReorgSizeMin: Math.max(0, clampedMax - 1) });
+      }
+      if (clampedMax <= clampedMin) {
+        this.settingsForm.patchValue({ objectReorgSizeMax: Math.min(256, clampedMin + 1) });
+      }
+    } else {
+      // Ensure values are clamped
+      if (min !== clampedMin) {
+        this.settingsForm.patchValue({ objectReorgSizeMin: clampedMin });
+      }
+      if (max !== clampedMax) {
+        this.settingsForm.patchValue({ objectReorgSizeMax: clampedMax });
+      }
+    }
+    this.ensureCurrentWithinRange();
+  }
+
+  ensureCurrentWithinRange() {
+    const min = this.settingsForm.get('objectReorgSizeMin')?.value || 0;
+    const max = this.settingsForm.get('objectReorgSizeMax')?.value || 256;
+    const current = this.settingsForm.get('objectReorgSizeCurrent')?.value || 121;
+    
+    if (current < min) {
+      this.settingsForm.patchValue({ objectReorgSizeCurrent: min });
+    } else if (current > max) {
+      this.settingsForm.patchValue({ objectReorgSizeCurrent: max });
+    }
+  }
+
+  openSelectDropdown(event: Event) {
+    const button = event.currentTarget as HTMLElement;
+    const relativeContainer = button.closest('.relative');
+    if (relativeContainer) {
+      const select = relativeContainer.querySelector('select') as HTMLSelectElement;
+      if (select) {
+        select.click();
+      }
+    }
+  }
+}
+

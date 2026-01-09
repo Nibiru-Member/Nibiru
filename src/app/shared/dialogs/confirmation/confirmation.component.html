@@ -1,11 +1,22 @@
-<div class="bg-muted relative mx-auto w-[30vw] max-w-2xl p-6">
+<div class="bg-muted relative mx-auto w-full max-w-md sm:max-w-lg md:max-w-xl p-4 sm:p-6">
   <!-- Header -->
-  <div class="mb-6 flex items-center justify-between">
-    <h2 class="text-xl font-semibold text-gray-100">{{ data.title }}</h2>
+  <div class="mb-4 sm:mb-6 flex items-center justify-between">
+    @if (data.isWarning) {
+    <div class="flex items-center gap-2 sm:gap-3">
+      <div class="flex h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 items-center justify-center rounded-full bg-yellow-900/30 warning-icon">
+        <svg class="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+        </svg>
+      </div>
+      <h2 class="text-lg sm:text-xl font-semibold text-yellow-400">{{ data.title || 'Warning' }}</h2>
+    </div>
+    } @else {
+    <h2 class="text-lg sm:text-xl font-semibold text-gray-100">{{ data.title }}</h2>
+    }
     <button
       type="button"
       (click)="closeDialog()"
-      class="cursor-pointer text-gray-400 transition hover:text-gray-200"
+      class="cursor-pointer text-gray-400 transition hover:text-gray-200 flex-shrink-0"
       aria-label="Close">
       <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-5 w-5'"></svg-icon>
     </button>
@@ -13,8 +24,16 @@
 
   <!-- Main Message -->
   @if (!data.showStatusSelector) {
-  <div class="flex items-center justify-center border-t border-gray-700 py-6">
-    <p class="text-md text-white">{{ data.message }}</p>
+  <div class="flex items-start gap-3 sm:gap-4 border-t border-gray-700 pt-4 sm:pt-6 pb-4 sm:pb-6">
+    @if (data.isWarning) {
+    <div class="flex-1">
+      <p class="text-sm sm:text-base text-gray-200 leading-relaxed">{{ data.message }}</p>
+    </div>
+    } @else {
+    <div class="flex items-center justify-center w-full">
+      <p class="text-sm sm:text-base text-white text-center">{{ data.message }}</p>
+    </div>
+    }
   </div>
   }
 
@@ -33,19 +52,19 @@
   }
 
   <!-- Footer Buttons -->
-  <div class="mt-4 flex justify-center space-x-4">
+  <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 sm:space-x-4">
     <button
       type="button"
-      class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+      class="w-full sm:w-auto cursor-pointer rounded border border-gray-600 px-4 sm:px-6 py-2 text-sm sm:text-base text-gray-300 transition hover:bg-gray-800 hover:text-white"
       (click)="closeDialog()">
-      {{ data.cancelText }}
+      {{ data.cancelText || 'Cancel' }}
     </button>
 
     <button
       type="submit"
-      class="bg-primary flex-none cursor-pointer rounded-md px-4 py-2.5 text-white"
+      [class]="data.isWarning ? 'w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 flex-none cursor-pointer rounded-md px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base text-white transition' : 'bg-primary flex-none cursor-pointer rounded-md px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base text-white'"
       (click)="onSubmit()">
-      {{ data.submitText }}
+      {{ data.submitText || 'OK' }}
     </button>
   </div>
 </div>

@@ -1,0 +1,110 @@
+/* ngx-slider bar and selection */
+.custom-slider .ngx-slider .ngx-slider-bar {
+  background: #ffe4d1 !important;
+  height: 2px !important;
+}
+
+.custom-slider .ngx-slider .ngx-slider-selection {
+  background: var(--primary) !important;
+  opacity: 0.7;
+}
+
+/* For dual-range slider: extend selection from second point (max) to end */
+/* The selection bar end should fill from highValue (second pointer) to ceil */
+/* Target all possible selection bar end elements */
+.custom-slider .ngx-slider .ngx-slider-selection-bar-end,
+.custom-slider-range .ngx-slider .ngx-slider-selection-bar-end,
+.custom-slider .ngx-slider [class*="selection-bar-end"],
+.custom-slider-range .ngx-slider [class*="selection-bar-end"] {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  opacity: 0.7 !important;
+  height: 2px !important;
+  top: 3px !important;
+  display: block !important;
+  visibility: visible !important;
+  position: absolute !important;
+  z-index: 2 !important;
+  right: 0 !important;
+  left: auto !important;
+}
+
+/* Bar wrapper - adjust for 8px handles */
+.custom-slider .ngx-slider .ngx-slider-bar-wrapper {
+  margin-top: -4px !important; /* Half of 8px handle to center it vertically */
+  padding-top: 4px !important; /* Half of 8px handle */
+  height: 8px !important; /* Handle size for proper vertical centering */
+}
+
+/* ngx-slider pointer styling - 8px circular primary color dots */
+.custom-slider .ngx-slider .ngx-slider-pointer {
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  min-height: 8px !important;
+  max-width: 8px !important;
+  max-height: 8px !important;
+  border-radius: 8px !important;
+  background-color: var(--primary) !important;
+  background: var(--primary) !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  z-index: 3 !important;
+  position: absolute !important;
+  /* Center 8px pointer on 2px track: top = -handleSize/2 + barHeight/2 = -4px + 1px = -3px */
+  top: -3px !important; /* -8px/2 + 2px/2 = -4px + 1px = -3px */
+  /* Center horizontally on its position: 8px width / 2 = 4px offset */
+}
+
+/* Remove the inner circle created by ::after pseudo-element */
+.custom-slider .ngx-slider .ngx-slider-pointer::before {
+  display: none !important;
+  content: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.custom-slider .ngx-slider .ngx-slider-pointer::after {
+  display: none !important;
+  content: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* All states should remain primary color and 8px */
+.custom-slider .ngx-slider .ngx-slider-pointer:focus,
+.custom-slider .ngx-slider .ngx-slider-pointer:active,
+.custom-slider .ngx-slider .ngx-slider-pointer:hover {
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  min-height: 8px !important;
+  max-width: 8px !important;
+  max-height: 8px !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  background-color: var(--primary) !important;
+  background: var(--primary) !important;
+  transform: none !important;
+}
+
+/* Ensure ::after is hidden in all states */
+.custom-slider .ngx-slider .ngx-slider-pointer:focus::after,
+.custom-slider .ngx-slider .ngx-slider-pointer:active::after,
+.custom-slider .ngx-slider .ngx-slider-pointer:hover::after {
+  display: none !important;
+  content: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Hide value bubbles */
+.custom-slider .ngx-slider .ngx-slider-bubble {
+  display: none !important;
+}
+

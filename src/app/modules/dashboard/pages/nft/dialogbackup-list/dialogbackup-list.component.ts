@@ -13,7 +13,13 @@ import { ServerService } from 'src/app/core/services/server/server.service';
 export class DialogbackupListComponent implements OnInit {
   listData: any[] = [];
   loading = true;
-
+  /**
+   * viewType to define table format
+   * 0: Normal
+   * 1: Only Backup Result
+   * 2: Defragment with backup
+   */
+  viewType = 0;
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<DialogbackupListComponent>,
@@ -26,17 +32,25 @@ export class DialogbackupListComponent implements OnInit {
   }
 
   loadConditionList(): void {
-    this.policyService.GetDefragmentationLogByLog(this.data.logId).subscribe({
-      next: (res: any) => {
-        this.listData = res?.data ? [res.data] : [];
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-    });
+    this.viewType = this.data.viewType
+    if(this.viewType == 1) {
+      this.listData = [this.data];
+      this.cdr.detectChanges();
+      console.log(this.data);
+    }
+    else {
+      this.policyService.GetDefragmentationLogByLog(this.data.logId).subscribe({
+        next: (res: any) => {
+          this.listData = res?.data ? [res.data] : [];
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+      });
+    }
   }
 
   closeDialog(): void {

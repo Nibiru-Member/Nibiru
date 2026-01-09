@@ -17,12 +17,13 @@ const STORAGE_IS_ALL_INDEX = 'lastIsAllIndex';
 // NEW: storage keys for selected table name and index name
 const STORAGE_SELECTED_TABLE_NAME = 'lastSelectedTableName';
 const STORAGE_SELECTED_INDEX_NAME = 'lastSelectedIndexName';
+// NEW: storage key for linked server name
+const STORAGE_LINKED_SERVER_NAME = 'linkedServerName';
 
 @Injectable({ providedIn: 'root' })
 export class ServerStateService {
   private connection$ = new BehaviorSubject<ServerConnection | null>(this.loadConnectionFromStorage());
   private selectedDatabase$ = new BehaviorSubject<string | null>(this.loadDbFromStorage());
-
   // suggested: explicit flag to indicate that the *list* of databases has been loaded
   private databaseListLoaded$ = new BehaviorSubject<boolean>(false);
   private isAllIndex$ = new BehaviorSubject<boolean>(this.loadIsAllIndexFromStorage());
@@ -35,7 +36,8 @@ export class ServerStateService {
   // NEW: BehaviorSubjects for selected table name & selected index name
   private selectedTableName$ = new BehaviorSubject<string | null>(this.loadSelectedTableNameFromStorage());
   private selectedIndexName$ = new BehaviorSubject<string | null>(this.loadSelectedIndexNameFromStorage());
-
+  // NEW: BehaviorSubject for linked server name
+  private linkedServerName$ = new BehaviorSubject<string | null>(this.loadLinkedServerNameFromStorage());
   // NEW: event for index refresh trigger (when user explicitly clicks an index in Sidebar)
   private indexRefresh$ = new BehaviorSubject<boolean>(false);
 
@@ -217,7 +219,28 @@ export class ServerStateService {
       return null;
     }
   }
+  // ----------------------------
+  // NEW: Linked Server Name
+  // ----------------------------
+  private loadLinkedServerNameFromStorage(): string | null {
+    try {
+      return localStorage.getItem(STORAGE_LINKED_SERVER_NAME) || null;
+    } catch {
+      return null;
+    }
+  }
 
+  setLinkedServerName(name: string | null): void {
+    this.linkedServerName$.next(name);
+    try {
+      if (name) localStorage.setItem(STORAGE_LINKED_SERVER_NAME, name);
+      else localStorage.removeItem(STORAGE_LINKED_SERVER_NAME);
+    } catch {}
+  }
+
+  getLinkedServerName(): string | null {
+    return this.linkedServerName$.value;
+  }
   // ----------------------------
   // NEW: Index refresh trigger (fired by Sidebar when user clicks an Index)
   // ----------------------------

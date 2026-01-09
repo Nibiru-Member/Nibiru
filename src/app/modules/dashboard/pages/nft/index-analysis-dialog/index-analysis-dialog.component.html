@@ -1,0 +1,178 @@
+<div class="bg-muted h-[90vh] max-h-[800px] w-[95vw] max-w-[1200px] rounded-lg p-0 text-white shadow-lg">
+  <!-- Header -->
+  <div class="flex items-center justify-between border-b border-gray-700 p-4">
+    <h2 class="text-xl font-semibold">Index Analysis Results</h2>
+    <button
+      type="button"
+      (click)="closeDialog()"
+      class="cursor-pointer text-gray-400 transition hover:text-gray-200">
+      <svg-icon src="assets/icons/heroicons/outline/x.svg" [svgClass]="'h-6 w-6'"></svg-icon>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="custom-scrollbar h-[calc(90vh-140px)] overflow-y-auto p-4">
+    <!-- Summary Section -->
+    <div *ngIf="summary" class="mb-6 rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+      <h3 class="mb-4 text-lg font-semibold text-primary">Analysis Summary</h3>
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div class="rounded bg-gray-900/50 p-3">
+          <div class="text-xs text-gray-400">Total Indexes Analyzed</div>
+          <div class="mt-1 text-2xl font-bold text-white">{{ summary.totalIndexesAnalyzed || 0 }}</div>
+        </div>
+        <div class="rounded bg-gray-900/50 p-3">
+          <div class="text-xs text-gray-400">Average Fragmentation</div>
+          <div class="mt-1 text-2xl font-bold text-yellow-400">
+            {{ (summary.averageFragmentation || 0).toFixed(2) }}%
+          </div>
+        </div>
+        <div class="rounded bg-gray-900/50 p-3">
+          <div class="text-xs text-gray-400">Maximum Fragmentation</div>
+          <div class="mt-1 text-2xl font-bold text-red-400">
+            {{ (summary.maximumFragmentation || 0).toFixed(2) }}%
+          </div>
+        </div>
+        <div class="rounded bg-gray-900/50 p-3">
+          <div class="text-xs text-gray-400">Duration</div>
+          <div class="mt-1 text-lg font-semibold text-white">
+            {{ summary.analysisDurationSeconds || 0 }}s
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-3 gap-4">
+        <div class="rounded bg-red-500/10 p-3">
+          <div class="text-xs text-gray-400">Rebuild Recommended</div>
+          <div class="mt-1 text-xl font-bold text-red-400">{{ summary.rebuildRecommended || 0 }}</div>
+        </div>
+        <div class="rounded bg-yellow-500/10 p-3">
+          <div class="text-xs text-gray-400">Reorganize Recommended</div>
+          <div class="mt-1 text-xl font-bold text-yellow-400">{{ summary.reorganizeRecommended || 0 }}</div>
+        </div>
+        <div class="rounded bg-green-500/10 p-3">
+          <div class="text-xs text-gray-400">No Action Needed</div>
+          <div class="mt-1 text-xl font-bold text-green-400">{{ summary.noActionNeeded || 0 }}</div>
+        </div>
+      </div>
+
+      <div class="mt-4 text-xs text-gray-400">
+        <div>Database: <span class="text-white">{{ summary.databaseName }}</span></div>
+        <div *ngIf="summary.tableName" class="mt-1">
+          Table: <span class="text-white">{{ summary.tableName }}</span>
+        </div>
+        <div *ngIf="summary.indexName" class="mt-1">
+          Index: <span class="text-white">{{ summary.indexName }}</span>
+        </div>
+        <div class="mt-1">
+          Analysis Time: <span class="text-white">{{ summary.analysisStartTime | date: 'short' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations Section -->
+    <div *ngIf="recommendations" class="mb-6 rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+      <h3 class="mb-3 text-lg font-semibold text-primary">Recommendations</h3>
+      <div class="space-y-3">
+        <div>
+          <div class="text-sm text-gray-400">Recommended Action</div>
+          <div
+            class="mt-1 text-lg font-semibold"
+            [ngClass]="getRecommendationClass(recommendations.recommendedAction)">
+            {{ recommendations.recommendedAction || 'N/A' }}
+          </div>
+        </div>
+        <div>
+          <div class="text-sm text-gray-400">Reason</div>
+          <div class="mt-1 text-sm text-gray-300">{{ recommendations.reason || 'N/A' }}</div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-sm text-gray-400">Estimated Duration</div>
+            <div class="mt-1 text-sm text-white">
+              {{ recommendations.estimatedDurationSeconds || 0 }} seconds
+            </div>
+          </div>
+          <div>
+            <div class="text-sm text-gray-400">Requires Offline</div>
+            <div class="mt-1 text-sm text-white">{{ recommendations.requiresOffline ? 'Yes' : 'No' }}</div>
+          </div>
+        </div>
+        <div *ngIf="recommendations.additionalNotes">
+          <div class="text-sm text-gray-400">Additional Notes</div>
+          <div class="mt-1 text-sm text-gray-300">{{ recommendations.additionalNotes }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Index Details Table -->
+    <div *ngIf="indexDetails && indexDetails.length > 0" class="rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+      <h3 class="mb-4 text-lg font-semibold text-primary">Index Details</h3>
+      <div class="custom-scrollbar max-h-[400px] overflow-x-auto overflow-y-auto">
+        <table class="w-full border-collapse text-sm">
+          <thead class="sticky top-0 z-10 bg-[#222]">
+            <tr class="border-b border-gray-600 text-xs uppercase text-gray-400">
+              <th class="p-2 text-left">Schema</th>
+              <th class="p-2 text-left">Table</th>
+              <th class="p-2 text-left">Index</th>
+              <th class="p-2 text-left">Type</th>
+              <th class="p-2 text-right">Fragmentation %</th>
+              <th class="p-2 text-right">Page Count</th>
+              <th class="p-2 text-right">Fragment Count</th>
+              <th class="p-2 text-right">Row Count</th>
+              <th class="p-2 text-right">Size (MB)</th>
+              <th class="p-2 text-left">Fill Factor</th>
+              <th class="p-2 text-left">Recommendation</th>
+              <th class="p-2 text-left">Priority</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let detail of indexDetails" class="border-b border-gray-700/50 text-gray-200 hover:bg-gray-700/30">
+              <td class="p-2">{{ detail.schemaName }}</td>
+              <td class="p-2">{{ detail.tableName }}</td>
+              <td class="p-2">{{ detail.indexName }}</td>
+              <td class="p-2">{{ detail.indexType }}</td>
+              <td class="p-2 text-right font-semibold" [ngClass]="{
+                'text-red-400': detail.fragmentationPercent >= 30,
+                'text-yellow-400': detail.fragmentationPercent >= 10 && detail.fragmentationPercent < 30,
+                'text-green-400': detail.fragmentationPercent < 10
+              }">
+                {{ (detail.fragmentationPercent || 0).toFixed(2) }}%
+              </td>
+              <td class="p-2 text-right">{{ detail.pageCount?.toLocaleString() || 0 }}</td>
+              <td class="p-2 text-right">{{ detail.fragmentCount?.toLocaleString() || 0 }}</td>
+              <td class="p-2 text-right">{{ detail.rowCount?.toLocaleString() || 0 }}</td>
+              <td class="p-2 text-right">{{ (detail.sizeMB || 0).toFixed(2) }}</td>
+              <td class="p-2">{{ detail.fillFactor || 'N/A' }}</td>
+              <td class="p-2" [ngClass]="getRecommendationClass(detail.recommendation)">
+                {{ detail.recommendation || 'N/A' }}
+              </td>
+              <td class="p-2">
+                <span
+                  class="rounded px-2 py-1 text-xs font-semibold"
+                  [ngClass]="getPriorityClass(detail.priority)">
+                  {{ detail.priority || 'N/A' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- No Data Message -->
+    <div *ngIf="!summary && indexDetails.length === 0" class="rounded-lg border border-gray-700 bg-gray-800/50 p-8 text-center">
+      <p class="text-gray-400">No analysis data available.</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="flex items-center justify-end border-t border-gray-700 px-6 py-4">
+    <button
+      type="button"
+      class="cursor-pointer rounded border border-gray-600 px-6 py-2 text-gray-300 transition hover:bg-gray-800 hover:text-white"
+      (click)="closeDialog()">
+      CLOSE
+    </button>
+  </div>
+</div>
+

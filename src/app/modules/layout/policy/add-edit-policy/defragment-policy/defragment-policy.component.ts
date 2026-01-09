@@ -51,8 +51,9 @@ export class DefragmentPolicyComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
 
   statisticsMethodEnabled: boolean = false;
-  mdfFiles: Array<{ location: string }> = [];
+  mdfFiles: Array<{ location: string; statusWithIndex?: string }> = [];
   location: string = '';
+  statusWithIndex: string | null = null;
 
   constructor(public serverState: ServerStateService) {}
 
@@ -189,10 +190,12 @@ export class DefragmentPolicyComponent implements OnInit {
 
               this.mdfFiles = mdfRes.data.map((m: any) => ({
                 location: m.location,
+                statusWithIndex: m.statusWithIndex,
               }));
 
               if (this.mdfFiles.length > 0) {
                 this.location = this.mdfFiles[0].location;
+                this.statusWithIndex = this.mdfFiles[0].statusWithIndex || null;
               }
 
               // 2. Now run defragment using the selected DB
@@ -200,6 +203,7 @@ export class DefragmentPolicyComponent implements OnInit {
                 databaseName: databaseName,
                 mdfFilePath: this.location,
                 backupPath: backupPath,
+                statusWithIndex: this.statusWithIndex,
               };
 
               return this.server.DefragmentMDF(payload);

@@ -17,6 +17,6 @@ export class BackupConfirmationComponent {
   }
 
   closeDialog() {
-    this.dialogRef.close();
+    this.dialogRef.close(false); // Return false when "No" is clicked
   }
 }

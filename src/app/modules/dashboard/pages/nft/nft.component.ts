@@ -35,10 +35,15 @@ import { DialogBackupComponent } from 'src/app/modules/layout/policy/add-edit-po
 import { DialogbackupListComponent } from './dialogbackup-list/dialogbackup-list.component';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { BackupConfirmationComponent } from 'src/app/shared/dialogs/backup-confirmation/backup-confirmation.component';
+import { ConfirmationComponent } from 'src/app/shared/dialogs/confirmation/confirmation.component';
 import { Overlay } from '@angular/cdk/overlay';
 import { TakeOfflineDialogComponent } from './take-offline-dialog/take-offline-dialog.component';
 import { DefragmentTablesComponent } from './defragment-tables/defragment-tables.component';
-
+import { LoaderComponent } from 'src/app/shared/dialogs/loader/loader.component';
+import { IndexAnalysisDialogComponent } from './index-analysis-dialog/index-analysis-dialog.component';
+import { ReorganizeResultDialogComponent } from './reorganize-result-dialog/reorganize-result-dialog.component';
+import { RebuildResultDialogComponent } from './rebuild-result-dialog/rebuild-result-dialog.component';
+import { IndexSettingsComponent } from 'src/app/shared/dialogs/index-settings/index-settings.component';
 export type LineChartOptions = {
   series: ApexAxisChartSeries;
   chart: ApexChart;
@@ -71,7 +76,7 @@ export type BarChartOptions = {
 @Component({
   selector: 'app-nft',
   templateUrl: './nft.component.html',
-  imports: [CommonModule, FormsModule, NgApexchartsModule, DynamicBreadcrumbComponent, AngularSvgIconModule],
+  imports: [CommonModule, FormsModule, NgApexchartsModule, DynamicBreadcrumbComponent, AngularSvgIconModule, LoaderComponent],
   animations: [
     trigger('dropdownAnimation', [
       transition(':enter', [
@@ -134,6 +139,9 @@ export class NftComponent implements OnInit, OnDestroy {
   activityModuleName: any;
   noFragmentation: any;
   ServerHealthStatus: any;
+  // flags for loading
+  isLoadingBackup = false;
+  isLoadingDefragment = false;
 
   constructor(private dashboardSvc: ServerService, public serverState: ServerStateService, private overlay: Overlay) {}
 
@@ -145,7 +153,345 @@ export class NftComponent implements OnInit, OnDestroy {
       this.initCalls();
     }
   }
+  // ================= INDEX STATISTICS =================
+  /**
+   * Rebuild Index
+   * @param row - Index row data from indexFilesReviews
+   */
+  rebuildIndex(row: any) {
+    if (!row) {
+      this.toaster.error('Invalid index data');
+      return;
+    }
 
+    const databaseName = this.serverState.getSelectedDatabase();
+    if (!databaseName) {
+      this.toaster.error('Please select a database first');
+      return;
+    }
+
+    // Show confirmation dialog
+    const dialogRef = this.dialog.open(ConfirmationComponent, {
+      disableClose: true,
+      width: '90%',
+      maxWidth: '500px',
+      panelClass: 'warning-dialog',
+      data: {
+        title: 'Rebuild Index',
+        message: `Are you sure you want to rebuild index "${row.index}" on table "${row.table}"? This operation may take some time and will lock the table.`,
+        cancelText: 'Cancel',
+        submitText: 'Rebuild',
+        isWarning: false,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (!confirmed) {
+        return;
+      }
+
+      // Show loading indicator
+      this.isLoadingDefragment = true;
+
+      // Prepare rebuild request
+      const rebuildPayload = {
+        databaseName: databaseName,
+        tableName: row.table || undefined,
+        indexName: row.index || undefined,
+        fillFactor: row.fillFactor || 80,
+        sortOrder: 'ASC',
+        maxDOP: undefined,
+        onlineRebuild: false,
+        updateStats: true,
+        recompileProcs: false,
+        fragmentationThreshold: 30,
+      };
+
+      // Call rebuild API
+      this.dashboardSvc.rebuildIndexes(rebuildPayload).subscribe({
+        next: (response: any) => {
+          this.isLoadingDefragment = false;
+
+          if (response && response.statusCode === 200 && response.success) {
+            const summary = response.data?.operationSummary;
+            const details = response.data?.indexDetails || [];
+
+            if (summary?.resultType === 'ERROR' || summary?.ResultType === 'ERROR') {
+              // Show error in dialog
+              this.dialog.open(RebuildResultDialogComponent, {
+                disableClose: false,
+                width: '95vw',
+                maxWidth: '1000px',
+                height: '85vh',
+                maxHeight: '700px',
+                panelClass: 'custom-dark-dialog',
+                data: {
+                  summary: summary,
+                  indexDetails: details,
+                },
+              });
+              this.toaster.error(summary?.errorMessage || summary?.ErrorMessage || 'Index rebuild failed');
+              return;
+            }
+
+            // Show success toast
+            this.toaster.success('Index rebuild completed successfully.');
+
+            // Open dialog with results
+            this.dialog.open(RebuildResultDialogComponent, {
+              disableClose: false,
+              width: '95vw',
+              maxWidth: '1000px',
+              height: '85vh',
+              maxHeight: '700px',
+              panelClass: 'custom-dark-dialog',
+              data: {
+                summary: summary,
+                indexDetails: details,
+              },
+            });
+
+            // Refresh only the INDEX STATISTICS table (not the whole page)
+            this.refreshIndexStatisticsOnly(databaseName);
+          } else {
+            this.toaster.error(response?.message || 'Index rebuild failed');
+          }
+        },
+        error: (err) => {
+          this.isLoadingDefragment = false;
+          console.error('Rebuild index error', err);
+          this.toaster.error(err?.error?.message || 'Failed to rebuild index');
+        },
+      });
+    });
+  }
+  /**
+   * Reindex Index (Reorganize)
+   * @param row - Index row data from indexFilesReviews
+   */
+  reindexIndex(row: any) {
+    if (!row) {
+      this.toaster.error('Invalid index data');
+      return;
+    }
+
+    const databaseName = this.serverState.getSelectedDatabase();
+    if (!databaseName) {
+      this.toaster.error('Please select a database first');
+      return;
+    }
+
+    // Show confirmation dialog
+    const dialogRef = this.dialog.open(ConfirmationComponent, {
+      disableClose: true,
+      width: '90%',
+      maxWidth: '500px',
+      panelClass: 'warning-dialog',
+      data: {
+        title: 'Reorganize Index',
+        message: `Are you sure you want to reorganize index "${row.index}" on table "${row.table}"? This operation is less intensive than rebuild and can be done online.`,
+        cancelText: 'Cancel',
+        submitText: 'Reorganize',
+        isWarning: false,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (!confirmed) {
+        return;
+      }
+
+      // Show loading indicator
+      this.isLoadingDefragment = true;
+
+      // Prepare reorganize request
+      const reorganizePayload = {
+        databaseName: databaseName,
+        tableName: row.table || undefined,
+        indexName: row.index || undefined,
+        fragmentationThreshold: 10, // Default threshold for reorganize (lower than rebuild)
+      };
+
+      // Call reorganize API
+      this.dashboardSvc.reorganizeIndexes(reorganizePayload).subscribe({
+        next: (response: any) => {
+          this.isLoadingDefragment = false;
+
+          if (response && response.statusCode === 200 && response.success) {
+            const summary = response.data?.operationSummary;
+            const details = response.data?.indexDetails || [];
+
+            if (summary?.resultType === 'ERROR' || summary?.ResultType === 'ERROR') {
+              // Show error in dialog
+              this.dialog.open(ReorganizeResultDialogComponent, {
+                disableClose: false,
+                width: '95vw',
+                maxWidth: '1000px',
+                height: '85vh',
+                maxHeight: '700px',
+                panelClass: 'custom-dark-dialog',
+                data: {
+                  summary: summary,
+                  indexDetails: details,
+                },
+              });
+              this.toaster.error(summary?.errorMessage || summary?.ErrorMessage || 'Index reorganization failed');
+              return;
+            }
+
+            // Show success toast
+            this.toaster.success('Index reorganization completed successfully.');
+
+            // Open dialog with results
+            this.dialog.open(ReorganizeResultDialogComponent, {
+              disableClose: false,
+              width: '95vw',
+              maxWidth: '1000px',
+              height: '85vh',
+              maxHeight: '700px',
+              panelClass: 'custom-dark-dialog',
+              data: {
+                summary: summary,
+                indexDetails: details,
+              },
+            });
+
+            // Refresh only the INDEX STATISTICS table (not the whole page)
+            this.refreshIndexStatisticsOnly(databaseName);
+          } else {
+            this.toaster.error(response?.message || 'Index reorganization failed');
+          }
+        },
+        error: (err) => {
+          this.isLoadingDefragment = false;
+          console.error('Reorganize index error', err);
+          this.toaster.error(err?.error?.message || 'Failed to reorganize index');
+        },
+      });
+    });
+  }
+  /**
+   * Run Analyze
+   * @param row 
+   */
+  runAnalyze(row: any) {
+    const databaseName = this.serverState.getSelectedDatabase();
+    if (!databaseName) {
+      this.toaster.error('Please select a database first');
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmationComponent, {
+      disableClose: true,
+      width: '90%',
+      maxWidth: '500px',
+      panelClass: 'warning-dialog',
+      data: {
+        title: 'Confirm Index Analysis',
+        message: `Are you sure you want to run analysis for index "${row.index}" on table "${row.table}" in database "${databaseName}"? This will analyze fragmentation and provide recommendations.`,
+        cancelText: 'Cancel',
+        submitText: 'Run Analysis',
+        isWarning: false,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (!confirmed) return;
+
+      this.dashboardLoading = true;
+      const payload = {
+        databaseName: databaseName,
+        tableName: row.table,
+        indexName: row.index,
+        generateReport: true,
+      };
+
+      this.dashboardLoading = true;
+      this.dashboardSvc
+        .analyzeIndex(payload)
+        .pipe(
+          catchError((err) => {
+            this.dashboardLoading = false;
+            console.error('Analyze Index API error', err);
+            this.toaster.error(err?.error?.message || 'Failed to run index analysis');
+            return EMPTY;
+          }),
+          take(1),
+        )
+        .subscribe((res: any) => {
+          this.dashboardLoading = false;
+          if (res.success) {
+            const summary = res.data?.summary;
+            const details = res.data?.indexDetails || [];
+            const recommendations = res.data?.recommendations;
+
+            // Show success toast
+            this.toaster.success('Index analysis completed successfully.');
+
+            // Open dialog with analysis results
+            this.dialog.open(IndexAnalysisDialogComponent, {
+              disableClose: false,
+              width: '95vw',
+              maxWidth: '1200px',
+              height: '90vh',
+              maxHeight: '800px',
+              panelClass: 'custom-dark-dialog',
+              data: {
+                summary: summary,
+                indexDetails: details,
+                recommendations: recommendations,
+              },
+            });
+          } else {
+            this.toaster.error(res.message || 'Failed to run index analysis');
+          }
+        });
+    });
+  }
+  /**
+   * Refresh only the INDEX STATISTICS table without refreshing the whole page
+   * @param databaseName 
+   */
+  refreshIndexStatisticsOnly(databaseName: string): void {
+    const indexName = this.serverState.getSelectedIndexName();
+    const tableName = this.serverState.getSelectedTableName() || '';
+    const apiPeriod = this.selectedPeriod;
+
+    this.dashboardSvc
+      .GetIndexFilesReview(databaseName, tableName, indexName || '', apiPeriod)
+      .pipe(
+        catchError((err) => {
+          console.error('Error refreshing index statistics', err);
+          return of(null);
+        }),
+        take(1),
+      )
+      .subscribe((res: any) => {
+        if (res && res.success && Array.isArray(res.data)) {
+          this.indexFilesReviews = res.data.map((m: any) => ({
+            table: m.table,
+            index: m.index,
+            indexType: m.indexType,
+            cluster: m.cluster,
+            sortedPercent: m.sorted,
+            columnsIndexed: m.columnsIndexed,
+            sizeKB: m.size,
+            rows: Number(m.rows),
+            pages: Number(m.pages),
+            fragmentationPercent: Number(m.fragmentation),
+            fillFactor: Number(m.fillFactor),
+            defragmentationStatus: m.defragmentationStatus,
+          }));
+          this.cdr.markForCheck();
+        } else {
+          if (!indexName) {
+            this.indexFilesReviews = [];
+          }
+        }
+      });
+  }
+
+  // ================= END INDEX STATISTICS =================
   loadActivityHistory(): void {
     this.activeHistoryService
       .GetActivityHistoryList()
@@ -188,77 +534,15 @@ export class NftComponent implements OnInit, OnDestroy {
     if (days === 1) return 'Yesterday';
     return `${days} days ago`;
   }
-  // backupMdfFile(row: any): void {
-  //   if (!row.mdfFiles) {
-  //     console.warn('No selected database found in ServerStateService.');
-  //     return;
-  //   }
-  //   // Step 1: open dialog INSTEAD of BackupDatabase API
-  //   const dialogRef = this.dialog.open(DialogBackupComponent, {
-  //     disableClose: true,
-  //     width: '560px',
-  //     data: {},
-  //   });
-
-  //   dialogRef
-  //     .afterClosed()
-  //     .pipe(
-  //       switchMap((dialogResult: any) => {
-  //         const mdfFilePath = dialogResult?.data.backupPath;
-  //         if (!mdfFilePath) {
-  //           console.warn('Dialog did not return backupFileName.');
-  //           return EMPTY;
-  //         }
-
-  //         const defragPayload = {
-  //           databaseName: row.mdfFiles || '',
-  //           mdfFilePath: row.location, // from dialog
-  //           backupPath: mdfFilePath,
-  //         };
-
-  //         // Step 3: Everything else remains same
-  //         return this.dashboardSvc.DefragmentMDF(defragPayload);
-  //       }),
-  //     )
-  //     .subscribe({
-  //       next: (defragRes: any) => {
-  //         const logId = defragRes?.data?.logId || (defragRes as any)?.logId || null;
-
-  //         if (!logId) {
-  //           console.warn('DefragmentMDF did not return logId.');
-  //           return;
-  //         }
-
-  //         this.dialog.open(DialogbackupListComponent, {
-  //           height: '400px',
-  //           data: { logId: logId },
-  //           panelClass: 'custom-dark-dialog',
-  //         });
-  //       },
-  //       error: (err) => {
-  //         console.error('Defragment flow failed', err);
-  //       },
-  //     });
-  // }
+  analyzeMdfFile(row: any) {
+    this.openDetailedFragmentation(row);
+  }
   backupMdfFile(row: any): void {
     // ✅ Safety check
     if (!row?.mdfFiles) {
       console.warn('No selected database found.');
       return;
     }
-
-    // ✅ STEP 1: Open Confirmation Dialog
-    // const confirmDialogRef = this.dialog.open(BackupConfirmationComponent, {
-    //   disableClose: true,
-    //   data: {},
-    // });
-
-    // confirmDialogRef.afterClosed().subscribe((confirmResult: boolean) => {
-    //   // ✅ If user CANCELS → STOP HERE
-    //   if (!confirmResult) {
-    //     console.log('Backup cancelled by user.');
-    //     return;
-    //   }
 
       // ✅ STEP 2: Open Backup Path Dialog
       const backupDialogRef = this.dialog.open(DialogBackupComponent, {
@@ -273,12 +557,11 @@ export class NftComponent implements OnInit, OnDestroy {
         .pipe(
           switchMap((dialogResult: any) => {
             const backupPath = dialogResult?.data?.backupPath;
-
             if (!backupPath) {
               console.warn('Dialog did not return backupPath.');
               return EMPTY;
             }
-
+            this.isLoadingBackup = true;
             // ✅ STEP 3: Prepare Payload
             const defragPayload = {
               databaseName: row.mdfFiles,
@@ -287,30 +570,186 @@ export class NftComponent implements OnInit, OnDestroy {
             };
 
             // ✅ STEP 4: Call API
-            return this.dashboardSvc.DefragmentMDF(defragPayload);
+            return this.dashboardSvc.BackupDatabase(defragPayload);
           }),
         )
         .subscribe({
-          next: (defragRes: any) => {
-            const logId = defragRes?.data?.logId || defragRes?.logId || null;
-
-            if (!logId) {
-              console.warn('DefragmentMDF did not return logId.');
+          next: (backupRes: any) => {
+            console.log(backupRes);
+            this.isLoadingBackup = false;
+            if(!backupRes.data.success) {
+              console.warn('No selected database found.');
+              this.toaster.error(backupRes.data.message);
               return;
             }
-
-            // ✅ STEP 5: Open Backup Log Dialog
-            this.dialog.open(DialogbackupListComponent, {
-              height: '400px',
-              data: { logId },
-              panelClass: 'custom-dark-dialog',
-            });
+            else {
+              const viewData = {
+                viewType: 1,
+                databaseName: row.mdfFiles,
+                backupFileName: backupRes.data.backupFileName,
+                backupFullPath: backupRes.data.backupPath,
+                status: backupRes.data.success,
+                mdfFileName: row.location
+              }
+              this.dialog.open(DialogbackupListComponent, {
+                height: '400px',
+                data: viewData,
+                panelClass: 'custom-dark-dialog',
+              }); 
+            }
           },
           error: (err) => {
             console.error('Defragment flow failed', err);
+            this.isLoadingBackup = false;
           },
         });
     // });
+  }
+
+  defragmentMdfFile(row: any): void {
+    // ✅ Safety check
+    if (!row?.mdfFiles) {
+      console.warn('No selected database found.');
+      this.toaster.error('No database selected for defragmentation.');
+      return;
+    }
+
+    // ✅ STEP 1: Show Backup Confirmation Dialog
+    const confirmDialogRef = this.dialog.open(BackupConfirmationComponent, {
+      disableClose: true,
+      width: '500px',
+      data: {},
+    });
+
+    confirmDialogRef.afterClosed().subscribe((backupConfirmed: boolean) => {
+      if (backupConfirmed === true) {
+        // ✅ User selected YES - Open Backup Dialog
+        this.openBackupDialogForDefragmentation(row);
+      } else if (backupConfirmed === false || backupConfirmed === undefined) {
+        // ✅ User selected NO or closed dialog - Show warning and proceed
+        this.showBackupWarningAndProceed(row);
+      }
+    });
+  }
+
+  private openBackupDialogForDefragmentation(row: any): void {
+    // ✅ Open Backup Path Dialog (same as right-click on database, select TASK)
+    const backupDialogRef = this.dialog.open(DialogBackupComponent, {
+      disableClose: true,
+      width: '560px',
+      data: row,
+      scrollStrategy: this.overlay.scrollStrategies.block(),
+    });
+
+    backupDialogRef
+      .afterClosed()
+      .pipe(
+        switchMap((dialogResult: any) => {
+          const backupPath = dialogResult?.data?.backupPath;
+          if (!backupPath) {
+            console.warn('Dialog did not return backupPath.');
+            return EMPTY;
+          }
+
+          // ✅ Prepare Defragmentation Payload
+          const defragPayload = {
+            databaseName: row.mdfFiles,
+            mdfFilePath: row.location,
+            backupPath: backupPath,
+            statusWithIndex: row.statusWithIndex
+          };
+          this.isLoadingBackup = true;
+          // ✅ Call DefragmentMDF API
+          return this.dashboardSvc.DefragmentMDF(defragPayload);
+        }),
+      )
+      .subscribe({
+        next: (defragRes: any) => {
+          const logId = defragRes?.data?.logId || defragRes?.logId || null;
+
+          if (!logId) {
+            console.warn('DefragmentMDF did not return logId.');
+            this.toaster.error('Defragmentation failed. No log ID returned.');
+            return;
+          }
+          this.isLoadingBackup = false;
+          // ✅ Show success message and open Backup Log Dialog
+          this.toaster.success('Defragmentation started successfully.');
+          this.dialog.open(DialogbackupListComponent, {
+            height: '400px',
+            data: { 
+              logId: logId,
+              viewType: 2
+             },
+            panelClass: 'custom-dark-dialog',
+          });
+        },
+        error: (err) => {
+          console.error('Defragment flow failed', err);
+          this.toaster.error(err?.error?.message || 'Failed to start defragmentation.');
+        },
+      });
+  }
+
+  private showBackupWarningAndProceed(row: any): void {
+    // ✅ Show warning modal
+    const warningDialogRef = this.dialog.open(ConfirmationComponent, {
+      disableClose: true,
+      width: '90%',
+      maxWidth: '500px',
+      panelClass: 'warning-dialog',
+      data: {
+        title: 'Warning',
+        message: 'It is recommended that the Database be backed up before defragmentation.',
+        cancelText: 'Cancel',
+        submitText: 'Proceed',
+        isWarning: true, // Flag to show warning style
+      },
+    });
+
+    warningDialogRef.afterClosed().subscribe((proceed: boolean) => {
+      if (proceed) {
+        // ✅ User clicked "Proceed" - Open backup dialog
+        this.proceedWithDefragmentationWithoutBackup(row);
+      }
+
+    });
+  }
+
+  private proceedWithDefragmentationWithoutBackup(row: any): void {
+    // ✅ Prepare Defragmentation Payload without backup path
+    // Note: backupPath might be optional or we pass empty string
+    const defragPayload = {
+      databaseName: row.mdfFiles,
+      mdfFilePath: row.location,
+      backupPath: '', // Empty backup path when user chooses not to backup
+      statusWithIndex: row.statusWithIndex
+    };
+    this.isLoadingDefragment = true;
+    // ✅ Call DefragmentMDF API
+    this.dashboardSvc.DefragmentMDF(defragPayload).subscribe({
+      next: (defragRes: any) => {
+        const logId = defragRes?.data?.logId || defragRes?.logId || null;
+        this.isLoadingDefragment = false;
+        if (!logId) {
+          console.warn('DefragmentMDF did not return logId.');
+          this.toaster.error('Defragmentation failed. No log ID returned.');
+          return;
+        }
+
+        // ✅ Show success message and open Backup Log Dialog
+        this.toaster.success('Defragmentation started successfully.');
+        this.dialog.open(DialogbackupListComponent, {
+          height: '400px',
+          data: { logId },
+          panelClass: 'custom-dark-dialog',
+        });
+      },
+      error: (err) => {
+        console.error('Defragment flow failed', err);
+        this.toaster.error(err?.error?.message || 'Failed to start defragmentation.');
+      },
+    });
   }
 
   getStatusTitle(status: string): string {
@@ -417,11 +856,17 @@ export class NftComponent implements OnInit, OnDestroy {
       this.openMenuIndex = null;
       this.openSubMenu = null;
       this.indexMenuPosition = null;
+      this.menu.row = null;
       return;
     }
     
     this.openMenuIndex = i;
     this.openSubMenu = null;
+    
+    // Set the row data from indexFilesReviews
+    if (this.indexFilesReviews && this.indexFilesReviews[i]) {
+      this.menu.row = this.indexFilesReviews[i];
+    }
     
     if (event) {
       const button = event.currentTarget as HTMLElement;
@@ -1189,5 +1634,26 @@ export class NftComponent implements OnInit, OnDestroy {
   onReindex(row: any) {
     console.log('Reindex clicked', row);
     // Call your API here
+  }
+
+  openIndexSettings() {
+    const dialogRef = this.dialog.open(IndexSettingsComponent, {
+      width: 'auto',
+      maxWidth: '1500px',
+      height: 'auto',
+      maxHeight: '95vh',
+      disableClose: true,
+      data: null, // You can pass existing settings here if needed
+      scrollStrategy: this.overlay.scrollStrategies.block(),
+      panelClass: 'responsive-dialog',
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        // Handle the settings result here
+        console.log('Settings saved:', result);
+        // You can save the settings or apply them as needed
+      }
+    });
   }
 }
