@@ -106,19 +106,9 @@ export class ServerService {
     IndexName: string,
     FilterType: string,
   ): Observable<any> {
+    const linkedServerName = localStorage.getItem('linkedServerName');
     return this.httpService.get(
-      `/api/Dashboard/GetIndexStorageUtilization?DatabaseName=${DatabaseName}&TableName=${TableName}&IndexName=${IndexName}&FilterType=${FilterType}`,
-      this.options,
-    );
-  }
-  GetIndexFillFactorCorrelation(
-    DatabaseName: string,
-    TableName: string,
-    IndexName: string,
-    FilterType: string,
-  ): Observable<any> {
-    return this.httpService.get(
-      `/api/Dashboard/GetIndexFillFactorCorrelation?DatabaseName=${DatabaseName}&TableName=${TableName}&IndexName=${IndexName}&FilterType=${FilterType}`,
+      `/api/Dashboard/GetIndexStorageUtilization?DatabaseName=${DatabaseName}&TableName=${TableName}&IndexName=${IndexName}&FilterType=${FilterType}&LinkedServerName=${linkedServerName}`,
       this.options,
     );
   }
@@ -154,6 +144,8 @@ export class ServerService {
     return this.httpService.post(`/api/Dashboard/SafeAttachDatabase`, data, this.options);
   }
   SafeDetachDatabase(data: any): Observable<BaseResponse> {
+    const linkedServerName = localStorage.getItem('linkedServerName');
+    data.linkedServerName = linkedServerName;
     return this.httpService.put(`/api/Dashboard/SafeDetachDatabase`, data, this.options);
   }
   DetachDatabase(data: any): Observable<BaseResponse> {
@@ -193,9 +185,10 @@ export class ServerService {
     );
   }
 
-  getDetailedTableFragmentation(DatabaseName: string, FragmentationThreshold: number): Observable<any> {
+  getDetailedTableFragmentation(DatabaseName: string, FragmentationThreshold: number, linkedServerName?: string | null): Observable<any> {
+    const linkedServerParam = linkedServerName ? `&LinkedServerName=${linkedServerName}` : '';
     return this.httpService.get(
-      `/api/Dashboard/GetDetailedTableFragmentation?DatabaseName=${DatabaseName}&FragmentationThreshold=${FragmentationThreshold}`,
+      `/api/Dashboard/GetDetailedTableFragmentation?DatabaseName=${DatabaseName}&FragmentationThreshold=${FragmentationThreshold}${linkedServerParam}`,
       this.options,
     );
   }
@@ -228,6 +221,7 @@ export class ServerService {
     fragmentationThreshold?: number;
   }): Observable<any> {
     const params = new URLSearchParams();
+    const linkedServerName = localStorage.getItem('linkedServerName');
     params.append('DatabaseName', data.databaseName);
     if (data.tableName) params.append('TableName', data.tableName);
     if (data.indexName) params.append('IndexName', data.indexName);
@@ -238,6 +232,7 @@ export class ServerService {
     if (data.updateStats !== undefined) params.append('UpdateStats', data.updateStats.toString());
     if (data.recompileProcs !== undefined) params.append('RecompileProcs', data.recompileProcs.toString());
     if (data.fragmentationThreshold !== undefined) params.append('FragmentationThreshold', data.fragmentationThreshold.toString());
+    if (linkedServerName) params.append('LinkedServerName', linkedServerName);
 
     return this.httpService.get(`/api/Dashboard/RebuildIndexes?${params.toString()}`, this.options);
   }
@@ -257,7 +252,8 @@ export class ServerService {
     } else {
       params.append('FragmentationThreshold', '10'); // Default threshold
     }
-
+    const linkedServerName = localStorage.getItem('linkedServerName');
+    if (linkedServerName) params.append('LinkedServerName', linkedServerName);
     return this.httpService.get(`/api/Dashboard/ReorganizeIndexes?${params.toString()}`, this.options);
   }
 
@@ -276,7 +272,8 @@ export class ServerService {
     } else {
       params.append('GenerateReport', 'true'); // Default to true
     }
-
+    const linkedServerName = localStorage.getItem('linkedServerName');
+    if (linkedServerName) params.append('LinkedServerName', linkedServerName);
     return this.httpService.get(`/api/Dashboard/AnalyzeIndex?${params.toString()}`, this.options);
   }
 }

@@ -33,6 +33,36 @@ export class DefragmentPolicyComponent implements OnInit {
   @Input() isBackup: boolean = false;
   @Input() isAutomate: boolean = false;
 
+  // PDF Options (UI only - maps to isMdf and isIndexMdf)
+  get isPdf(): boolean {
+    return this.isMdf && !this.isIndexMdf;
+  }
+
+  set isPdf(value: boolean) {
+    if (value) {
+      this.isMdf = true;
+      this.isIndexMdf = false;
+      this.isMdfChange.emit(true);
+      this.isIndexMdfChange.emit(false);
+    } else {
+      this.isMdf = false;
+      this.isMdfChange.emit(false);
+    }
+  }
+
+  get isPdfIndex(): boolean {
+    return this.isIndexMdf;
+  }
+
+  set isPdfIndex(value: boolean) {
+    this.isIndexMdf = value;
+    if (value) {
+      this.isMdf = false;
+      this.isMdfChange.emit(false);
+    }
+    this.isIndexMdfChange.emit(value);
+  }
+
   // Outputs
   @Output() isAutomateChange = new EventEmitter<boolean>();
   @Output() optimizeOptionChange = new EventEmitter<string>();
@@ -109,6 +139,29 @@ export class DefragmentPolicyComponent implements OnInit {
 
   onIsIndexMdfChange(event: any) {
     this.isIndexMdfChange.emit(event.target.checked);
+  }
+
+  onIsPdfChange(event: any) {
+    const checked = event.target.checked;
+    if (checked) {
+      this.isMdf = true;
+      this.isIndexMdf = false;
+      this.isMdfChange.emit(true);
+      this.isIndexMdfChange.emit(false);
+    } else {
+      this.isMdf = false;
+      this.isMdfChange.emit(false);
+    }
+  }
+
+  onIsPdfIndexChange(event: any) {
+    const checked = event.target.checked;
+    this.isIndexMdf = checked;
+    if (checked) {
+      this.isMdf = false;
+      this.isMdfChange.emit(false);
+    }
+    this.isIndexMdfChange.emit(checked);
   }
 
   // ---------------------------------------------
@@ -199,11 +252,13 @@ export class DefragmentPolicyComponent implements OnInit {
               }
 
               // 2. Now run defragment using the selected DB
+              const linkedServerName = this.serverState.getLinkedServerName();
               const payload = {
                 databaseName: databaseName,
                 mdfFilePath: this.location,
                 backupPath: backupPath,
                 statusWithIndex: this.statusWithIndex,
+                linkedServerName: linkedServerName,
               };
 
               return this.server.DefragmentMDF(payload);

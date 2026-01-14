@@ -652,11 +652,13 @@ export class NftComponent implements OnInit, OnDestroy {
           }
 
           // ✅ Prepare Defragmentation Payload
+          const linkedServerName = this.serverState.getLinkedServerName();
           const defragPayload = {
             databaseName: row.mdfFiles,
             mdfFilePath: row.location,
             backupPath: backupPath,
-            statusWithIndex: row.statusWithIndex
+            statusWithIndex: row.statusWithIndex,
+            linkedServerName: linkedServerName,
           };
           this.isLoadingBackup = true;
           // ✅ Call DefragmentMDF API
@@ -719,11 +721,13 @@ export class NftComponent implements OnInit, OnDestroy {
   private proceedWithDefragmentationWithoutBackup(row: any): void {
     // ✅ Prepare Defragmentation Payload without backup path
     // Note: backupPath might be optional or we pass empty string
+    const linkedServerName = this.serverState.getLinkedServerName();
     const defragPayload = {
       databaseName: row.mdfFiles,
       mdfFilePath: row.location,
       backupPath: '', // Empty backup path when user chooses not to backup
-      statusWithIndex: row.statusWithIndex
+      statusWithIndex: row.statusWithIndex,
+      linkedServerName: linkedServerName,
     };
     this.isLoadingDefragment = true;
     // ✅ Call DefragmentMDF API
@@ -1235,6 +1239,7 @@ export class NftComponent implements OnInit, OnDestroy {
         if (mdfRes && mdfRes.success && Array.isArray(mdfRes.data)) {
           this.mdfFiles = mdfRes.data.map((m: any) => ({
             mdfFiles: m.mdfFiles,
+            databaseName: m.databaseName,
             serverName: m.serverName,
             location: m.location,
             sizeInMB: m.sizeInMB,
@@ -1486,9 +1491,12 @@ export class NftComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const linkedServerName = this.serverState.getLinkedServerName();
+
     const payload: any = {
       databaseName: databaseName,
       mdfFilePath: mdfFilePath,
+      linkedServerName: linkedServerName,
     };
 
     this.dashboardSvc
@@ -1517,8 +1525,11 @@ export class NftComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const linkedServerName = this.serverState.getLinkedServerName();
+
     const payload = {
       databaseName: databaseName,
+      linkedServerName: linkedServerName,
     };
 
     this.dashboardSvc

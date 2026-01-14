@@ -2,6 +2,7 @@ import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { ServerService } from 'src/app/core/services/server/server.service';
+import { ServerStateService } from 'src/app/core/services/server-state.service';
 import { ToasterService } from 'src/app/core/services/toaster/toaster.service';
 import { catchError, EMPTY, take } from 'rxjs';
 
@@ -16,6 +17,7 @@ export class DefragmentTablesComponent {
   private cdr = inject(ChangeDetectorRef);
   data = inject(MAT_DIALOG_DATA, { optional: true });
   private _serverService = inject(ServerService);
+  private _serverState = inject(ServerStateService);
   private _toast = inject(ToasterService);
   private dialog = inject(MatDialog);
   uiDropAll = false;
@@ -39,8 +41,9 @@ export class DefragmentTablesComponent {
   }
 
   getDetailedTableFragmentation() {
+    const linkedServerName = this._serverState.getLinkedServerName();
     this._serverService
-      .getDetailedTableFragmentation(this.data.mdfFiles, 5)
+      .getDetailedTableFragmentation(this.data.mdfFiles, 5, linkedServerName)
       .pipe(
         catchError(() => EMPTY),
         take(1),

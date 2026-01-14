@@ -5,6 +5,7 @@ import { NavbarMenuComponent } from './navbar-menu/navbar-menu.component';
 import { NavbarMobileComponent } from './navbar-mobile/navbar-mobilecomponent';
 import { ProfileMenuComponent } from './profile-menu/profile-menu.component';
 import { NavbarNotificationComponent } from './navbar-notification/navbar-notification.component';
+import { SettingsMenuComponent } from './settings-menu/settings-menu.component';
 
 @Component({
   selector: 'app-navbar',
@@ -16,6 +17,7 @@ import { NavbarNotificationComponent } from './navbar-notification/navbar-notifi
     ProfileMenuComponent,
     NavbarMobileComponent,
     NavbarNotificationComponent,
+    SettingsMenuComponent,
   ],
 })
 export class NavbarComponent implements OnInit {
