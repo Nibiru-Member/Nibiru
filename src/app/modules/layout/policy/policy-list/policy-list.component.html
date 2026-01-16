@@ -1,45 +1,264 @@
-<header
-  class="bg-muted mb-6 flex flex-col items-center justify-between space-y-3 rounded-lg px-4 py-2 sm:flex-row sm:space-y-0">
-  <p class="p-2 text-sm font-semibold tracking-widest text-white">POLICY MANAGEMENT</p>
+<!-- Top Bar -->
+<header class="mb-6 flex items-center justify-between m-6">
+  <!-- Left: NEW POLICY Button -->
+  <button
+    (click)="onAddEditPolicy()"
+    class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-full px-6 py-2.5 text-sm font-medium text-white uppercase transition-all shadow-md">
+    NEW POLICY
+  </button>
 
-  <nav class="flex items-center space-x-2 px-3">
-    <div class="mx-auto max-w-6xl">
-      <div class="bg-muted relative flex justify-end p-4">
-        <div class="max-w-2xl">
-          <div class="relative w-60">
-            <input
-              [(ngModel)]="searchText"
-              (input)="debouncedSearch()"
-              type="text"
-              placeholder="Search"
-              class="rounded-md bg-gray-800 py-3 pl-10 pr-4 text-sm text-gray-300 outline-none" />
-            <svg-icon
-              src="assets/icons/heroicons/outline/magnifying-glass.svg"
-              [svgClass]="'absolute left-3 top-2.5 h-4 w-4 text-gray-400'">
-            </svg-icon>
-          </div>
-        </div>
+  <!-- Right: Search Bar and View Toggle Buttons -->
+  <div class="flex items-center space-x-2">
+    <!-- Search Bar -->
+    <div class="max-w-sm">
+      <div class="relative rounded-full search-container">
+        <input 
+          id="search-input"
+          [(ngModel)]="searchText"
+          (input)="debouncedSearch()"
+          type="text"
+          placeholder="Search"
+          class="w-full rounded-full bg-white py-2.5 pl-4 pr-10 text-sm text-gray-800 outline-none placeholder:text-gray-400"
+          />
+        <svg-icon
+          src="assets/icons/heroicons/outline/magnifying-glass.svg"
+          [svgClass]="'absolute right-3 top-2.5 h-5 w-5 text-gray-400'">
+        </svg-icon>
       </div>
     </div>
 
-    <button (click)="exportPoliciesCSV()" class="mr-3 rounded-md bg-gray-700 px-4 py-2.5 text-sm text-white">
-      Export
-    </button>
-
-    <button
-      (click)="onAddEditPolicy()"
-      class="bg-primary rounded-md px-4 py-2.5 text-white transition-colors hover:bg-red-600">
-      Add Policy
-    </button>
-  </nav>
+    <!-- View Toggle Button Group -->
+    <div class="flex rounded-md overflow-hidden bg-white">
+      <button
+        (click)="toggleViewMode('list')"
+        [ngClass]="viewMode === 'list' ? 'bg-red-600' : 'bg-white'"
+        class="px-3 py-2 transition-colors border-r border-gray-300">
+        <svg-icon
+          src="assets/icons/heroicons/outline/menu.svg"
+          [svgClass]="viewMode === 'list' ? 'h-5 w-5 text-white' : 'h-5 w-5 text-gray-600'">
+        </svg-icon>
+      </button>
+      <button
+        (click)="toggleViewMode('grid')"
+        [ngClass]="viewMode === 'grid' ? 'bg-red-600' : 'bg-white'"
+        class="px-3 py-2 transition-colors">
+        <svg-icon
+          src="assets/icons/heroicons/outline/view-grid.svg"
+          [svgClass]="viewMode === 'grid' ? 'h-5 w-5 text-white' : 'h-5 w-5 text-gray-600'">
+        </svg-icon>
+      </button>
+    </div>
+  </div>
 </header>
 
-<!-- Main table -->
-<div class="bg-muted mx-auto mb-3 max-w-6xl p-4 text-gray-200 shadow-md">
+<!-- Main Content -->
+<div class="mb-6 items-center justify-between m-6">
   @if (!isLoading) {
+    @if (viewMode === 'grid') {
+      <!-- Grid View: Policy Cards -->
+      <div class=" grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 items-start">
+        @for (policy of policies; track policy.policyId; let i = $index) {
+          <div class="bg-muted rounded-lg shadow-lg overflow-hidden flex flex-col">
+            <!-- Card Header -->
+            <div class="px-4 py-3 flex items-center justify-between">
+              <span class="text-white font-semibold text-sm">{{ policy.policyName || 'Policy ' + (i + 1) }}</span>
+              <div class="flex items-center space-x-2">
+                <button
+                  (click)="toggleExpand(policy.policyId)"
+                  class="text-white hover:text-gray-200 transition-colors">
+                  <svg-icon
+                    [src]="expandedPolicyId === policy.policyId
+                      ? 'assets/icons/heroicons/solid/chevron-up.svg'
+                      : 'assets/icons/heroicons/solid/chevron-down.svg'"
+                    [svgClass]="'h-5 w-5'">
+                  </svg-icon>
+                </button>
+                <div class="relative options-menu-container">
+                  <button
+                    (click)="toggleOptionsMenu(policy.policyId, $event)"
+                    class="text-white hover:text-gray-200 transition-colors">
+                    <svg-icon
+                      src="assets/icons/heroicons/outline/ellipsis-vertical.svg"
+                      [svgClass]="'h-5 w-5'">
+                    </svg-icon>
+                  </button>
+                  @if (openMenuPolicyId === policy.policyId) {
+                    <div class="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg z-10 border border-gray-600">
+                      <div class="py-1">
+                        <button
+                          (click)="onAddEditPolicy(policy.policyId); closeOptionsMenu()"
+                          class="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 flex items-center space-x-2">
+                          <svg-icon
+                            src="assets/icons/heroicons/outline/pencil.svg"
+                            [svgClass]="'h-4 w-4'">
+                          </svg-icon>
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          (click)="onPolicyUpdate(policy.policyId); closeOptionsMenu()"
+                          class="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 flex items-center space-x-2">
+                          <svg-icon
+                            src="assets/icons/heroicons/outline/arrow-path.svg"
+                            [svgClass]="'h-4 w-4'">
+                          </svg-icon>
+                          <span>Update Status</span>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
 
-  <div class="overflow-x-auto">
-    <table class="border-spacing-y-1 min-w-full border-separate">
+            <!-- Card Body -->
+            <div class="px-4 py-3 bg-black/20 flex-1 policy-card-body" 
+                 [class.expanded]="expandedPolicyId === policy.policyId">
+              <div class="policy-card-content-wrapper">
+              @if (expandedPolicyId !== policy.policyId) {
+                <!-- Collapsed View -->
+                <div class="space-y-2 text-sm text-gray-300">
+                  <div>
+                    <span class="text-gray-400">- Category</span>
+                    <span class="text-gray-300 ml-2">{{ policy.categoryName || policy.name || '—' }}</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-400">- Description</span>
+                    <span class="text-gray-300 ml-2">{{ policy.description || '—' }}</span>
+                  </div>
+                </div>
+              } @else {
+                <!-- Expanded View -->
+                <div class="space-y-4 text-sm text-gray-300">
+                  <!-- Summary -->
+                  <div class="space-y-2">
+                    <div>
+                      <span class="text-gray-400">- Category</span>
+                      <span class="text-gray-300 ml-2">{{ policy.categoryName || policy.name || '—' }}</span>
+                    </div>
+                    <div>
+                      <span class="text-gray-400">- Description</span>
+                      <span class="text-gray-300 ml-2">{{ policy.description || '—' }}</span> 
+                    </div>
+                  </div>
+
+                  <!-- General -->
+                  <div class="border-t border-gray-700 pt-3">
+                    <div class="text-gray-300 font-medium mb-2">General</div>
+                    <div class="space-y-1 text-xs text-gray-400">
+                      <div>Server: <span class="text-white">{{ policy.serverName || '—' }}</span></div>
+                      <div>Owner: <span class="text-white">{{ policy.ownerName || '—' }}</span></div>
+                      <div>Category: <span class="text-white">{{ policy.categoryName || 'Local' }}</span></div>
+                    </div>
+                  </div>
+
+                  <!-- Target -->
+                  <div class="border-t border-gray-700 pt-3">
+                    <div class="text-gray-300 font-medium mb-2">Target</div>
+                    <div class="text-xs text-gray-400">
+                      <span class="text-white">
+                        {{ policy.isAllIndex && policy.isMDF ? 'All Index + MDF' : 'All indexes' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Thresholds -->
+                  <div class="border-t border-gray-700 pt-3">
+                    <div class="text-gray-300 font-medium mb-2">Thresholds</div>
+                    <div class="text-xs text-gray-400">
+                      Optimize if Fragmentation > <span class="text-white">{{ policy.fragmentationThreshold || 30 }}%</span>
+                    </div>
+                  </div>
+
+                  <!-- Filters -->
+                  <div class="border-t border-gray-700 pt-3">
+                    <div class="text-gray-300 font-medium mb-2">Filters</div>
+                    <div class="space-y-1 text-xs text-gray-400">
+                      <div>Page Count: Min. <span class="text-white">{{ policy.minPageCount || 25 }}</span></div>
+                      <div class="text-white">All qualified indexes</div>
+                      <div>Order by <span class="text-white">{{ policy.primaryIndexSorting || 'Fragmented (Descending)' }}</span></div>
+                    </div>
+                  </div>
+
+                  <!-- Defragment Action -->
+                  <div class="border-t border-gray-700 pt-3">
+                    <div class="text-gray-300 font-medium mb-2">Defragment Action</div>
+                    <div class="space-y-1 text-xs text-gray-400">
+                      <div>
+                        <span class="text-white">{{ policy.isRebuildOnline ? 'Rebuild Offline' : 'Reorganize' }}</span>
+                      </div>
+                      <div>
+                        <span class="text-white">{{ policy.isAutomate ? 'Automated Response' : 'Manual Response' }}</span>
+                      </div>
+                      <div>
+                        Update Statistics <span class="text-white">{{ policy.updateStatistics || 'Never' }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Schedule -->
+                  <div class="border-t border-gray-700 pt-3">
+                    <div class="text-gray-300 font-medium mb-2">Schedule</div>
+                    <div class="space-y-1 text-xs text-gray-400">
+                      <div>
+                        Status: <span class="text-white">{{ policy.isEnabled ? 'Enabled' : 'Disabled' }}</span>
+                      </div>
+                      <div>
+                        Restrictions: <span class="text-white">{{ policy.restrictionStartTime && policy.restrictionEndTime ? policy.restrictionStartTime + ' to ' + policy.restrictionEndTime : 'None' }}</span>
+                      </div>
+                      <div>
+                        Daily at <span class="text-white">{{ policy.scheduleTime || '8:31' }}</span>
+                        <span class="text-white"> ({{ getActiveDays(policy) }})</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Notifications -->
+                  <div class="border-t border-gray-700 pt-3">
+                    <div class="text-gray-300 font-medium mb-2">Notifications</div>
+                    <div class="space-y-1 text-xs text-gray-400">
+                      <div>
+                        <span class="text-white">{{ policy.isRebuildOnline ? 'Rebuild Offline' : 'Reorganize' }}</span>
+                      </div>
+                      <div>
+                        <span class="text-white">{{ policy.isAutomate ? 'Use Automated Response' : 'Manual Response' }}</span>
+                      </div>
+                      <div>
+                        Update Statistics <span class="text-white">{{ policy.updateStatistics || 'Never' }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Fill Factor -->
+                  <div class="border-t border-gray-700 pt-3">
+                    <div class="text-gray-300 font-medium mb-2">Fill Factor</div>
+                    <div class="text-xs text-gray-400">
+                      Current Value: <span class="text-white">{{ policy.fillFactorNewValue || '20%' }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+              </div>
+            </div>
+            <!-- Card Footer -->
+            <div class="px-4 py-3 bg-muted">
+              <div class="text-gray-300 text-xs">Next Run <span class="text-sm">{{ policy.restrictionStartTime }}</span></div>
+              <div class="text-gray-300 text-xs">Last Run <span class="text-sm">{{ policy.restrictionEndTime }}</span></div>
+            </div>
+          </div>
+        }
+
+        <!-- No Records -->
+        @if (policies.length === 0) {
+          <div class="col-span-full py-12 text-center text-gray-400">
+            No policies found
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- List View: Table -->
+      <div class="bg-muted rounded-lg p-4 text-gray-200 shadow-md">
+        <div class="overflow-x-auto">
+          <table class="border-spacing-y-1 min-w-full border-separate">
       <thead>
         <tr class="text-left text-sm uppercase tracking-wider text-white">
           <th class="w-4 px-4 py-3"></th>
@@ -224,8 +443,12 @@
         <!-- end @for -->
       </tbody>
     </table>
+        </div>
+      </div>
+    }
 
-    <!-- Pagination -->
+    <!-- Pagination (Only for List View) -->
+    @if (viewMode === 'list') {
     <div class="mt-6 flex items-center justify-between pt-4 text-gray-300">
       <p class="text-sm">
         Showing
@@ -273,8 +496,7 @@
         </button>
       </div>
     </div>
-  </div>
-  <!-- overflow -->
+    }
   }
   <!-- end isLoading=false -->
 </div>

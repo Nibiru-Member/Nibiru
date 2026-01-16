@@ -28,6 +28,7 @@ export class PolicyListComponent implements OnInit {
   policies: PolicyDetail[] = [];
   expandedPolicyId: string | null = null;
   isLoading = false;
+  openMenuPolicyId: string | null = null;
 
   // Pagination
   page = 1;
@@ -39,6 +40,9 @@ export class PolicyListComponent implements OnInit {
   // Search
   searchText = '';
   private searchTimer: any;
+
+  // View toggle
+  viewMode: 'grid' | 'list' = 'grid';
 
   ownwerName: any;
 
@@ -134,7 +138,12 @@ export class PolicyListComponent implements OnInit {
 
   /** Expand Row */
   toggleExpand(id: string): void {
-    this.expandedPolicyId = this.expandedPolicyId === id ? null : id;
+    // If clicking the same card, toggle it. Otherwise, expand the new one (collapsing the previous)
+    if (this.expandedPolicyId === id) {
+      this.expandedPolicyId = null;
+    } else {
+      this.expandedPolicyId = id;
+    }
   }
 
   /** Add / Edit Policy */
@@ -190,6 +199,32 @@ export class PolicyListComponent implements OnInit {
     return isActive
       ? 'px-2 py-1 rounded-full text-xs bg-green-100 text-green-800'
       : 'px-2 py-1 rounded-full text-xs bg-red-100 text-red-800';
+  }
+
+  /** Toggle View Mode */
+  toggleViewMode(mode: 'grid' | 'list'): void {
+    this.viewMode = mode;
+  }
+
+  /** Toggle Options Menu */
+  toggleOptionsMenu(policyId: string, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.openMenuPolicyId = this.openMenuPolicyId === policyId ? null : policyId;
+  }
+
+  /** Close Options Menu */
+  closeOptionsMenu(): void {
+    this.openMenuPolicyId = null;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.options-menu-container')) {
+      this.closeOptionsMenu();
+    }
   }
 
   /** Update Status */

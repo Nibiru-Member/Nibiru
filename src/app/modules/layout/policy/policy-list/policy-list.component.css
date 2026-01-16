@@ -1,0 +1,19 @@
+.search-container input {
+  border-radius: 10000px !important;
+}
+
+/* Smooth expand/collapse animation for policy cards */
+.policy-card-body {
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.policy-card-content-wrapper {
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out;
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.policy-card-body.expanded .policy-card-content-wrapper {
+  max-height: 2000px;
+}
