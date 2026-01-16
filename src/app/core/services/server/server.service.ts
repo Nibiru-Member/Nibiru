@@ -93,12 +93,50 @@ export class ServerService {
   }
 
   // API
-  GetIndexFilesReview(DatabaseName: string, TableName: string, IndexName: string, FilterType: string): Observable<any> {
-    const linkedServerName = localStorage.getItem('linkedServerName');
-    return this.httpService.get(
-      `/api/Dashboard/GetIndexFilesReview?DatabaseName=${DatabaseName}&TableName=${TableName}&IndexName=${IndexName}&FilterType=${FilterType}&LinkedServerName=${linkedServerName}`,
-      this.options,
-    );
+  GetIndexFilesReview(payload: {
+    DatabaseName: string;
+    TableName?: string;
+    IndexName?: string;
+    FilterType?: string;
+    LinkedServerName?: string | null;
+    objectReorgSizeMin?: number;
+    objectReorgSizeMax?: number;
+    objectReorgSizeCurrent?: number;
+    objectRebuildSizeMin?: number;
+    objectRebuildSizeMax?: number;
+    objectRebuildSizeCurrent?: number;
+    ignoreThreshold?: number;
+    reorganizeThreshold?: number;
+    rebuildThreshold?: number;
+    heap?: boolean;
+    clustered?: boolean;
+    nonClustered?: boolean;
+    missingIndex?: boolean;
+    clusteredColumnstore?: boolean;
+    nonClusteredColumnstore?: boolean;
+    ignoreReadOnlyFilegroups?: boolean;
+    ignoreObjectPermissions?: boolean;
+    ignoreHeapWithCompression?: boolean;
+    onlyWhenRowsGreaterThan1000?: boolean;
+    fragmentationScanMode?: string;
+    dataCompression?: string;
+    fillFactor?: number;
+    maxDop?: number;
+    lobCompaction?: boolean;
+    sortInTempdb?: boolean;
+    padIndex?: boolean;
+    online?: boolean;
+    waitAtLowPriority?: boolean;
+    maxDuration?: number;
+    abortAfterWait?: string;
+    statisticsSamplePercent?: number;
+    statisticsNoRecompute?: string;
+  }): Observable<any> {
+    // Ensure LinkedServerName is included
+    if (!payload.LinkedServerName) {
+      payload.LinkedServerName = localStorage.getItem('linkedServerName');
+    }
+    return this.httpService.post(`/api/Dashboard/GetIndexFilesReview`, payload, this.options);
   }
   GetIndexStorageUtilization(
     DatabaseName: string,

@@ -44,6 +44,7 @@ import { IndexAnalysisDialogComponent } from './index-analysis-dialog/index-anal
 import { ReorganizeResultDialogComponent } from './reorganize-result-dialog/reorganize-result-dialog.component';
 import { RebuildResultDialogComponent } from './rebuild-result-dialog/rebuild-result-dialog.component';
 import { IndexSettingsComponent } from 'src/app/shared/dialogs/index-settings/index-settings.component';
+import { IndexSettingsPayload } from 'src/app/core/models/server.model';
 export type LineChartOptions = {
   series: ApexAxisChartSeries;
   chart: ApexChart;
@@ -456,9 +457,18 @@ export class NftComponent implements OnInit, OnDestroy {
     const indexName = this.serverState.getSelectedIndexName();
     const tableName = this.serverState.getSelectedTableName() || '';
     const apiPeriod = this.selectedPeriod;
+    const payload = this.getIndexSettingsPayload();
+    const requestPayload = {
+      ...payload,
+      DatabaseName: databaseName,
+      TableName: tableName,
+      IndexName: indexName || '',
+      FilterType: apiPeriod,
+      LinkedServerName: this.serverState.getLinkedServerName(),
+    };
 
     this.dashboardSvc
-      .GetIndexFilesReview(databaseName, tableName, indexName || '', apiPeriod)
+      .GetIndexFilesReview(requestPayload)
       .pipe(
         catchError((err) => {
           console.error('Error refreshing index statistics', err);
@@ -1049,7 +1059,6 @@ export class NftComponent implements OnInit, OnDestroy {
     let indexStorageUtili$: any = of(null);
     let fillFactorHistory$: any = of(null);
     let totalIndex$: any = of(null);
-
     // CASE 1: No Database → call nothing (leave all as of(null))
     if (!databaseName) {
       // do nothing — all 4 observables remain not called
@@ -1057,8 +1066,19 @@ export class NftComponent implements OnInit, OnDestroy {
 
     // CASE 2: Database selected but NO index selected → call 2 APIs
     else if (databaseName && !indexName) {
+      const payload = this.getIndexSettingsPayload();
+      console.log('----------payload--------');
+      console.log(payload);
+      const requestPayload = {
+        ...payload,
+        DatabaseName: databaseName,
+        TableName: this.serverState.getSelectedTableName() || '',
+        IndexName: '',
+        FilterType: apiPeriod,
+        LinkedServerName: this.serverState.getLinkedServerName(),
+      };
       indexReview$ = this.dashboardSvc
-        .GetIndexFilesReview(databaseName, this.serverState.getSelectedTableName() || '', '', apiPeriod)
+        .GetIndexFilesReview(requestPayload)
         .pipe(catchError(() => of(null)));
 
       indexStorageUtili$ = this.dashboardSvc
@@ -1068,8 +1088,17 @@ export class NftComponent implements OnInit, OnDestroy {
 
     // CASE 3: Database selected AND index selected → call all 4 APIs
     else if (databaseName && indexName) {
+      const payload = this.getIndexSettingsPayload();
+      const requestPayload = {
+        ...payload,
+        DatabaseName: databaseName,
+        TableName: this.serverState.getSelectedTableName() || '',
+        IndexName: indexName,
+        FilterType: apiPeriod,
+        LinkedServerName: this.serverState.getLinkedServerName(),
+      };
       indexReview$ = this.dashboardSvc
-        .GetIndexFilesReview(databaseName, this.serverState.getSelectedTableName() || '', indexName, apiPeriod)
+        .GetIndexFilesReview(requestPayload)
         .pipe(catchError(() => of(null)));
 
       indexStorageUtili$ = this.dashboardSvc
@@ -1647,23 +1676,126 @@ export class NftComponent implements OnInit, OnDestroy {
     // Call your API here
   }
 
+  getIndexSettingsPayload(): IndexSettingsPayload {
+    // Try to get saved settings from localStorage
+    const savedSettings = localStorage.getItem('indexSettings');
+    
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        return {
+          objectReorgSizeMin: parsed.objectReorgSizeMin ?? 6,
+          objectReorgSizeMax: parsed.objectReorgSizeMax ?? 128,
+          objectReorgSizeCurrent: parsed.objectReorgSizeCurrent ?? 121,
+          objectRebuildSizeMin: parsed.objectRebuildSizeMin ?? 512,
+          objectRebuildSizeMax: parsed.objectRebuildSizeMax ?? 131072,
+          objectRebuildSizeCurrent: parsed.objectRebuildSizeCurrent ?? 8192,
+          ignoreThreshold: parsed.ignoreThreshold ?? 15,
+          reorganizeThreshold: parsed.reorganizeThreshold ?? 30,
+          rebuildThreshold: parsed.rebuildThreshold ?? 30,
+          heap: parsed.heap ?? true,
+          clustered: parsed.clustered ?? true,
+          nonClustered: parsed.nonClustered ?? true,
+          missingIndex: parsed.missingIndex ?? false,
+          clusteredColumnstore: parsed.clusteredColumnstore ?? true,
+          nonClusteredColumnstore: parsed.nonClusteredColumnstore ?? true,
+          ignoreReadOnlyFilegroups: parsed.ignoreReadOnlyFilegroups ?? true,
+          ignoreObjectPermissions: parsed.ignoreObjectPermissions ?? true,
+          ignoreHeapWithCompression: parsed.ignoreHeapWithCompression ?? false,
+          onlyWhenRowsGreaterThan1000: parsed.onlyWhenRowsGreaterThan1000 ?? false,
+          fragmentationScanMode: parsed.fragmentationScanMode ?? 'LIMITED',
+          dataCompression: parsed.dataCompression ?? 'DEFAULT',
+          fillFactor: parsed.fillFactor ?? 0,
+          maxDop: parsed.maxDop ?? 0,
+          lobCompaction: parsed.lobCompaction ?? true,
+          sortInTempdb: parsed.sortInTempdb ?? true,
+          padIndex: parsed.padIndex ?? false,
+          online: parsed.online ?? false,
+          waitAtLowPriority: parsed.waitAtLowPriority ?? false,
+          maxDuration: parsed.maxDuration ?? 1,
+          abortAfterWait: parsed.abortAfterWait ?? 'NONE',
+          statisticsSamplePercent: parsed.statisticsSamplePercent ?? 100,
+          statisticsNoRecompute: parsed.statisticsNoRecompute ?? 'DEFAULT',
+          DatabaseName: parsed.DatabaseName ?? this.serverState.getSelectedDatabase() ?? '',
+          TableName: parsed.TableName ?? this.serverState.getSelectedTableName() ?? '',
+          IndexName: parsed.IndexName ?? this.serverState.getSelectedIndexName() ?? '',
+          FilterType: parsed.FilterType ?? this.selectedPeriod ?? '',
+          LinkedServerName: parsed.LinkedServerName ?? this.serverState.getLinkedServerName() ?? null,
+        };
+      } catch (error) {
+        console.error('Error parsing saved index settings:', error);
+      }
+    }
+    
+    // Return default values if no saved settings found
+    return {
+      objectReorgSizeMin: 6,
+      objectReorgSizeMax: 128,
+      objectReorgSizeCurrent: 121,
+      objectRebuildSizeMin: 512,
+      objectRebuildSizeMax: 131072,
+      objectRebuildSizeCurrent: 8192,
+      ignoreThreshold: 15,
+      reorganizeThreshold: 30,
+      rebuildThreshold: 30,
+      heap: true,
+      clustered: true,
+      nonClustered: true,
+      missingIndex: false,
+      clusteredColumnstore: true,
+      nonClusteredColumnstore: true,
+      ignoreReadOnlyFilegroups: true,
+      ignoreObjectPermissions: true,
+      ignoreHeapWithCompression: false,
+      onlyWhenRowsGreaterThan1000: false,
+      fragmentationScanMode: 'LIMITED',
+      dataCompression: 'DEFAULT',
+      fillFactor: 0,
+      maxDop: 0,
+      lobCompaction: true,
+      sortInTempdb: true,
+      padIndex: false,
+      online: false,
+      waitAtLowPriority: false,
+      maxDuration: 1,
+      abortAfterWait: 'NONE',
+      statisticsSamplePercent: 100,
+      statisticsNoRecompute: 'DEFAULT',
+      DatabaseName: '',
+      TableName: '',
+      IndexName: '',
+      FilterType: '',
+      LinkedServerName: null,
+    };
+  }
+
   openIndexSettings() {
+    const savedSettings = localStorage.getItem('indexSettings');
+    let parsed: any = {};
+    if (savedSettings) {
+       parsed = JSON.parse(savedSettings);
+    }
     const dialogRef = this.dialog.open(IndexSettingsComponent, {
       width: 'auto',
       maxWidth: '1500px',
       height: 'auto',
       maxHeight: '95vh',
       disableClose: true,
-      data: null, // You can pass existing settings here if needed
+      data: parsed, // You can pass existing settings here if needed
       scrollStrategy: this.overlay.scrollStrategies.block(),
       panelClass: 'responsive-dialog',
     });
-
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        // Handle the settings result here
+        // Save the settings to localStorage
+        localStorage.setItem('indexSettings', JSON.stringify(result));
         console.log('Settings saved:', result);
-        // You can save the settings or apply them as needed
+        
+        // Refresh index statistics if a database is selected
+        const databaseName = this.serverState.getSelectedDatabase();
+        if (databaseName) {
+          this.refreshIndexStatisticsOnly(databaseName);
+        }
       }
     });
   }

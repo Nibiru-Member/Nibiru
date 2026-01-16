@@ -1,4 +1,4 @@
-import { Component, inject, Inject, ViewEncapsulation } from '@angular/core';
+import { Component, inject, Inject, ViewEncapsulation, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
@@ -54,9 +54,16 @@ export interface IndexSettingsData {
   styleUrl: './index-settings.component.css',
   encapsulation: ViewEncapsulation.None,
 })
-export class IndexSettingsComponent {
+export class IndexSettingsComponent implements AfterViewInit {
   settingsForm: FormGroup;
   private fb = inject(FormBuilder);
+  private cdr = inject(ChangeDetectorRef);
+  
+  // Cached slider options to prevent change detection issues
+  private _objectReorgSizeSliderOptions: Options | null = null;
+  private _objectReorgSizeCurrentSliderOptions: Options | null = null;
+  private _objectRebuildSizeCurrentSliderOptions: Options | null = null;
+  private _fragmentationThresholdSliderOptions: Options | null = null;
 
   // Slider values for dual-range slider (bound to form)
   get objectReorgSizeMinValue(): number {
@@ -103,26 +110,27 @@ export class IndexSettingsComponent {
 
   // Slider options for single-range slider (current value - rerorg)
   get objectReorgSizeCurrentSliderOptions(): Options {
-    const min = this.settingsForm.get('objectReorgSizeMin')?.value || 0;
-    const max = this.settingsForm.get('objectReorgSizeMax')?.value || 256;
-    return {
-      floor: Math.max(0, min),
-      ceil: Math.min(256, max),
-      step: 1,
-      getPointerColor: () => {
-        // Get primary color from CSS variable
-        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
-      },
-      getSelectionBarColor: () => {
-        // Get primary color from CSS variable
-        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
-      },
-      showTicks: false,
-      showTicksValues: false,
-      hidePointerLabels: true,
-      hideLimitLabels: true,
-      // Single pointer slider - no highValue
-    };
+    if (!this._objectReorgSizeCurrentSliderOptions) {
+      const min = this.settingsForm.get('objectReorgSizeMin')?.value || 0;
+      const max = this.settingsForm.get('objectReorgSizeMax')?.value || 256;
+      this._objectReorgSizeCurrentSliderOptions = {
+        floor: Math.max(0, min),
+        ceil: Math.min(256, max),
+        step: 1,
+        animate: false, // Disable animation to prevent change detection issues
+        getPointerColor: () => {
+          return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+        },
+        getSelectionBarColor: () => {
+          return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+        },
+        showTicks: false,
+        showTicksValues: false,
+        hidePointerLabels: true,
+        hideLimitLabels: true,
+      };
+    }
+    return this._objectReorgSizeCurrentSliderOptions;
   }
 
   // Slider value for rebuild single-range slider (current value)
@@ -146,53 +154,53 @@ export class IndexSettingsComponent {
 
   // Slider options for rebuild single-range slider (current value)
   get objectRebuildSizeCurrentSliderOptions(): Options {
-    const min = this.settingsForm.get('objectRebuildSizeMin')?.value || 512;
-    return {
-      floor: 512,
-      ceil: 131072,
-      step: 1,
-      getPointerColor: () => {
-        // Get primary color from CSS variable
-        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
-      },
-      getSelectionBarColor: () => {
-        // Get primary color from CSS variable
-        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
-      },
-      showTicks: false,
-      showTicksValues: false,
-      hidePointerLabels: true,
-      hideLimitLabels: true,
-      // Show selection bar from first point (min) to end
-      showSelectionBarFromValue: min,
-      showSelectionBarEnd: true,
-    };
+    if (!this._objectRebuildSizeCurrentSliderOptions) {
+      const min = this.settingsForm.get('objectRebuildSizeMin')?.value || 512;
+      this._objectRebuildSizeCurrentSliderOptions = {
+        floor: 512,
+        ceil: 131072,
+        step: 1,
+        animate: false, // Disable animation to prevent change detection issues
+        getPointerColor: () => {
+          return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+        },
+        getSelectionBarColor: () => {
+          return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+        },
+        showTicks: false,
+        showTicksValues: false,
+        hidePointerLabels: true,
+        hideLimitLabels: true,
+        showSelectionBarFromValue: min,
+        showSelectionBarEnd: true,
+      };
+    }
+    return this._objectRebuildSizeCurrentSliderOptions;
   }
 
   // Slider options for dual-range slider
   get objectReorgSizeSliderOptions(): Options {
-    const min = this.settingsForm.get('objectReorgSizeMin')?.value || 0;
-    return {
-      floor: 0,
-      ceil: 256,
-      step: 1,
-      getPointerColor: () => {
-        // Get primary color from CSS variable
-        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
-      },
-      getSelectionBarColor: () => {
-        // Get primary color from CSS variable
-        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
-      },
-      showTicks: false,
-      showTicksValues: false,
-      hidePointerLabels: true,
-      hideLimitLabels: true,
-      // Show selection bar from first point (min) - this will show from min to min pointer (no bar)
-      // Combined with showSelectionBarEnd, we'll extend from max to end
-      // We'll use CSS to extend the selection from min to end
-      showSelectionBarEnd: true,
-    };
+    if (!this._objectReorgSizeSliderOptions) {
+      const min = this.settingsForm.get('objectReorgSizeMin')?.value || 0;
+      this._objectReorgSizeSliderOptions = {
+        floor: 0,
+        ceil: 256,
+        step: 1,
+        animate: false, // Disable animation to prevent change detection issues
+        getPointerColor: () => {
+          return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+        },
+        getSelectionBarColor: () => {
+          return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+        },
+        showTicks: false,
+        showTicksValues: false,
+        hidePointerLabels: true,
+        hideLimitLabels: true,
+        showSelectionBarEnd: true,
+      };
+    }
+    return this._objectReorgSizeSliderOptions;
   }
 
   // Fragmentation threshold slider values (dual-range)
@@ -223,24 +231,26 @@ export class IndexSettingsComponent {
 
   // Slider options for fragmentation threshold dual-range slider
   get fragmentationThresholdSliderOptions(): Options {
-    return {
-      floor: 0,
-      ceil: 100,
-      step: 1,
-      getPointerColor: () => {
-        // Get primary color from CSS variable
-        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
-      },
-      getSelectionBarColor: () => {
-        // Get primary color from CSS variable
-        return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
-      },
-      showTicks: false,
-      showTicksValues: false,
-      hidePointerLabels: true,
-      hideLimitLabels: true,
-      showSelectionBarEnd: true,
-    };
+    if (!this._fragmentationThresholdSliderOptions) {
+      this._fragmentationThresholdSliderOptions = {
+        floor: 0,
+        ceil: 100,
+        step: 1,
+        animate: false, // Disable animation to prevent change detection issues
+        getPointerColor: () => {
+          return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+        },
+        getSelectionBarColor: () => {
+          return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2490FF';
+        },
+        showTicks: false,
+        showTicksValues: false,
+        hidePointerLabels: true,
+        hideLimitLabels: true,
+        showSelectionBarEnd: true,
+      };
+    }
+    return this._fragmentationThresholdSliderOptions;
   }
 
   constructor(
@@ -322,6 +332,20 @@ export class IndexSettingsComponent {
       statisticsSamplePercent: [defaultData.statisticsSamplePercent],
       statisticsNoRecompute: [defaultData.statisticsNoRecompute],
     });
+  }
+
+  ngAfterViewInit(): void {
+    // Initialize cached slider options after view init to prevent change detection issues
+    // Accessing the getters will cache the options
+    this.objectReorgSizeSliderOptions;
+    this.objectReorgSizeCurrentSliderOptions;
+    this.objectRebuildSizeCurrentSliderOptions;
+    this.fragmentationThresholdSliderOptions;
+    
+    // Defer change detection to next tick to avoid ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 0);
   }
 
   onDefaults() {
