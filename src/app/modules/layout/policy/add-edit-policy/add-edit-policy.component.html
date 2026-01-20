@@ -31,7 +31,7 @@
       [(newCategory)]="newCategory"
       [owner]="owner"></app-general-policy>
 
-    <app-target-policy *ngIf="activeTab === 1" [(selectedItems)]="selectedItems"> </app-target-policy>
+    <app-target-policy *ngIf="activeTab === 1" [(selectedItems)]="selectedItems" [serverConnection]="selectedServerConnection" [policyObjectTypes]="policyObjectTypes"> </app-target-policy>
 
     <app-threshold-policy
       *ngIf="activeTab === 2"
@@ -47,11 +47,8 @@
 
     <app-defragment-policy
       *ngIf="activeTab === 4"
-      [(optimizeOption)]="optimizeOption"
-      [(updateStatistics)]="updateStatistics"
-      [(recompileProcedures)]="recompileProcedures"
-      [(fillFactorCurrent)]="fillFactorCurrent"
-      [(fillFactorNew)]="fillFactorNew"></app-defragment-policy>
+      [defragmentPolicy]="defragmentPolicy"
+      [serverConnection]="selectedServerConnection"></app-defragment-policy>
 
     <app-schedule-policy
       *ngIf="activeTab === 5"

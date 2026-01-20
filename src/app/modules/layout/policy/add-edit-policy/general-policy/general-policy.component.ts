@@ -32,7 +32,7 @@ export class GeneralPolicyComponent {
   /** Lists */
   categoryList: any[] = [];
   ownerList: any[] = [];
-  serverDetails: any[] = [];
+  serverDetails: any[] = []; // Made public so parent can access it
 
   /** New Category textbox */
   newCategoryName = '';

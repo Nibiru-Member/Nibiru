@@ -65,9 +65,11 @@ export class TargetPolicyComponent implements OnInit, OnChanges, OnDestroy {
   // -------------------------
   // Inputs / Outputs
   // -------------------------
-  @Input() selectedItems: string[] = []; // mirror from parent
+  @Input() selectedItems: string[] = []; // mirror from parent (can be PolicyAssignment[] or string[])
   @Output() selectedItemsChange = new EventEmitter<string[]>(); // emit when selection changed
-
+  @Input() serverConnection: any = null; // Server connection from general form (server, username, password)
+  @Input() policyObjectTypes: any[] = []; // Policy object types from backend (optional, for edit mode)
+  
   // -------------------------
   // Injected services
   // -------------------------
@@ -81,6 +83,7 @@ export class TargetPolicyComponent implements OnInit, OnChanges, OnDestroy {
   // -------------------------
   isLoading = false; // top-level loading flag for root DB list
   treeData: TreeNode[] = []; // root tree nodes (server -> databases -> ...)
+  updateStatus: boolean = false; // Update status of the policy target selection
 
   // Central selection state: a Set of fullPath (or name) strings representing checked nodes.
   private selectionSet = new Set<string>();
@@ -96,27 +99,38 @@ export class TargetPolicyComponent implements OnInit, OnChanges, OnDestroy {
   // Lifecycle: OnInit
   // -------------------------
   ngOnInit(): void {
-    // If there is an active connection, load root DBs immediately.
-    const conn = this.serverState.getConnection();
-    if (conn) {
-      this.loadRootDatabases(conn);
+    // Priority 1: Use serverConnection from general form if available
+    if (this.serverConnection && this.serverConnection.server) {
+      this.loadRootDatabases(this.serverConnection);
+    } else {
+      // Priority 2: Fall back to ServerStateService connection
+      const conn = this.serverState.getConnection();
+      if (conn) {
+        this.loadRootDatabases(conn);
+      }
     }
 
     // Subscribe to connection changes: reload / clear state as needed.
+    // Note: This is a fallback for when not using serverConnection from general form
     const connSub = this.serverState.onConnectionChange().subscribe((c) => {
-      if (c) {
-        // new connection: clear loaded DB tracking and load new root DB list
-        this.loadedDatabaseChildren.clear();
-        this.loadRootDatabases(c);
-      } else {
-        // connection removed: clear UI
-        this.treeData = [];
-        this.isLoading = false;
-        this.selectionSet.clear();
-        this.emitSelection(false); // notify parent with empty selection
-        this.cdr.markForCheck();
+      // Only use ServerStateService connection if no serverConnection is provided
+      if (!this.serverConnection || !this.serverConnection.server) {
+        if (c) {
+          // new connection: clear loaded DB tracking and load new root DB list
+          this.loadedDatabaseChildren.clear();
+          this.loadRootDatabases(c);
+        } else {
+          // connection removed: clear UI
+          this.treeData = [];
+          this.isLoading = false;
+          this.selectionSet.clear();
+          this.emitSelection(false); // notify parent with empty selection
+          this.cdr.markForCheck();
+        }
       }
     });
+
+    console.log('selectedItems', this.selectedItems);
 
     this.subs.add(connSub);
   }
@@ -126,10 +140,161 @@ export class TargetPolicyComponent implements OnInit, OnChanges, OnDestroy {
   // -------------------------
   ngOnChanges(changes: SimpleChanges): void {
     // If parent updated selectedItems input, sync the internal selectionSet and attempt to expand tree
-    if (changes['selectedItems'] && !changes['selectedItems'].firstChange) {
-      this.selectionSet = new Set((this.selectedItems || []).filter(Boolean));
-      this.applySelectionsToTree();
+    if (changes['selectedItems']) {
+      const serverName = this.getServerNameFromTree();
+      if (serverName) {
+        this.processSelectedItems(serverName).then(() => {
+          this.cdr.markForCheck();
+        });
+      }
     }
+
+    // If serverConnection input changed (from general form), load databases for that server
+    if (changes['serverConnection'] && !changes['serverConnection'].firstChange) {
+      const conn = changes['serverConnection'].currentValue;
+      if (conn && conn.server) {
+        this.loadedDatabaseChildren.clear(); // Clear previous loaded DBs
+        this.loadRootDatabases(conn);
+      }
+    }
+  }
+
+  // Helper method to get server name from tree
+  private getServerNameFromTree(): string {
+    return this.treeData?.[0]?.name || '';
+  }
+
+  // Process selectedItems - handle both PolicyAssignment objects and string paths
+  private async processSelectedItems(serverName: string): Promise<void> {
+    if (!this.selectedItems || !this.selectedItems.length) {
+      this.selectionSet.clear();
+      this.applySelectionsToTree();
+      return;
+    }
+
+    // Check if selectedItems is an array of objects (PolicyAssignment) or strings (paths)
+    const firstItem = this.selectedItems[0];
+    const isObjectArray = typeof firstItem === 'object' && firstItem !== null;
+
+    if (isObjectArray) {
+      // Handle PolicyAssignment objects: { databaseName, serverName, assignmentId, ... }
+      const newSelectionSet = new Set<string>();
+      const expandPromises: Promise<void>[] = [];
+
+      // First, add all matching database names
+      this.selectedItems.forEach((item: any) => {
+        // Match serverName and databaseName with tree
+        if (item.serverName === serverName && item.databaseName) {
+          // Add database name to selection set
+          newSelectionSet.add(item.databaseName);
+
+          // Find the database node in the tree and expand it
+          if (this.treeData && this.treeData.length > 0) {
+            const serverNode = this.treeData[0];
+            if (serverNode && serverNode.children) {
+              const dbNode = serverNode.children.find(
+                (child: TreeNode) => child.name === item.databaseName && child.icon === 'database'
+              );
+
+              if (dbNode) {
+                // Expand the database node
+                dbNode.expanded = true;
+
+                // Load children if not already loaded, then collect selected children paths
+                const loadPromise = this.lazyLoadDatabaseChildrenIfNeeded(dbNode)
+                  .then(() => {
+                    // After children are loaded, collect selected children paths based on objectTypes
+                    this.collectSelectedChildrenPaths(dbNode, item, newSelectionSet);
+                  })
+                  .catch((err) => {
+                    console.error('Error loading database children:', err);
+                  });
+                expandPromises.push(loadPromise);
+              }
+            }
+          }
+        }
+      });
+
+      // Wait for all databases to load their children, then update selectionSet
+      await Promise.all(expandPromises);
+      this.selectionSet = newSelectionSet;
+    } else {
+      // Handle string array format (legacy): paths like "DatabaseName\ObjectType\ObjectName"
+      this.selectionSet = new Set((this.selectedItems || []).filter(Boolean));
+    }
+
+    this.applySelectionsToTree();
+  }
+
+  // Helper method to collect selected children paths from a database node based on objectTypes
+  private collectSelectedChildrenPaths(node: TreeNode, assignment: any, selectionSet: Set<string>): void {
+    if (!node || !node.children || node.children.length === 0) {
+      return;
+    }
+
+    // Get objectTypes for this assignment
+    const assignmentId = assignment.assignmentId?.toString();
+    const databaseName = assignment.databaseName;
+    const selectedObjectPaths = new Set<string>();
+
+    if (assignmentId && this.policyObjectTypes && this.policyObjectTypes.length > 0) {
+      // Find all objectTypes for this assignment
+      this.policyObjectTypes.forEach((objType: any) => {
+        if (objType.assignmentId?.toString() === assignmentId && objType.objectTypeName) {
+          // Build full path: DatabaseName\ObjectTypeName
+          // objectTypeName might be "ObjectType\ObjectName" or just "ObjectType"
+          const objectTypeName = objType.objectTypeName;
+          const fullPath = `${databaseName}\\${objectTypeName}`;
+          selectedObjectPaths.add(fullPath);
+          
+          // Also add partial matches (for folder paths)
+          const pathParts = objectTypeName.split('\\');
+          if (pathParts.length > 1) {
+            // Add intermediate folder paths
+            let currentPath = databaseName;
+            for (let i = 0; i < pathParts.length - 1; i++) {
+              currentPath = `${currentPath}\\${pathParts[i]}`;
+              selectedObjectPaths.add(currentPath);
+            }
+          }
+        }
+      });
+    }
+
+    // If we have selected object paths, only add matching children
+    // Otherwise, add all children (fallback behavior)
+    const shouldFilter = selectedObjectPaths.size > 0;
+
+    const checkAndAddPath = (child: TreeNode) => {
+      if (!child.fullPath) return;
+
+      if (shouldFilter) {
+        // Check if this path matches any selected objectType (exact or starts with)
+        let shouldAdd = false;
+        for (const selectedPath of selectedObjectPaths) {
+          if (child.fullPath === selectedPath || child.fullPath.startsWith(selectedPath + '\\')) {
+            shouldAdd = true;
+            break;
+          }
+        }
+        if (shouldAdd) {
+          selectionSet.add(child.fullPath);
+        }
+      } else {
+        // No objectTypes available, add all children
+        selectionSet.add(child.fullPath);
+      }
+    };
+
+    node.children.forEach((child: TreeNode) => {
+      checkAndAddPath(child);
+
+      // Recursively collect paths from nested children
+      if (child.children && child.children.length > 0) {
+        this.collectSelectedChildrenPaths(child, assignment, selectionSet);
+      }
+    });
   }
 
   // -------------------------
@@ -198,10 +363,11 @@ export class TargetPolicyComponent implements OnInit, OnChanges, OnDestroy {
         } else {
           this.treeData = [];
         }
-
-        // Re-apply any incoming selection from parent
-        this.selectionSet = new Set((this.selectedItems || []).filter(Boolean));
-        this.applySelectionsToTree();
+        
+        // Process selectedItems - handle both object array (PolicyAssignment) and string array formats
+        this.processSelectedItems(conn.server).then(() => {
+          this.cdr.markForCheck();
+        });
 
         this.cdr.markForCheck();
       });
@@ -232,7 +398,11 @@ export class TargetPolicyComponent implements OnInit, OnChanges, OnDestroy {
   // ----------------------------------------------------------------
   private lazyLoadDatabaseChildrenIfNeeded(dbNode: TreeNode): Promise<void> {
     return new Promise<void>((resolve) => {
-      const conn = this.serverState.getConnection();
+      // Priority: Use serverConnection from general form, fall back to ServerStateService
+      const conn = this.serverConnection && this.serverConnection.server 
+        ? this.serverConnection 
+        : this.serverState.getConnection();
+      
       if (!conn || !dbNode || dbNode.icon !== 'database') return resolve();
 
       // Unique key to avoid reloading same DB twice
@@ -589,7 +759,8 @@ export class TargetPolicyComponent implements OnInit, OnChanges, OnDestroy {
     }));
 
     return {
-      databases,
+      databases: databases,
+      serverConnection: this.serverConnection,
     };
   }
 

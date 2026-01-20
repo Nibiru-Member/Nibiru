@@ -1,9 +1,10 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogDefagBackupComponent } from './dialog-defag-backup/dialog-defag-backup.component';
 import { DialogbackupListComponent } from 'src/app/modules/dashboard/pages/nft/dialogbackup-list/dialogbackup-list.component';
+import { BackupConfirmationComponent } from 'src/app/shared/dialogs/backup-confirmation/backup-confirmation.component';
 import { catchError, EMPTY, of, switchMap, take } from 'rxjs';
 import { ServerService } from 'src/app/core/services/server/server.service';
 import { ServerStateService } from 'src/app/core/services/server-state.service';
@@ -17,14 +18,8 @@ import { ServerStateService } from 'src/app/core/services/server-state.service';
 })
 export class DefragmentPolicyComponent implements OnInit {
   // Inputs
-  @Input() optimizeOption: string = '';
-  @Input() updateStatistics: string = '';
-  @Input() recompileProcedures: string = '';
-  @Input() statisticsMethod: string = '';
-  @Input() useNoRecompute: boolean = false;
-
-  @Input() fillFactorCurrent: string = '';
-  @Input() fillFactorNew: string = '';
+  @Input() defragmentPolicy: any = null;
+  @Input() serverConnection: any = null;
 
   @Input() isIndex: boolean = false;
   @Input() isMdf: boolean = false;
@@ -33,76 +28,78 @@ export class DefragmentPolicyComponent implements OnInit {
   @Input() isBackup: boolean = false;
   @Input() isAutomate: boolean = false;
 
-  // PDF Options (UI only - maps to isMdf and isIndexMdf)
-  get isPdf(): boolean {
-    return this.isMdf && !this.isIndexMdf;
-  }
-
-  set isPdf(value: boolean) {
-    if (value) {
-      this.isMdf = true;
-      this.isIndexMdf = false;
-      this.isMdfChange.emit(true);
-      this.isIndexMdfChange.emit(false);
-    } else {
-      this.isMdf = false;
-      this.isMdfChange.emit(false);
-    }
-  }
-
-  get isPdfIndex(): boolean {
-    return this.isIndexMdf;
-  }
-
-  set isPdfIndex(value: boolean) {
-    this.isIndexMdf = value;
-    if (value) {
-      this.isMdf = false;
-      this.isMdfChange.emit(false);
-    }
-    this.isIndexMdfChange.emit(value);
-  }
-
-  // Outputs
-  @Output() isAutomateChange = new EventEmitter<boolean>();
-  @Output() optimizeOptionChange = new EventEmitter<string>();
-  @Output() updateStatisticsChange = new EventEmitter<string>();
-  @Output() recompileProceduresChange = new EventEmitter<string>();
-  @Output() fillFactorCurrentChange = new EventEmitter<string>();
-  @Output() fillFactorNewChange = new EventEmitter<string>();
-
-  @Output() isIndexChange = new EventEmitter<boolean>();
-  @Output() isMdfChange = new EventEmitter<boolean>();
-  @Output() isIndexMdfChange = new EventEmitter<boolean>();
-  @Output() isBackupChange = new EventEmitter<boolean>();
-
   private dialog = inject(MatDialog);
   private server = inject(ServerService);
   private cdr = inject(ChangeDetectorRef);
+
+  // Local properties for form data
+  statisticsMethod: string = '';
+  useNoRecompute: boolean = false;
+
+  optimizeOption: string = '';
+  updateStatistics: string = '';
+  recompileProcedures: string = '';
+  fillFactorCurrent: string = '';
+  fillFactorNew: string = '';
 
   statisticsMethodEnabled: boolean = false;
   mdfFiles: Array<{ location: string; statusWithIndex?: string }> = [];
   location: string = '';
   statusWithIndex: string | null = null;
+  
+  // Backup path and type for display
+  backupPath: string = '';
+  backupType: 'PDF' | 'PDF + INDEX' | '' = '';
 
   constructor(public serverState: ServerStateService) {}
 
   ngOnInit(): void {
-    // MDF files will no longer load here.
-    // They will load ONLY after database selection from the dialog.
+    // Initialize properties from defragmentPolicy if it exists (for edit mode)
+    if (this.defragmentPolicy) {
+      console.log('defragmentPolicy', this.defragmentPolicy);
+      this.optimizeOption = this.defragmentPolicy.reorganize ? 'reorganize' : 
+                            (this.defragmentPolicy.rebuild ? 'rebuild' : '');
+      this.updateStatistics = this.defragmentPolicy.updateStatistics || this.updateStatistics || '';
+      this.statisticsMethod = this.defragmentPolicy.statisticsMethod || '';
+      this.recompileProcedures = this.defragmentPolicy.recompileProcedures || this.recompileProcedures || '';
+      this.useNoRecompute = this.defragmentPolicy.useNoRecompute || false;
+      this.isIndex = this.defragmentPolicy.isIndex || false;
+      this.isMdf = this.defragmentPolicy.isMdf || false;
+      this.isIndexMdf = this.defragmentPolicy.isIndexMdf || false;
+      this.isBackup = this.defragmentPolicy.isBackup || false;
+      this.isAutomate = this.defragmentPolicy.isAutomate || false;
+      this.fillFactorCurrent = this.defragmentPolicy.fillFactorCurrent || this.fillFactorCurrent || '';
+      this.fillFactorNew = this.defragmentPolicy.fillFactorNew || this.fillFactorNew || '';
+      this.backupPath = this.defragmentPolicy.backupPath || '';
+      
+      // Set backup type based on PDF options
+      if (this.isIndexMdf) {
+        this.backupType = 'PDF + INDEX';
+      } else if (this.isMdf) {
+        this.backupType = 'PDF';
+      }
+
+      // Enable statistics method if updateStatistics requires it
+      this.statisticsMethodEnabled = this.updateStatistics === 'before-analysis-refresh' || 
+                                     this.updateStatistics === 'before-optimization';
+    } else {
+      // For new policy mode, enable statistics method based on current updateStatistics value
+      this.statisticsMethodEnabled = this.updateStatistics === 'before-analysis-refresh' || 
+                                     this.updateStatistics === 'before-optimization';
+    }
   }
 
   // ---------------------------------------------
   // Event Handlers (unchanged)
   // ---------------------------------------------
   onOptimizeOptionChange(event: any) {
-    this.optimizeOptionChange.emit(event.target.value);
+    this.optimizeOption = event.target.value;
+    console.log('optimizeOption', this.optimizeOption);
   }
 
   onUpdateStatisticsChange(event: any) {
     const val = event.target.value;
     this.updateStatistics = val;
-    this.updateStatisticsChange.emit(val);
 
     this.statisticsMethodEnabled = val === 'before-analysis-refresh' || val === 'before-optimization';
 
@@ -112,56 +109,130 @@ export class DefragmentPolicyComponent implements OnInit {
   }
 
   onRecompileProceduresChange(event: any) {
-    this.recompileProceduresChange.emit(event.target.value);
+    this.recompileProcedures = event.target.value;
   }
 
   onFillFactorCurrentChange(event: any) {
-    this.fillFactorCurrentChange.emit(event.target.value);
+    this.fillFactorCurrent = event.target.value;
   }
 
   onFillFactorNewChange(event: any) {
-    this.fillFactorNewChange.emit(event.target.value);
+    this.fillFactorNew = event.target.value;
   }
 
   onIsAutomateChange(event: any) {
     const val = event.target.value === 'true' || event.target.value === true;
     this.isAutomate = val;
-    this.isAutomateChange.emit(val);
   }
 
   onIsIndexChange(event: any) {
-    this.isIndexChange.emit(event.target.checked);
+    this.isIndex = event.target.checked;
   }
 
   onIsMdfChange(event: any) {
-    this.isMdfChange.emit(event.target.checked);
+    const checked = event.target.checked;
+    if (checked) {
+      // When checking PDF, uncheck PDF + INDEX and show backup confirmation dialog
+      this.isIndexMdf = false;
+      this.showBackupConfirmationDialog('PDF');
+    } else {
+      // When unchecking PDF, also uncheck backup and clear backup info
+      this.isMdf = false;
+      this.backupPath = '';
+      this.backupType = '';
+      this.isBackup = false;
+      this.cdr.detectChanges();
+    }
   }
 
   onIsIndexMdfChange(event: any) {
-    this.isIndexMdfChange.emit(event.target.checked);
-  }
-
-  onIsPdfChange(event: any) {
     const checked = event.target.checked;
     if (checked) {
-      this.isMdf = true;
-      this.isIndexMdf = false;
-      this.isMdfChange.emit(true);
-      this.isIndexMdfChange.emit(false);
+      // When checking PDF + INDEX, uncheck PDF and show backup confirmation dialog
+      this.isMdf = false;
+      this.showBackupConfirmationDialog('PDF + INDEX');
     } else {
-      this.isMdf = false;
-      this.isMdfChange.emit(false);
+      // When unchecking PDF + INDEX, also uncheck backup and clear backup info
+      this.isIndexMdf = false;
+      this.backupPath = '';
+      this.backupType = '';
+      this.isBackup = false;
+      this.cdr.detectChanges();
     }
   }
 
-  onIsPdfIndexChange(event: any) {
-    const checked = event.target.checked;
-    this.isIndexMdf = checked;
-    if (checked) {
-      this.isMdf = false;
-      this.isMdfChange.emit(false);
-    }
-    this.isIndexMdfChange.emit(checked);
+  // Show backup confirmation dialog and handle the flow
+  private showBackupConfirmationDialog(pdfType: 'PDF' | 'PDF + INDEX'): void {
+    const confirmationDialogRef = this.dialog.open(BackupConfirmationComponent, {
+      disableClose: true,
+      width: '500px',
+      data: {
+        message: `Would you like to Backup the PDF file before defragmentation ?`,
+      },
+    });
+
+    confirmationDialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        // User clicked Yes - open backup dialog
+        this.openBackupDialog(pdfType);
+      } else {
+        // User clicked No or closed - uncheck the PDF option and backup checkbox
+        if (pdfType === 'PDF') {
+          this.isMdf = false;
+        } else {
+          this.isIndexMdf = false;
+        }
+        // Uncheck backup and clear backup info
+        this.isBackup = false;
+        this.backupPath = '';
+        this.backupType = '';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // Open backup dialog and handle result
+  private openBackupDialog(pdfType: 'PDF' | 'PDF + INDEX'): void {
+    const backupDialogRef = this.dialog.open(DialogDefagBackupComponent, {
+      disableClose: true,
+      width: '560px',
+      data: {
+        pdfType: pdfType, // Pass PDF type to dialog
+        isPolicyMode: true, // Flag to indicate this is for policy (not immediate execution)
+        serverConnection: this.serverConnection
+      },
+    });
+
+    backupDialogRef.afterClosed().subscribe((result: any) => {
+      if (result && result.backupPath) {
+        // Backup dialog completed successfully - store backup path and type
+        this.backupPath = result.backupPath;
+        this.backupType = pdfType;
+        // Check the backup checkbox since user confirmed backup
+        this.isBackup = true;
+        
+        // Set the appropriate PDF flags
+        if (pdfType === 'PDF') {
+          this.isMdf = true;
+          this.isIndexMdf = false;
+        } else {
+          this.isIndexMdf = true;
+          this.isMdf = false;
+        }
+      } else {
+        // User cancelled backup dialog - uncheck the PDF option and backup checkbox
+        if (pdfType === 'PDF') {
+          this.isMdf = false;
+        } else {
+          this.isIndexMdf = false;
+        }
+        // Uncheck backup and clear backup info
+        this.isBackup = false;
+        this.backupPath = '';
+        this.backupType = '';
+      }
+      this.cdr.detectChanges();
+    });
   }
 
   // ---------------------------------------------
@@ -184,6 +255,22 @@ export class DefragmentPolicyComponent implements OnInit {
   }
 
   getFormData() {
+    const data = {
+      isMdf: this.isMdf || false,
+      isIndexMdf: this.isIndexMdf || false,
+      isBackup: this.isBackup || false,
+      backupPath: this.backupPath || '',
+      reorganize: this.optimizeOption === 'reorganize' || false,
+      rebuild: this.optimizeOption === 'rebuild' || false,
+      isAutomate: this.isAutomate || false,
+      isIndex: this.isIndex || false,
+      updateStatistics: this.updateStatistics || '',
+      recompileProcedures: this.recompileProcedures || '',
+      statisticsMethod: this.statisticsMethod || '',
+      useNoRecompute: this.useNoRecompute || false,
+      fillFactorCurrent: this.fillFactorCurrent || '',
+      fillFactorNew: this.fillFactorNew || '', 
+    }
     return {
       optimizeOption: this.optimizeOption,
       updateStatistics: this.updateStatistics,
@@ -197,96 +284,19 @@ export class DefragmentPolicyComponent implements OnInit {
       isIndexMdf: this.isIndexMdf,
       isBackup: this.isBackup,
       isAutomate: this.isAutomate,
+      backupPath: this.backupPath,
+      backupType: this.backupType,
     };
   }
 
   // ---------------------------------------------
-  // Backup + MDF Defragmentation Flow (UPDATED)
+  // Backup Change Handler (DISABLED - Auto-controlled by PDF options)
   // ---------------------------------------------
-  async onIsBackupChange(event: any) {
-    const checked = !!event.target.checked;
-
-    if (!checked) {
-      this.isBackup = false;
-      this.isBackupChange.emit(false);
-      return;
-    }
-
-    const dialogRef = this.dialog.open(DialogDefagBackupComponent, {
-      disableClose: true,
-      width: '560px',
-      data: {},
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(
-        switchMap((result) => {
-          if (!result) {
-            this.isBackup = false;
-            this.isBackupChange.emit(false);
-            return EMPTY;
-          }
-
-          const backupPath = result.backupPath;
-          const databaseName = result.databaseName;
-
-          if (!databaseName) {
-            console.warn('Dialog did not return databaseName.');
-            return EMPTY;
-          }
-
-          // 1. Load MDF files for the selected database
-          return this.server.getTopFragmentedMdfFiles('Monthly', databaseName).pipe(
-            switchMap((mdfRes: any) => {
-              if (!mdfRes || !mdfRes.success) return EMPTY;
-
-              this.mdfFiles = mdfRes.data.map((m: any) => ({
-                location: m.location,
-                statusWithIndex: m.statusWithIndex,
-              }));
-
-              if (this.mdfFiles.length > 0) {
-                this.location = this.mdfFiles[0].location;
-                this.statusWithIndex = this.mdfFiles[0].statusWithIndex || null;
-              }
-
-              // 2. Now run defragment using the selected DB
-              const linkedServerName = this.serverState.getLinkedServerName();
-              const payload = {
-                databaseName: databaseName,
-                mdfFilePath: this.location,
-                backupPath: backupPath,
-                statusWithIndex: this.statusWithIndex,
-                linkedServerName: linkedServerName,
-              };
-
-              return this.server.DefragmentMDF(payload);
-            }),
-          );
-        }),
-      )
-      .subscribe({
-        next: (defragRes: any) => {
-          const logId = defragRes?.data?.logId || (defragRes as any)?.logId || null;
-
-          if (!logId) {
-            console.warn('DefragmentMDF did not return logId.');
-            return;
-          }
-
-          this.dialog.open(DialogbackupListComponent, {
-            height: '400px',
-            data: { logId: logId },
-            panelClass: 'custom-dark-dialog',
-          });
-
-          this.isBackup = true;
-          this.isBackupChange.emit(true);
-        },
-        error: (err) => {
-          console.error('Defragment flow failed', err);
-        },
-      });
+  // Note: The backup checkbox is now disabled and automatically controlled
+  // by the isMdf/isIndexMdf options. It gets checked when user confirms backup
+  // and unchecked when user cancels or declines backup.
+  onIsBackupChange(event: any) {
+    // This function is kept for compatibility but the checkbox is disabled
+    // The backup state is automatically managed by onIsMdfChange and onIsIndexMdfChange
   }
 }

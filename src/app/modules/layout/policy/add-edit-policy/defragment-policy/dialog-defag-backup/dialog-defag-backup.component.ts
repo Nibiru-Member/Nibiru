@@ -8,9 +8,6 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { ToasterService } from 'src/app/core/services/toaster/toaster.service';
 import { Overlay } from '@angular/cdk/overlay';
 import { BackDestinationDialogComponent } from '../dialog-backup/back-destination-dialog/back-destination-dialog.component';
-import { catchError } from 'rxjs/internal/operators/catchError';
-import { of, take } from 'rxjs';
-import { DialogbackupListComponent } from 'src/app/modules/dashboard/pages/nft/dialogbackup-list/dialogbackup-list.component';
 
 @Component({
   selector: 'app-dialog-defag-backup',
@@ -27,10 +24,8 @@ export class DialogDefagBackupComponent {
 
   selectedUserId: any;
   servers: Array<{ serverName: string }> = [];
-  databases: string[] = [];
 
   selectedServer = '';
-  selectedDatabase = '';
 
   backupTypes = ['Full', 'Differential'];
   selectedBackupType = 'Full';
@@ -40,11 +35,7 @@ export class DialogDefagBackupComponent {
 
   destinations: { fullPath: string }[] = [];
   selectedDestinationIndex = -1;
-
-  mdfFiles: Array<{ location: string; statusWithIndex?: string }> = [];
-  location: string = '';
-  statusWithIndex: string | null = null;
-
+  
   saving = false;
   authUser: any;
 
@@ -63,7 +54,14 @@ export class DialogDefagBackupComponent {
     if (authUser) this.authUser = JSON.parse(authUser);
 
     this.selectedUserId = this.authUser?.userId;
-    this.loadServers();
+    
+    // Check if serverConnection is provided (policy mode)
+    if (this.data?.serverConnection) {
+      this.selectedServer = this.data.serverConnection.server || '';
+    } else {
+      // Regular mode - load servers dropdown
+      this.loadServers();
+    }
   }
 
   // ----------------------------------------------------
@@ -82,72 +80,11 @@ export class DialogDefagBackupComponent {
   }
 
   // ----------------------------------------------------
-  // SERVER CHANGE → LOAD DATABASES
+  // SERVER CHANGE
   // ----------------------------------------------------
   onServerChange() {
-    this.databases = [];
-    this.selectedDatabase = '';
-
+    // Server changed - no database loading needed
     if (!this.selectedServer) return;
-
-    const conn = this.serverState.getConnection();
-
-    const payload: any = {
-      server: this.selectedServer,
-      username: conn?.username,
-      password: conn?.password,
-    };
-
-    this.serverApi.getDatabases(payload).subscribe({
-      next: (resp: any) => {
-        this.databases = resp?.data?.databases || [];
-      },
-      error: () => this.toast.error('Unable to load database list.'),
-    });
-  }
-
-  // ----------------------------------------------------
-  // DATABASE CHANGE → LOAD MDF FILES
-  // ----------------------------------------------------
-  onDatabaseChange() {
-    if (!this.selectedDatabase) return;
-    this.loadMdfFilesForDatabase(this.selectedDatabase);
-  }
-
-  // ----------------------------------------------------
-  // LOAD MDF FILES FOR SELECTED DATABASE
-  // ----------------------------------------------------
-  loadMdfFilesForDatabase(databaseName: string) {
-    return this.server
-      .getTopFragmentedMdfFiles('Monthly', databaseName)
-      .pipe(
-        catchError((err) => {
-          console.error('MDF API error', err);
-          return of(null);
-        }),
-        take(1),
-      )
-      .subscribe((mdfRes: any) => {
-        if (mdfRes && mdfRes.success && Array.isArray(mdfRes.data)) {
-          this.mdfFiles = mdfRes.data.map((m: any) => ({
-            location: m.location,
-            statusWithIndex: m.statusWithIndex,
-          }));
-          if (this.mdfFiles.length > 0) {
-            this.location = this.mdfFiles[0].location;
-            this.statusWithIndex = this.mdfFiles[0].statusWithIndex || null;
-          } else {
-            this.location = '';
-            this.statusWithIndex = null;
-          }
-        } else {
-          this.mdfFiles = [];
-          this.location = '';
-          this.statusWithIndex = null;
-        }
-
-        this.cdr.markForCheck();
-      });
   }
 
   // ----------------------------------------------------
@@ -180,12 +117,11 @@ export class DialogDefagBackupComponent {
     const dialogRef = this.dialog.open(BackDestinationDialogComponent, {
       width: '520px',
       disableClose: true,
-      data: { fileName: this.backupPath, serverName: this.selectedServer, databaseName: this.selectedDatabase },
+      data: { fileName: this.backupPath, serverName: this.selectedServer },
       scrollStrategy: this.overlay.scrollStrategies.block(),
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      console.log(result, 'result');
       if (result) this.backupPath = result.backupPath;
       this.cdr.detectChanges();
     });
@@ -195,8 +131,8 @@ export class DialogDefagBackupComponent {
   // SAVE BACKUP
   // ----------------------------------------------------
   save() {
-    if (!this.selectedServer || !this.selectedDatabase) {
-      this.toast.error('Select server and database.');
+    if (!this.selectedServer) {
+      this.toast.error('Select server.');
       return;
     }
 
@@ -207,83 +143,13 @@ export class DialogDefagBackupComponent {
       return;
     }
 
-    const backupPayload = {
-      databaseName: this.selectedDatabase,
+    // Return the backup configuration (policy mode)
+    this.dialogRef.close({
       backupPath: finalPath,
       backupType: this.selectedBackupType,
-      backupDeviceType: this.backupDeviceType,
-    };
-
-    const defragPayload = {
-      databaseName: this.selectedDatabase,
-      backupPath: this.backupPath.trim(),
-      mdfFilePath: this.location,
-      statusWithIndex: this.statusWithIndex,
-    };
-
-    this.saving = true;
-
-    // ----------------------------------------------------
-    // STEP 1 — BACKUP DATABASE
-    // ----------------------------------------------------
-    this.serverApi.BackupDatabase(backupPayload).subscribe({
-      next: (backupRes: any) => {
-        if (backupRes.statusCode !== 200) {
-          this.saving = false;
-          this.toast.error(backupRes?.data?.message || 'Backup failed.');
-          return;
-        }
-
-        this.toast.success(backupRes.data?.message || 'Backup successful.');
-
-        // ----------------------------------------------------
-        // STEP 2 — MDF DEFRAGMENT
-        // ----------------------------------------------------
-        this.serverApi.DefragmentMDF(defragPayload).subscribe({
-          next: (defragRes: any) => {
-            this.saving = false;
-
-            if (defragRes.statusCode !== 200) {
-              this.toast.error(defragRes?.data?.message || 'Defragment failed.');
-              return;
-            }
-
-            this.toast.success(defragRes.data?.message || 'Defragment successful.');
-
-            // ----------------------------------------------------
-            // STEP 3 — EXTRACT logId FROM RESPONSE
-            // ----------------------------------------------------
-            const logId = defragRes?.data?.logId || defragRes?.logId || null;
-
-            if (!logId) {
-              console.warn('DefragmentMDF did not return logId.');
-              return;
-            }
-
-            // ----------------------------------------------------
-            // STEP 4 — OPEN LOG DIALOG
-            // ----------------------------------------------------
-            this.dialog.open(DialogbackupListComponent, {
-              height: '400px',
-              data: { logId: logId },
-              panelClass: 'custom-dark-dialog',
-            });
-            // Close this dialog
-            this.dialogRef.close(defragRes);
-          },
-          error: (err) => {
-            this.saving = false;
-            console.error('Defragment request failed', err);
-            this.toast.error('Defragment request failed.');
-          },
-        });
-      },
-
-      error: (err) => {
-        this.saving = false;
-        console.error('Backup request failed', err);
-        this.toast.error('Backup request failed.');
-      },
+      pdfType: this.data?.pdfType || 'PDF',
+      destinations: this.destinations,
+      selectedDestinationIndex: this.selectedDestinationIndex,
     });
   }
 

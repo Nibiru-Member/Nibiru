@@ -9,13 +9,14 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './threshold-policy.component.html',
 })
 export class ThresholdPolicyComponent {
-  @Input() fragmentation = { enabled: true, value: 30, recommended: 30 };
-  @Input() scanDensity = { enabled: false, value: 80, recommended: 80 };
+  @Input() fragmentation: { enabled: boolean, value: number, recommended: number } = { enabled: true, value: 30, recommended: 30 };
+  @Input() scanDensity: { enabled: boolean, value: number, recommended: number } = { enabled: false, value: 80, recommended: 80 };
 
   @Output() fragmentationChange = new EventEmitter<typeof this.fragmentation>();
   @Output() scanDensityChange = new EventEmitter<typeof this.scanDensity>();
 
   onFragmentationChange() {
+    console.log('Fragmentation changed:', this.fragmentation);
     this.fragmentationChange.emit(this.fragmentation);
   }
 

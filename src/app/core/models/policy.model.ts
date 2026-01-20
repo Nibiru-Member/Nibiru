@@ -107,6 +107,7 @@ export interface UpdatePolicyDefragment {
   isIndexMDF: boolean;
   isAutomate: boolean;
   isBackup: boolean;
+  backupPath: string;
 }
 export interface UpdatePolicyResource {
   userId: string;

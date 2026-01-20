@@ -4,7 +4,6 @@
   <div class="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
     <div class="font-semibold">
       Back Up Database
-      <span *ngIf="selectedDatabase"> - {{ selectedDatabase }}</span>
     </div>
 
     <button
@@ -22,10 +21,19 @@
     <div class="space-y-2 rounded border border-gray-700 bg-gray-800 px-4 py-3">
       <div class="mb-1 text-[11px] font-semibold tracking-wide text-gray-200">Source</div>
 
-      <!-- Server Dropdown -->
+      <!-- Server Input/Dropdown -->
       <div class="grid grid-cols-[140px,1fr] items-center">
         <label>Server:</label>
+        <!-- If serverConnection is provided, show input (read-only) -->
+        <input
+          *ngIf="data?.serverConnection"
+          type="text"
+          [(ngModel)]="selectedServer"
+          readonly
+          class="w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-[13px] cursor-not-allowed" />
+        <!-- Otherwise, show dropdown -->
         <select
+          *ngIf="!data?.serverConnection"
           [(ngModel)]="selectedServer"
           (change)="onServerChange()"
           class="w-full rounded border border-gray-600 bg-gray-900 px-2 py-1 text-[13px]">
@@ -33,18 +41,6 @@
           <option *ngFor="let s of servers" [value]="s.serverName">
             {{ s.serverName }}
           </option>
-        </select>
-      </div>
-
-      <!-- Database Dropdown -->
-      <div class="grid grid-cols-[140px,1fr] items-center">
-        <label>Database:</label>
-        <select
-          [(ngModel)]="selectedDatabase"
-          (change)="onDatabaseChange()"
-          class="w-full rounded border border-gray-600 bg-gray-900 px-2 py-1 text-[13px]">
-          <option value="">-- Select Database --</option>
-          <option *ngFor="let d of databases" [value]="d">{{ d }}</option>
         </select>
       </div>
 
@@ -80,7 +76,7 @@
         <div class="flex h-[85px] flex-1 overflow-x-auto overflow-y-auto rounded border border-gray-600 bg-gray-900">
           <div class="min-w-max">
             <div class="cursor-default whitespace-nowrap bg-blue-900/60 px-2 py-[2px] text-[12px] text-white">
-              {{ backupPath ? backupPath : location }}
+              {{ backupPath || '(No destination selected)' }}
             </div>
             <!-- <div
               *ngFor="let dest of destinations; let i = index"

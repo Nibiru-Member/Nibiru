@@ -81,6 +81,11 @@ export class AddEditPolicyComponent implements OnInit {
   connectionPassword: string = '';
   category: string = 'Local';
   isSchedule: boolean = false;
+  defragmentPolicy: any = null;
+  schedulePolicy: any = null;
+  selectedServerConnection: any = null; // Store selected server connection details
+  policyObjectTypes: any[] = []; // Store policy object types from backend
+  selectedNotifications: string[] = []; // Store selected notifications from backend
   // Child refs
   @ViewChild(GeneralPolicyComponent) generalComp!: GeneralPolicyComponent;
   @ViewChild(TargetPolicyComponent) targetComp!: TargetPolicyComponent;
@@ -126,6 +131,37 @@ export class AddEditPolicyComponent implements OnInit {
           this.server = policy.serverName;
           this.owner = policy.ownerId;
 
+          // Seleted Items - pass assignments
+          this.selectedItems = policy.assignments;
+          // Store objectTypes for target component
+          this.policyObjectTypes = policy.objectTypes || [];
+          //  fragmentationThreshold and scanDensityThreshold in Threshold Policy Component
+          this.fragmentation = { enabled: policy.isFragmentation || false, value: policy.fragmentationThreshold || 30, recommended: 30 };
+          this.scanDensity = { enabled: policy.isScanDensity || false, value: policy.scanDensityThreshold || 80, recommended: 80 };
+          
+          // Filter Policy Component
+          this.pageCountMin = policy.minPageCount || 19;
+          this.pageCountMax = policy.maxPageCount || 19;
+          this.primaryIndexSorting = policy.primaryIndexSorting || '';
+
+          // Defragment Policy Component 
+          this.defragmentPolicy = {
+            isMdf: policy.isMDF || false,
+            isIndexMdf: policy.isIndexMdf || false,
+            isBackup: policy.isBackup || false,
+            backupPath: policy.backupPath || '',
+            reorganize: policy.isReorganize || false,
+            rebuild: policy.isRebuildOnline || false,
+            isAutomate: policy.isAutomate || false,
+            isIndex: policy.isIndex || false,
+            updateStatistics: policy.updateStatistics || '',
+            recompileProcedures: policy.recompiledSP || '',
+            statisticsMethod: policy.statisticsMethod.trimEnd() || '',
+            useNoRecompute: policy.useNoRecompute || false,
+            fillFactorCurrent: policy.fillFactorCurrentValue || '',
+            fillFactorNew: policy.fillFactorNewValue || '',          
+          };
+          
           // Allow Angular input-binding to update child
           setTimeout(() => {
             if (this.generalComp) {
@@ -171,6 +207,23 @@ export class AddEditPolicyComponent implements OnInit {
     if (!valid) {
       this.toast.error('Please fill all required fields before proceeding.');
       return;
+    }
+
+    // If moving from General tab (tab 0) to Target tab (tab 1), capture server connection
+    if (this.activeTab === 0 && this.generalComp) {
+      const serverName = this.generalComp.server;
+      if (serverName) {
+        // Find the full server connection details from serverDetails
+        const selectedServer = this.generalComp.serverDetails?.find((s: any) => s.serverName === serverName);
+        if (selectedServer) {
+          this.selectedServerConnection = {
+            server: selectedServer.serverName,
+            username: selectedServer.userName,
+            password: selectedServer.passwordHash,
+            connectionID: selectedServer.connectionID,
+          };
+        }
+      }
     }
 
     this.isSaving = true;
@@ -248,18 +301,11 @@ export class AddEditPolicyComponent implements OnInit {
             return false;
           }
 
-          const conn = this.serverState.getConnection();
-          if (!conn || !conn.server) {
-            this.toast.error('No active server connection found.');
-            return false;
-          }
-
           const payload: UpdatePolicyTargetSelection = {
             policyId: this.policyId!,
             accountId: this.getAccountId(),
-            serverName: conn.server,
+            serverName: target.serverConnection.server,
             isAllIndex: this.serverState.getIsAllIndex(),
-
             // NEW STRUCTURE
             databases: target.databases,
           };
@@ -342,6 +388,7 @@ export class AddEditPolicyComponent implements OnInit {
             isIndexMDF: d.isIndexMdf,
             isBackup: d.isBackup,
             isAutomate: d.isAutomate,
+            backupPath: d.backupPath,
           };
 
           await this.policyService.updatePolicyDefragment(payload).toPromise();
