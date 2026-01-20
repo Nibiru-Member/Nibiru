@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -8,12 +8,14 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, FormsModule],
   templateUrl: './notification-policy.component.html',
 })
-export class NotificationPolicyComponent {
+export class NotificationPolicyComponent implements OnInit {
+  @Input() notificationsPolicy: any = null;
   @Input() emailAlerts = '';
+  
   isEmailValid = true;
   @Output() emailAlertsChange = new EventEmitter<string>();
 
-  @Input() notificationOptions = [
+  notificationOptions = [
     { name: 'Policy Started', value: 'Started' },
     { name: 'Policy Completed', value: 'Completed' },
     { name: 'Policy Canceled', value: 'Canceled' },
@@ -23,10 +25,22 @@ export class NotificationPolicyComponent {
     { name: 'Policy Delayed', value: 'Delayed' },
   ];
 
-  @Input() selectedNotifications: string[] = [];
+  selectedNotifications: string[] = [];
   @Output() selectedNotificationsChange = new EventEmitter<string[]>();
 
   enableCustomEmail = false;
+
+  ngOnInit(): void {
+    if (this.notificationsPolicy) {
+      console.log('notificationsPolicy', this.notificationsPolicy);
+      // Initialize from notificationsPolicy
+      if (Array.isArray(this.notificationsPolicy.selectedNotifications)) {
+        this.selectedNotifications = [...this.notificationsPolicy.selectedNotifications];
+      }
+      this.emailAlerts = this.notificationsPolicy.emailAlerts ?? this.emailAlerts ?? '';
+      this.enableCustomEmail = this.notificationsPolicy.enableCustomEmail ?? this.enableCustomEmail ?? false;
+    }
+  }
 
   toggleNotification(value: string) {
     if (this.selectedNotifications.includes(value)) {
@@ -79,6 +93,7 @@ export class NotificationPolicyComponent {
     return {
       selectedNotifications: this.selectedNotifications,
       emailAlerts: this.enableCustomEmail ? this.emailAlerts : '',
+      enableCustomEmail: this.enableCustomEmail,
     };
   }
 }

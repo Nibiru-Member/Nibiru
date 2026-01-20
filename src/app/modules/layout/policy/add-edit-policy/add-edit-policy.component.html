@@ -61,7 +61,7 @@
     <app-resource-check *ngIf="activeTab === 6" #resourceCheckComp [policyId]="policyId" [userId]="getUserId()">
     </app-resource-check>
 
-    <app-notification-policy *ngIf="activeTab === 7" [(emailAlerts)]="emailAlerts"></app-notification-policy>
+    <app-notification-policy *ngIf="activeTab === 7" [notificationsPolicy]="notificationsPolicy" [(emailAlerts)]="emailAlerts"></app-notification-policy>
   </div>
 
   <div class="flex items-center justify-between border-t border-gray-700 px-6 py-4">

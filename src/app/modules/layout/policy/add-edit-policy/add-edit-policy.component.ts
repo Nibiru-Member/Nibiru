@@ -66,16 +66,6 @@ export class AddEditPolicyComponent implements OnInit {
   pageCountMin = 19;
   pageCountMax = 19;
   primaryIndexSorting = '';
-  optimizeOption = '';
-  updateStatistics = '';
-  recompileProcedures = '';
-  fillFactorCurrent = '';
-  fillFactorNew = '';
-  scheduleType = 'Monthly';
-  startTime = '12:20:00 AM';
-  selectedDays = [false, false, false, false, false, false, false];
-  restrictionStart = '12:20:00 AM';
-  restrictionEnd = '12:20:00 AM';
   emailAlerts = '';
   connectionUsername: string = '';
   connectionPassword: string = '';
@@ -85,6 +75,7 @@ export class AddEditPolicyComponent implements OnInit {
   schedulePolicy: any = null;
   selectedServerConnection: any = null; // Store selected server connection details
   policyObjectTypes: any[] = []; // Store policy object types from backend
+  notificationsPolicy: any = null;
   selectedNotifications: string[] = []; // Store selected notifications from backend
   // Child refs
   @ViewChild(GeneralPolicyComponent) generalComp!: GeneralPolicyComponent;
@@ -175,6 +166,23 @@ export class AddEditPolicyComponent implements OnInit {
             onceDate: policy.onceDate || '',
             restrictionStart: policy.restrictionStartTime || '',
             restrictionEnd: policy.restrictionEndTime || '',
+          };
+
+          // Notifications Policy Component
+          const notificationValues = ['Started', 'Completed', 'Canceled', 'Expired', 'Disabled', 'Failed', 'Delayed'];
+          const notificationBools = [
+            policy.policyStarted || false,
+            policy.policyCompleted || false,
+            policy.policyCanceled || false,
+            policy.policyExpired || false,
+            policy.policyDisabled || false,
+            policy.policyFailed || false,
+            policy.policyDelayed || false
+          ];
+          this.notificationsPolicy = {
+            selectedNotifications: notificationValues.filter((_, index) => notificationBools[index] === true),
+            emailAlerts: policy.emailRecipients || '',
+            enableCustomEmail: policy.enableCustomEmail || false,
           };
           // Allow Angular input-binding to update child
           setTimeout(() => {
@@ -469,7 +477,8 @@ export class AddEditPolicyComponent implements OnInit {
             policyDisabled: n.selectedNotifications.includes('Disabled'),
             policyFailed: n.selectedNotifications.includes('Failed'),
             policyDelayed: n.selectedNotifications.includes('Delayed'),
-            emailRecipients: n.emailAlerts,
+            emailRecipients: n.emailAlerts || '',
+            enableCustomEmail: n.enableCustomEmail ?? false
           };
 
           await this.policyService.updatePolicyNotifications(payload).toPromise();

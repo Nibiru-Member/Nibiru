@@ -150,6 +150,7 @@ export interface UpdatePolicyNotifications {
   policyFailed: boolean;
   policyDelayed: boolean;
   emailRecipients: string;
+  enableCustomEmail: boolean;
 }
 export interface DynamicContentionConditionsRequest {
   activeSessionCountThreshold?: any;
