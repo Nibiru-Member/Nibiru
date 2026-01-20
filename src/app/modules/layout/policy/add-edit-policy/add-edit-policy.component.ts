@@ -161,7 +161,21 @@ export class AddEditPolicyComponent implements OnInit {
             fillFactorCurrent: policy.fillFactorCurrentValue || '',
             fillFactorNew: policy.fillFactorNewValue || '',          
           };
-          
+
+          // Schedule Policy Component
+          this.schedulePolicy = {
+            isSchedule: policy.isSchedule || false,
+            scheduleType: policy.scheduleType || '',
+            startTime: policy.scheduleStartTime || '',
+            selectedDays: [policy.onSunday || false, policy.onMonday || false, policy.onTuesday || false, policy.onWednesday || false, policy.onThursday || false, policy.onFriday || false, policy.onSaturday || false],
+            monthlyDay: policy.monthlyDay || 1,
+            monthlyEveryMonths: policy.monthlyEveryMonths || 1,
+            weeklyInterval: policy.weeklyInterval || 1,
+            dailyInterval: policy.dailyInterval || 1,
+            onceDate: policy.onceDate || '',
+            restrictionStart: policy.restrictionStartTime || '',
+            restrictionEnd: policy.restrictionEndTime || '',
+          };
           // Allow Angular input-binding to update child
           setTimeout(() => {
             if (this.generalComp) {
@@ -422,8 +436,13 @@ export class AddEditPolicyComponent implements OnInit {
             restrictionStartTime: s.restrictionStart,
             restrictionEndTime: s.restrictionEnd,
             isSchedule: s.isSchedule,
+            monthlyDay: s.monthlyDay,
+            monthlyEveryMonths: s.monthlyEveryMonths,
+            weeklyInterval: s.weeklyInterval,
+            dailyInterval: s.dailyInterval,
+            onceDate: s.onceDate,
           };
-
+          console.log('payload', payload);
           await this.policyService.updatePolicySchedule(payload).toPromise();
 
           // LOG UPDATE SUCCESS

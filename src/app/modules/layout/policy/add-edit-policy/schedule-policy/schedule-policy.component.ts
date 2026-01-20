@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -9,39 +9,61 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './schedule-policy.component.html',
   styleUrls: ['./schedule-policy.component.css'],
 })
-export class SchedulePolicyComponent {
-  @Input() isSchedule: boolean = false;
-  @Input() scheduleType: string = '';
-  @Input() startTime: string = '';
-  @Input() selectedDays: boolean[] = [false, false, false, false, false, false, false];
-  @Input() restrictionStart: string = '';
-  @Input() restrictionEnd: string = '';
+export class SchedulePolicyComponent implements OnInit {
+  @Input() schedulePolicy: any = null;
 
-  @Output() isScheduleChange = new EventEmitter<boolean>();
-  @Output() scheduleTypeChange = new EventEmitter<string>();
-  @Output() startTimeChange = new EventEmitter<string>();
-  @Output() selectedDaysChange = new EventEmitter<boolean[]>();
-  @Output() restrictionStartChange = new EventEmitter<string>();
-  @Output() restrictionEndChange = new EventEmitter<string>();
+  // Sunday-first ordering must match mapping in AddEditPolicyComponent
+  days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  // Recurrence detail fields
+  isSchedule: boolean = false;
+  scheduleType: string = '';
+  startTime: string = '';
+  selectedDays: boolean[] = [false, false, false, false, false, false, false];
+  restrictionStart: string = '';
+  restrictionEnd: string = '';
+  monthlyDay: number = 1;
+  monthlyEveryMonths: number = 1;
+  weeklyInterval: number = 1;
+  dailyInterval: number = 1;
+  onceDate: string = '';
 
-  onScheduleTypeChange(event: any) {
-    this.scheduleTypeChange.emit(event.target.value);
+  ngOnInit(): void {
+    if (this.schedulePolicy) {
+      console.log('schedulePolicy', this.schedulePolicy);
+      this.isSchedule = this.schedulePolicy.isSchedule ?? false;
+      this.scheduleType = this.schedulePolicy.scheduleType ?? '';
+      this.startTime = this.schedulePolicy.startTime ?? '';
+
+      const days = this.schedulePolicy.selectedDays as boolean[] | undefined;
+      if (Array.isArray(days) && days.length === 7) {
+        this.selectedDays = [...days];
+      }
+
+      this.restrictionStart = this.schedulePolicy.restrictionStart ?? '';
+      this.restrictionEnd = this.schedulePolicy.restrictionEnd ?? '';
+
+      this.monthlyDay = this.schedulePolicy.monthlyDay ?? this.monthlyDay;
+      this.monthlyEveryMonths = this.schedulePolicy.monthlyEveryMonths ?? this.monthlyEveryMonths;
+      this.weeklyInterval = this.schedulePolicy.weeklyInterval ?? this.weeklyInterval;
+      this.dailyInterval = this.schedulePolicy.dailyInterval ?? this.dailyInterval;
+      this.onceDate = this.schedulePolicy.onceDate ?? this.onceDate;
+    }
   }
+
   onStartTimeChange(event: any) {
-    this.startTimeChange.emit(event.target.value);
+    this.startTime = event.target.value;
   }
   onSelectedDaysChange(index: number, event: any) {
     const updated = [...this.selectedDays];
     updated[index] = event.target.checked;
-    this.selectedDaysChange.emit(updated);
+    this.selectedDays = updated;
   }
   onRestrictionStartChange(event: any) {
-    this.restrictionStartChange.emit(event.target.value);
+    this.restrictionStart = event.target.value;
   }
   onRestrictionEndChange(event: any) {
-    this.restrictionEndChange.emit(event.target.value);
+    this.restrictionEnd = event.target.value;
   }
 
   validate(): boolean {
@@ -61,12 +83,17 @@ export class SchedulePolicyComponent {
 
   getFormData() {
     return {
+      isSchedule: this.isSchedule,
       scheduleType: this.scheduleType,
       startTime: this.startTime,
       selectedDays: this.selectedDays,
       restrictionStart: this.restrictionStart,
       restrictionEnd: this.restrictionEnd,
-      isSchedule: this.isSchedule,
+      monthlyDay: this.monthlyDay,
+      monthlyEveryMonths: this.monthlyEveryMonths,
+      weeklyInterval: this.weeklyInterval,
+      dailyInterval: this.dailyInterval,
+      onceDate: this.onceDate,
     };
   }
 }

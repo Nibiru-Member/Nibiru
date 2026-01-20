@@ -4,7 +4,6 @@
     <input
       type="checkbox"
       [(ngModel)]="isSchedule"
-      (ngModelChange)="isScheduleChange.emit($event)"
       class="accent-red-500" />
     <span>Schedule</span>
   </label>
@@ -23,7 +22,6 @@
             name="scheduleType"
             [value]="type"
             [(ngModel)]="scheduleType"
-            (change)="onScheduleTypeChange($event)"
             class="accent-red-500" />
           <span>{{ type }}</span>
         </label>
@@ -34,32 +32,86 @@
     <div class="border-b border-gray-700 pb-4">
       <h3 class="mb-3 text-sm font-medium">Schedule</h3>
 
-      <div class="mb-3 flex items-center space-x-8">
-        <!-- Start Time -->
-        <div class="flex items-center space-x-3">
-          <span class="text-sm">Start:</span>
-          <input
-            type="text"
-            [(ngModel)]="startTime"
-            (input)="onStartTimeChange($event)"
-            class="bg-gray-950 w-32 rounded-md border border-gray-600 p-1 text-center text-sm" />
-        </div>
-
-        <!-- Days -->
-        <div class="flex items-center space-x-3">
-          <span class="text-sm">On:</span>
-          <div class="flex items-center space-x-3">
-            <label *ngFor="let day of days; let i = index" class="flex items-center space-x-1 text-sm">
-              <input
-                type="checkbox"
-                [(ngModel)]="selectedDays[i]"
-                (change)="onSelectedDaysChange(i, $event)"
-                class="accent-red-500" />
-              <span>{{ day }}</span>
-            </label>
-          </div>
-        </div>
+      <!-- Start Time -->
+      <div class="mb-4 flex items-center space-x-3">
+        <span class="text-sm">Start:</span>
+        <input
+          type="time"
+          step="1"
+          [(ngModel)]="startTime"
+          (input)="onStartTimeChange($event)"
+          class="bg-gray-950 rounded-md border border-gray-600 px-2 py-1 text-sm text-center"
+          style="width: 130px;" />
       </div>
+
+      <!-- Monthly UI -->
+      @if (scheduleType === 'Monthly') {
+      <div class="flex flex-nowrap items-center gap-2 text-sm">
+        <span class="whitespace-nowrap">Day:</span>
+        <input
+          type="number"
+          min="1"
+          max="31"
+          [(ngModel)]="monthlyDay"
+          class="bg-gray-950 w-16 rounded-md border border-gray-600 px-2 py-1 text-center text-sm"  style="width: 60px;" />
+        <span class="whitespace-nowrap">of every</span>
+        <input
+          type="number"
+          min="1"
+          [(ngModel)]="monthlyEveryMonths"
+          class="bg-gray-950 w-16 rounded-md border border-gray-600 px-2 py-1 text-center text-sm"  style="width: 60px;" />
+        <span class="whitespace-nowrap">month(s)</span>
+      </div>
+      }
+
+      <!-- Weekly UI -->
+      @if (scheduleType === 'Weekly') {
+      <div class="flex flex-nowrap items-center gap-3">
+        <span class="whitespace-nowrap">Recurs every:</span>
+        <input
+          type="number"
+          min="1"
+          [(ngModel)]="weeklyInterval"
+          class="bg-gray-950 rounded-md border border-gray-600 px-2 py-1 text-center text-sm" style="width: 60px;" />
+        <span class="whitespace-nowrap">week(s) on</span>
+      </div>
+      <div class="flex flex-wrap gap-3 p-2">
+        <label *ngFor="let day of days; let i = index" class="flex items-center space-x-1 text-sm">
+          <input
+            type="checkbox"
+            [(ngModel)]="selectedDays[i]"
+            (change)="onSelectedDaysChange(i, $event)"
+            class="accent-red-500" />
+          <span>{{ day }}</span>
+        </label>
+      </div>
+      }
+
+      <!-- Daily UI -->
+      @if (scheduleType === 'Daily') {
+      <div class="flex flex-wrap items-center gap-2 text-sm">
+        <span class="whitespace-nowrap">Recurs every:</span>
+        <input
+          type="number"
+          min="1"
+          [(ngModel)]="dailyInterval"
+          class="bg-gray-950 w-16 rounded-md border border-gray-600 px-2 py-1 text-center text-sm" style="width: 60px;"/>
+        <span class="whitespace-nowrap">day(s)</span>
+      </div>
+      }
+
+      <!-- Once UI -->
+      @if (scheduleType === 'Once') {
+      <div class="flex flex-wrap items-center gap-3 text-sm">
+        <span class="whitespace-nowrap">Date:</span>
+        <input
+          type="date"
+          [(ngModel)]="onceDate"
+          class="bg-gray-950 rounded-md border border-gray-600 px-2 py-1 text-sm"
+          style="width: 170px;" />
+        <span class="text-gray-400">Runs once at the specified start time.</span>
+      </div>
+      }
     </div>
 
     <!-- RESTRICTION -->
@@ -70,18 +122,22 @@
         <span class="shrink-0 whitespace-nowrap text-sm"> Execute only between: </span>
 
         <input
-          type="text"
+          type="time"
+          step="1"
           [(ngModel)]="restrictionStart"
           (input)="onRestrictionStartChange($event)"
-          class="bg-gray-950 w-32 rounded-md border border-gray-600 p-1 text-center text-sm" />
+          class="bg-gray-950 rounded-md border border-gray-600 px-2 py-1 text-sm text-center"
+          style="width: 130px;" />
 
         <span class="shrink-0 text-sm">and</span>
 
         <input
-          type="text"
+          type="time"
+          step="1"
           [(ngModel)]="restrictionEnd"
           (input)="onRestrictionEndChange($event)"
-          class="bg-gray-950 w-32 rounded-md border border-gray-600 p-1 text-center text-sm" />
+          class="bg-gray-950 rounded-md border border-gray-600 px-2 py-1 text-sm text-center"
+          style="width: 130px;" />
       </div>
     </div>
   </div>

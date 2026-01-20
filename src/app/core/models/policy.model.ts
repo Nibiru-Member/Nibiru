@@ -133,6 +133,11 @@ export interface UpdatePolicySchedule {
   restrictionStartTime: string;
   restrictionEndTime: string;
   isSchedule: boolean;
+  monthlyDay: number;
+  monthlyEveryMonths: number;
+  weeklyInterval: number;
+  dailyInterval: number;
+  onceDate: string;
 }
 export interface UpdatePolicyNotifications {
   userId: string;
