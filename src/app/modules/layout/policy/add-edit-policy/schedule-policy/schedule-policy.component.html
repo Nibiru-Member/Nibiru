@@ -22,6 +22,7 @@
             name="scheduleType"
             [value]="type"
             [(ngModel)]="scheduleType"
+            (ngModelChange)="onScheduleTypeChange()"
             class="accent-red-500" />
           <span>{{ type }}</span>
         </label>
@@ -53,12 +54,14 @@
           min="1"
           max="31"
           [(ngModel)]="monthlyDay"
+          (ngModelChange)="onMonthlyDayChange()"
           class="bg-gray-950 w-16 rounded-md border border-gray-600 px-2 py-1 text-center text-sm"  style="width: 60px;" />
         <span class="whitespace-nowrap">of every</span>
         <input
           type="number"
           min="1"
           [(ngModel)]="monthlyEveryMonths"
+          (ngModelChange)="onMonthlyEveryMonthsChange()"
           class="bg-gray-950 w-16 rounded-md border border-gray-600 px-2 py-1 text-center text-sm"  style="width: 60px;" />
         <span class="whitespace-nowrap">month(s)</span>
       </div>
@@ -72,6 +75,7 @@
           type="number"
           min="1"
           [(ngModel)]="weeklyInterval"
+          (ngModelChange)="onWeeklyIntervalChange()"
           class="bg-gray-950 rounded-md border border-gray-600 px-2 py-1 text-center text-sm" style="width: 60px;" />
         <span class="whitespace-nowrap">week(s) on</span>
       </div>
@@ -95,6 +99,7 @@
           type="number"
           min="1"
           [(ngModel)]="dailyInterval"
+          (ngModelChange)="onDailyIntervalChange()"
           class="bg-gray-950 w-16 rounded-md border border-gray-600 px-2 py-1 text-center text-sm" style="width: 60px;"/>
         <span class="whitespace-nowrap">day(s)</span>
       </div>
@@ -107,6 +112,7 @@
         <input
           type="date"
           [(ngModel)]="onceDate"
+          (ngModelChange)="onOnceDateChange()"
           class="bg-gray-950 rounded-md border border-gray-600 px-2 py-1 text-sm"
           style="width: 170px;" />
         <span class="text-gray-400">Runs once at the specified start time.</span>

@@ -449,6 +449,7 @@ export class AddEditPolicyComponent implements OnInit {
             weeklyInterval: s.weeklyInterval,
             dailyInterval: s.dailyInterval,
             onceDate: s.onceDate,
+            nextAutoRun: s.nextAutoRun || '',
           };
           console.log('payload', payload);
           await this.policyService.updatePolicySchedule(payload).toPromise();

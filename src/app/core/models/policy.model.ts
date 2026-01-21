@@ -138,6 +138,7 @@ export interface UpdatePolicySchedule {
   weeklyInterval: number;
   dailyInterval: number;
   onceDate: string;
+  nextAutoRun: string;
 }
 export interface UpdatePolicyNotifications {
   userId: string;
