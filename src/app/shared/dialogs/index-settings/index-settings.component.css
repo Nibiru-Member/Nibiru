@@ -67,6 +67,14 @@
   height: 0 !important;
 }
 
+/* Override for tooltip sliders - allow ::before for tooltips */
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer[data-tooltip]::before {
+  display: block !important;
+  content: attr(data-tooltip) !important;
+  width: auto !important;
+  height: auto !important;
+}
+
 .custom-slider .ngx-slider .ngx-slider-pointer::after {
   display: none !important;
   content: none !important;
@@ -106,5 +114,134 @@
 /* Hide value bubbles */
 .custom-slider .ngx-slider .ngx-slider-bubble {
   display: none !important;
+}
+
+/* Tooltip styling for sliders */
+.slider-with-tooltip {
+  position: relative;
+}
+
+.slider-with-tooltip .ngx-slider {
+  position: relative;
+}
+
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer {
+  position: relative;
+}
+
+/* Override the ::before hiding for tooltip sliders */
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer::before {
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  content: '' !important;
+}
+
+/* Tooltip for single pointer sliders */
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer[data-tooltip]::before {
+  content: attr(data-tooltip) !important;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.95);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  max-width: 280px;
+  min-width: 200px;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  word-wrap: break-word;
+}
+
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer[data-tooltip]:hover::before,
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer[data-tooltip]:active::before,
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer[data-tooltip]:focus::before {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+/* Tooltip for dual-range sliders - min pointer (first child) */
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer:first-child[data-tooltip]::before {
+  content: attr(data-tooltip) !important;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.95);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  max-width: 280px;
+  min-width: 200px;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  word-wrap: break-word;
+}
+
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer:first-child[data-tooltip]:hover::before,
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer:first-child[data-tooltip]:active::before,
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer:first-child[data-tooltip]:focus::before {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+/* Tooltip for dual-range sliders - max pointer (last child) */
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer:last-child[data-tooltip]::before {
+  content: attr(data-tooltip) !important;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.95);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  max-width: 280px;
+  min-width: 200px;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  word-wrap: break-word;
+}
+
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer:last-child[data-tooltip]:hover::before,
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer:last-child[data-tooltip]:active::before,
+.slider-with-tooltip .ngx-slider .ngx-slider-pointer:last-child[data-tooltip]:focus::before {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+/* Show pointer labels */
+.custom-slider .ngx-slider .ngx-slider-model-value,
+.custom-slider .ngx-slider .ngx-slider-model-high {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: var(--primary) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  margin-top: 4px !important;
 }
 

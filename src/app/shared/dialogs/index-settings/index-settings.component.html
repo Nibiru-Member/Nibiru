@@ -20,25 +20,40 @@
           
           <!-- OBJECT SIZE Slider -->
           <div class="mb-2">
-            <span class="text-xs text-gray-400 whitespace-nowrap">
-              <span class="text-gray-300">OBJECT SIZE:</span>
-              >= {{ formatSize(settingsForm.get('objectReorgSizeMin')?.value || 0) }}...
-              {{ formatSize(settingsForm.get('objectReorgSizeMax')?.value || 256) }} <= {{ formatSize(settingsForm.get('objectRebuildSizeCurrent')?.value || 131072) }}</span>
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-2">
+            <div class="mb-1.5">
+              <span class="text-xs font-semibold text-gray-300">OBJECT SIZE:</span>
+            </div>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-2">
               <!-- Dual-range slider for min-max (rerorg) -->
-              <div class="flex-1 w-full sm:w-auto custom-slider custom-slider-range">
-                <ngx-slider
-                  [(value)]="objectReorgSizeMinValue"
-                  [(highValue)]="objectReorgSizeMaxValue"
-                  [options]="objectReorgSizeSliderOptions">
-                </ngx-slider>
+              <div class="flex-1 w-full sm:w-auto">
+                <label class="text-xs text-gray-400 mb-1 block">Reorganize Range (Min - Max):</label>
+                <div class="custom-slider custom-slider-range slider-with-tooltip" 
+                     [attr.data-tooltip-min]="'Min Size (Reorganize): Sets the minimum object size for reorganization operations. Objects smaller than this will be ignored.'"
+                     [attr.data-tooltip-max]="'Max Size (Reorganize): Sets the maximum object size for reorganization operations. Objects larger than this will be rebuilt instead.'">
+                  <ngx-slider
+                    [(value)]="objectReorgSizeMinValue"
+                    [(highValue)]="objectReorgSizeMaxValue"
+                    [options]="objectReorgSizeSliderOptions">
+                  </ngx-slider>
+                </div>
+                <div class="text-xs text-gray-400 mt-1">
+                  >= {{ formatSize(settingsForm.get('objectReorgSizeMin')?.value || 0) }} ... 
+                  {{ formatSize(settingsForm.get('objectReorgSizeMax')?.value || 256) }} <=
+                </div>
               </div>
               <!-- Single-range slider for current value (rebuild) -->
-              <div class="flex-1 w-full sm:w-auto custom-slider">
-                <ngx-slider
-                  [(value)]="objectRebuildSizeCurrentValue"
-                  [options]="objectRebuildSizeCurrentSliderOptions">
-                </ngx-slider>
+              <div class="flex-1 w-full sm:w-auto">
+                <label class="text-xs text-gray-400 mb-1 block">Rebuild Threshold:</label>
+                <div class="custom-slider slider-with-tooltip"
+                     [attr.data-tooltip]="'Rebuild Threshold: Sets the minimum object size for rebuild operations. Objects at or above this size will be rebuilt instead of reorganized.'">
+                  <ngx-slider
+                    [(value)]="objectRebuildSizeCurrentValue"
+                    [options]="objectRebuildSizeCurrentSliderOptions">
+                  </ngx-slider>
+                </div>
+                <div class="text-xs text-gray-400 mt-1">
+                  >= {{ formatSize(settingsForm.get('objectRebuildSizeCurrent')?.value || 131072) }}
+                </div>
               </div>
             </div>
           </div>
@@ -59,12 +74,18 @@
             </div>
             <!-- Fragmentation Percentage Range Slider -->
             <div class="mt-2 pt-2 border-t border-gray-700">
-              <div class="w-full custom-slider custom-slider-range">
+              <label class="text-xs text-gray-400 mb-1 block">Fragmentation Threshold Range:</label>
+              <div class="w-full custom-slider custom-slider-range slider-with-tooltip"
+                   [attr.data-tooltip-min]="'Ignore Threshold: Objects with fragmentation below this percentage will be ignored. No action will be taken on these objects.'"
+                   [attr.data-tooltip-max]="'Reorganize/Rebuild Threshold: Objects with fragmentation at or above this percentage will be reorganized (if within size range) or rebuilt (if larger).'">
                 <ngx-slider
                   [(value)]="fragmentationThresholdMinValue"
                   [(highValue)]="fragmentationThresholdMaxValue"
                   [options]="fragmentationThresholdSliderOptions">
                 </ngx-slider>
+              </div>
+              <div class="text-xs text-gray-400 mt-1">
+                Min: {{ settingsForm.get('ignoreThreshold')?.value || 15 }}% | Max: {{ settingsForm.get('reorganizeThreshold')?.value || 30 }}%
               </div>
             </div>
           </div>

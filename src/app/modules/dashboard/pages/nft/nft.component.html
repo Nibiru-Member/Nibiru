@@ -138,50 +138,6 @@
               [style.top.px]="mdfMenuPosition.y"
               [style.left.px]="mdfMenuPosition.x"
               (click)="$event.stopPropagation()">
-              <!-- ================= TASK (WITH SUBMENU) ================= -->
-              <div
-                class="group relative flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-gray-700">
-                <span class="text-sm text-white">Task</span>
-                <span class="text-gray-400">▶</span>
-
-                <!-- SUBMENU -->
-                <div
-                  class="absolute left-full top-0 ml-1 hidden min-w-[190px] rounded-md border border-gray-700 bg-gray-900 shadow-md group-hover:block">
-                  <div
-                    class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
-                    (click)="onAttachDatabase(menu.row); closeMdfMenu()">
-                    <span class="ml-2 text-sm text-white">Attach Database</span>
-                  </div>
-
-                  <div
-                    class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
-                    (click)="onDetachDatabase(menu.row); closeMdfMenu()">
-                    <span class="ml-2 text-sm text-white">Detach Database</span>
-                  </div>
-
-                  <!-- Take Offline -->
-                  <div
-                    class="flex items-center px-4 py-2"
-                    [class.cursor-pointer]="!isOffline"
-                    [class.opacity-50]="isOffline"
-                    [class.pointer-events-none]="isOffline"
-                    [class.hover:bg-gray-700]="!isOffline"
-                    (click)="!isOffline && openCloseConnectionsDialog(menu.row, true); closeMdfMenu()">
-                    <span class="ml-2 text-sm text-white">Take Offline</span>
-                  </div>
-
-                  <!-- Bring Online -->
-                  <div
-                    class="flex items-center px-4 py-2"
-                    [class.cursor-pointer]="isOffline"
-                    [class.opacity-50]="!isOffline"
-                    [class.pointer-events-none]="!isOffline"
-                    [class.hover:bg-gray-700]="isOffline"
-                    (click)="isOffline && openCloseConnectionsDialog(menu.row, false); closeMdfMenu()">
-                    <span class="ml-2 text-sm text-white">Bring Online</span>
-                  </div>
-                </div>
-              </div>
               <!-- ================= BACKUP ================= -->
               <div
                 class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"

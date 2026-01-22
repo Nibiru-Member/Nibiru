@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angul
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import { NgxSliderModule, Options } from '@angular-slider/ngx-slider';
+import { NgxSliderModule, Options, LabelType, TranslateFunction } from '@angular-slider/ngx-slider';
 
 export interface IndexSettingsData {
   // Filters
@@ -126,8 +126,11 @@ export class IndexSettingsComponent implements AfterViewInit {
         },
         showTicks: false,
         showTicksValues: false,
-        hidePointerLabels: true,
+        hidePointerLabels: false,
         hideLimitLabels: true,
+        translate: (value: number, label: LabelType): string => {
+          return `${this.formatSize(value)}`;
+        },
       };
     }
     return this._objectReorgSizeCurrentSliderOptions;
@@ -169,10 +172,13 @@ export class IndexSettingsComponent implements AfterViewInit {
         },
         showTicks: false,
         showTicksValues: false,
-        hidePointerLabels: true,
+        hidePointerLabels: false,
         hideLimitLabels: true,
         showSelectionBarFromValue: min,
         showSelectionBarEnd: true,
+        translate: (value: number, label: LabelType): string => {
+          return `${this.formatSize(value)}`;
+        },
       };
     }
     return this._objectRebuildSizeCurrentSliderOptions;
@@ -195,9 +201,12 @@ export class IndexSettingsComponent implements AfterViewInit {
         },
         showTicks: false,
         showTicksValues: false,
-        hidePointerLabels: true,
+        hidePointerLabels: false,
         hideLimitLabels: true,
         showSelectionBarEnd: true,
+        translate: (value: number, label: LabelType): string => {
+          return `${this.formatSize(value)}`;
+        },
       };
     }
     return this._objectReorgSizeSliderOptions;
@@ -245,9 +254,12 @@ export class IndexSettingsComponent implements AfterViewInit {
         },
         showTicks: false,
         showTicksValues: false,
-        hidePointerLabels: true,
+        hidePointerLabels: false,
         hideLimitLabels: true,
         showSelectionBarEnd: true,
+        translate: (value: number, label: LabelType): string => {
+          return `${value}%`;
+        },
       };
     }
     return this._fragmentationThresholdSliderOptions;
@@ -345,7 +357,53 @@ export class IndexSettingsComponent implements AfterViewInit {
     // Defer change detection to next tick to avoid ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
       this.cdr.detectChanges();
-    }, 0);
+      this.attachTooltips();
+    }, 100);
+  }
+
+  attachTooltips(): void {
+    // Attach tooltips to slider pointers using title attributes
+    const tooltipData = {
+      'reorganize-min': 'Min Size (Reorganize): Sets the minimum object size for reorganization operations. Objects smaller than this will be ignored.',
+      'reorganize-max': 'Max Size (Reorganize): Sets the maximum object size for reorganization operations. Objects larger than this will be rebuilt instead.',
+      'rebuild-threshold': 'Rebuild Threshold: Sets the minimum object size for rebuild operations. Objects at or above this size will be rebuilt instead of reorganized.',
+      'fragmentation-min': 'Ignore Threshold: Objects with fragmentation below this percentage will be ignored. No action will be taken on these objects.',
+      'fragmentation-max': 'Reorganize/Rebuild Threshold: Objects with fragmentation at or above this percentage will be reorganized (if within size range) or rebuilt (if larger).'
+    };
+
+    // Find all slider pointers and attach tooltips
+    setTimeout(() => {
+      const reorganizeSlider = document.querySelector('.custom-slider-range[data-tooltip-min]');
+      if (reorganizeSlider) {
+        const pointers = reorganizeSlider.querySelectorAll('.ngx-slider-pointer');
+        if (pointers.length >= 2) {
+          pointers[0].setAttribute('title', tooltipData['reorganize-min']);
+          pointers[0].setAttribute('data-tooltip', tooltipData['reorganize-min']);
+          pointers[1].setAttribute('title', tooltipData['reorganize-max']);
+          pointers[1].setAttribute('data-tooltip', tooltipData['reorganize-max']);
+        }
+      }
+
+      const rebuildSlider = document.querySelector('.custom-slider[data-tooltip]');
+      if (rebuildSlider) {
+        const pointer = rebuildSlider.querySelector('.ngx-slider-pointer');
+        if (pointer) {
+          pointer.setAttribute('title', tooltipData['rebuild-threshold']);
+          pointer.setAttribute('data-tooltip', tooltipData['rebuild-threshold']);
+        }
+      }
+
+      const fragmentationSlider = document.querySelector('.custom-slider-range[data-tooltip-min][data-tooltip-max]');
+      if (fragmentationSlider) {
+        const pointers = fragmentationSlider.querySelectorAll('.ngx-slider-pointer');
+        if (pointers.length >= 2) {
+          pointers[0].setAttribute('title', tooltipData['fragmentation-min']);
+          pointers[0].setAttribute('data-tooltip', tooltipData['fragmentation-min']);
+          pointers[1].setAttribute('title', tooltipData['fragmentation-max']);
+          pointers[1].setAttribute('data-tooltip', tooltipData['fragmentation-max']);
+        }
+      }
+    }, 200);
   }
 
   onDefaults() {

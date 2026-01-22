@@ -51,8 +51,19 @@ export class ServerService {
   // Dashboard
   getTopFragmentedMdfFiles(FilterType?: string, DatabaseName?: any): Observable<any> {
     const linkedServerName = localStorage.getItem('linkedServerName');
+    // Get server name from stored connection
+    let serverName = '';
+    try {
+      const connectionStr = localStorage.getItem('lastServerConnection');
+      if (connectionStr) {
+        const connection = JSON.parse(connectionStr);
+        serverName = connection?.server || '';
+      }
+    } catch (e) {
+      // Ignore parsing errors
+    }
     return this.httpService.get(
-      `/api/Dashboard/GetTopFragmentedMdfFiles?FilterType=${FilterType}&DatabaseName=${DatabaseName}&LinkedServerName=${linkedServerName}`,
+      `/api/Dashboard/GetTopFragmentedMdfFiles?FilterType=${FilterType}&DatabaseName=${DatabaseName}&LinkedServerName=${linkedServerName}&ServerName=${serverName}`,
       this.options,
     );
   }
