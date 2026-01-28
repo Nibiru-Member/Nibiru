@@ -464,6 +464,10 @@ export class AddEditPolicyComponent implements OnInit {
 
           break;
         }
+        case 6: {
+          // Resource check update
+          break;
+        }
 
         case 7: {
           // Notifications update

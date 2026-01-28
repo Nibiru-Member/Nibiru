@@ -1,0 +1,17 @@
+/* Custom tooltip styling */
+::ng-deep .custom-tooltip {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+  border: 1px solid #374151 !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  max-width: 400px !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+}
+
+::ng-deep .custom-tooltip .mat-tooltip-trigger {
+  cursor: help;
+}
+

@@ -4,17 +4,23 @@
       <thead class="bg-muted sticky top-0 z-10">
         <tr class="text-xs uppercase text-gray-400">
           <th class="w-6 p-2"></th>
-          <th class="p-2 text-left text-primary">Name</th>
-          <th class="p-2 text-left text-primary">Comparison</th>
-          <th class="p-2 text-left text-primary">Value</th>
-          <th class="p-2 text-center text-primary">Details</th>
+          <th class="p-2 text-left text-primary">Unit of Contention</th>
+          <th class="p-2 text-left text-primary">Operator</th>
+          <th class="p-2 text-left text-primary">Unit</th>
+          <th class="p-2 text-center text-primary">Info</th>
         </tr>
       </thead>
 
       <tbody>
         <ng-container *ngFor="let item of resourceChecks">
           <tr class="hover:bg-gray-700">
-            <td class="p-2 text-center"></td>
+            <td class="p-2 text-center">
+              <input
+                type="checkbox"
+                [(ngModel)]="item.isActive"
+                class="h-4 w-4 cursor-pointer rounded border-gray-600 bg-gray-700 text-red-500 focus:ring-2 focus:ring-red-500"
+              />
+            </td>
 
             <td class="p-2">
               <div class="flex items-center gap-2">
@@ -22,27 +28,75 @@
               </div>
             </td>
 
-            <td class="p-2 text-gray-400">
-              {{ item?.comparisonOperator }}
+            <td class="p-2">
+              <select
+                [(ngModel)]="item.comparisonOperator"
+                class="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-200 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              >
+                <option *ngFor="let op of getOperatorsForCheck(item.checkName)" [value]="op">{{ op }}</option>
+              </select>
             </td>
 
             <td class="p-2">
-              {{ item.thresholdOldValue }}
+              <input
+                *ngIf="!isJobnameCheck(item.checkName)"
+                type="number"
+                [(ngModel)]="item.thresholdOldValue"
+                class="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-200 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                placeholder="Enter value"
+              />
+              <input
+                *ngIf="isJobnameCheck(item.checkName)"
+                type="text"
+                [(ngModel)]="item.thresholdOldValue"
+                class="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-200 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                placeholder="Enter jobname(s)"
+              />
             </td>
 
             <td class="p-2 text-center">
-              <button
-                (click)="showDetails(item)"
-                class="relative inline-flex items-center justify-center rounded border border-gray-600 p-1.5 hover:border-red-500 hover:text-red-400">
+              <div
+                class="relative inline-flex items-center justify-center cursor-help"
+                [matTooltip]="getTooltipMessage(item.checkName)"
+                matTooltipPosition="above"
+                matTooltipClass="custom-tooltip"
+              >
                 <svg-icon
-                  src="assets/icons/heroicons/outline/exclamation-circle.svg"
-                  [svgClass]="'h-5 w-5 text-blue-300'">
+                  src="assets/icons/heroicons/outline/information-circle.svg"
+                  [svgClass]="'h-5 w-5 text-blue-400 hover:text-blue-300'">
                 </svg-icon>
-              </button>
+              </div>
             </td>
           </tr>
         </ng-container>
       </tbody>
     </table>
+  </div>
+
+  <!-- Contention Check Options -->
+  <div class="mt-6 border-t border-gray-700 pt-4 px-4 pb-4">
+    <div class="grid grid-cols-4 gap-3">
+      <label class="text-sm text-gray-200 col-span-2">
+        Cancel the policy when a contention check is delayed
+      </label>
+      <input
+        type="number"
+        [(ngModel)]="delayTimeValue"
+        [disabled]="delayTimeUnit === 'never'"
+        min="0"
+        class="w-24 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-200 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        placeholder="0"
+      />
+      <select
+        [(ngModel)]="delayTimeUnit"
+        (change)="onDelayTimeUnitChange()"
+        class="rounded border border-gray-600 bg-gray-700 px-3 py-1 text-gray-200 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+      >
+        <option value="minutes">Minutes</option>
+        <option value="hours">Hours</option>
+        <option value="days">Days</option>
+        <option value="never">Never</option>
+      </select>
+    </div>
   </div>
 </div>

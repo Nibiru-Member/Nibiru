@@ -111,11 +111,6 @@ export interface UpdatePolicyDefragment {
 }
 export interface UpdatePolicyResource {
   userId: string;
-  checkId: string;
-  checkName: string;
-  comparisonOperator: string;
-  thresholdOldValue: any;
-  thresholdNewValue: any;
   policyId: string;
 }
 export interface UpdatePolicySchedule {

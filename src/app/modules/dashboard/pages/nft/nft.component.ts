@@ -821,48 +821,49 @@ export class NftComponent implements OnInit, OnDestroy {
     if (!hasOpenedServerDialog) {
       const dialogRef = this.dialog.open(ServerComponent, { disableClose: true });
       localStorage.setItem('ServerDialogOpened', 'true');
-      dialogRef.afterClosed().subscribe(() => {});
-    }
-    this.loadMdfFiles(this.selectedPeriod);
-    // load disk storage on init if connection present
-    this.loadDiskStorage();
-    this.GetServerHealthStatus();
-    // Subscribe to DB selection changes but only react after DB list loaded
-    const dbSub = this.serverState
-      .onSelectedDatabaseChange()
-      .pipe(debounceTime(60), distinctUntilChanged())
-      .subscribe((dbName) => {
-        // ignore until DB list loaded & connection present
-        if (!this.serverState.isDatabaseListLoaded()) return;
+      dialogRef.afterClosed().subscribe(() => {
+        this.loadMdfFiles(this.selectedPeriod);
+        // load disk storage on init if connection present
+        this.loadDiskStorage();
+        this.GetServerHealthStatus();
+        // Subscribe to DB selection changes but only react after DB list loaded
+        const dbSub = this.serverState
+          .onSelectedDatabaseChange()
+          .pipe(debounceTime(60), distinctUntilChanged())
+          .subscribe((dbName) => {
+            // ignore until DB list loaded & connection present
+            if (!this.serverState.isDatabaseListLoaded()) return;
 
-        const conn = this.serverState.getConnection();
-        if (!conn) {
-          this.resetDashboardState();
-          return;
+            const conn = this.serverState.getConnection();
+            if (!conn) {
+              this.resetDashboardState();
+              return;
+            }
+
+            // load dashboard for selected DB (this method itself gates index APIs)
+            this.loadAllForCurrent(dbName, this.selectedPeriod);
+          });
+
+        this.subs.push(dbSub);
+
+        // Listen to explicit index-refresh signals (fired when user clicks an index leaf)
+        const idxSub = this.serverState.onIndexRefresh().subscribe(() => {
+          const db = this.serverState.getSelectedDatabase();
+          this.loadAllForCurrent(db || '', this.selectedPeriod);
+        });
+
+        this.subs.push(idxSub);
+
+        // if a DB is already selected and DB list loaded, trigger initial load
+        if (this.serverState.isDatabaseListLoaded()) {
+          const selected = this.serverState.getSelectedDatabase();
+          if (selected) {
+            this.loadAllForCurrent(selected, this.selectedPeriod);
+          }
         }
-
-        // load dashboard for selected DB (this method itself gates index APIs)
-        this.loadAllForCurrent(dbName, this.selectedPeriod);
+        this.loadActivityHistory();
       });
-
-    this.subs.push(dbSub);
-
-    // Listen to explicit index-refresh signals (fired when user clicks an index leaf)
-    const idxSub = this.serverState.onIndexRefresh().subscribe(() => {
-      const db = this.serverState.getSelectedDatabase();
-      this.loadAllForCurrent(db || '', this.selectedPeriod);
-    });
-
-    this.subs.push(idxSub);
-
-    // if a DB is already selected and DB list loaded, trigger initial load
-    if (this.serverState.isDatabaseListLoaded()) {
-      const selected = this.serverState.getSelectedDatabase();
-      if (selected) {
-        this.loadAllForCurrent(selected, this.selectedPeriod);
-      }
     }
-    this.loadActivityHistory();
   }
 
   toggleMenu(i: number, event?: MouseEvent) {

@@ -2,16 +2,15 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PolicyService } from 'src/app/core/services/Policy/policy.service';
-import { MatDialog } from '@angular/material/dialog';
-import { DialogResourceCheckComponent } from './dialog-resource-check/dialog-resource-check.component';
 import { AngularSvgIconModule } from 'angular-svg-icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { UpdatePolicyResource } from 'src/app/core/models/policy.model';
 
 interface ResourceCheckViewModel {
   checkId: string;
   checkName: string;
   comparisonOperator: string;
-  thresholdOldValue: number;
-  thresholdNewValue: number | null;
+  thresholdOldValue: number | string;
   isActive: boolean;
   expanded: boolean;
 }
@@ -19,16 +18,41 @@ interface ResourceCheckViewModel {
 @Component({
   selector: 'app-resource-check',
   standalone: true,
-  imports: [CommonModule, FormsModule, AngularSvgIconModule],
+  imports: [CommonModule, FormsModule, AngularSvgIconModule, MatTooltipModule],
   templateUrl: './resource-check.component.html',
+  styleUrls: ['./resource-check.component.css'],
 })
 export class ResourceCheckComponent implements OnInit {
   @Input() policyId!: string;
   @Input() userId!: string;
 
   resourceChecks: ResourceCheckViewModel[] = [];
+  
+  // Comparison operators dropdown options (standard operators for numeric comparisons)
+  comparisonOperators: string[] = ['=', '!=', '>', '>=', '<', '<='];
+  
+  // Jobname specific operators
+  jobnameOperators: string[] = ['Does Not Contain', 'Contains', 'EQ'];
+  
+  // Contention check options
+  cancelPolicyOnDelay: boolean = false;
+  delayTimeValue: number = 0;
+  delayTimeUnit: 'minutes' | 'hours' | 'days' | 'never' = 'never';
 
-  constructor(private policyService: PolicyService, private cdr: ChangeDetectorRef, private dialog: MatDialog) {}
+  // Tooltip messages for each resource check
+  tooltipMessages: { [key: string]: string } = {
+    'Active session counts': 'Detect the number of active sessions running at the time the defragmentation operation is to run based on the "unit" specified.',
+    'CPU Load Percentage (SQL Instance)': 'Detect the CPU utilization percentage of the SQL Server instance at the time the defragmentation operation is to run based on the "unit" specified.',
+    'Memory Usage percentage': 'Detect the memory utilization percentage of the SQL Server instance at the time the defragmentation operation is to run based on the "unit" specified.',
+    'Jobname': 'Detect the jobnames running on the SQL Server instance at the time the defragmentation operation is to run based on the "Jobname(s)" specified.',
+    'Job count': 'Detect the number of jobs running on the SQL Server instance at the time the defragmentation operation is to run based on the "unit" specified.',
+    'Users logged in': 'Detect the number of users logged into the SQL Server instance at the time the defragmentation operation is to run based on the "unit" specified.',
+    'Active transaction count': 'Detect the active transaction count running on the SQL Server instance at the time the defragmentation operation is to run based on the "unit" specified.',
+    'Transaction log Usage percentage': 'Detect the transaction Log utilization percentage for the SQL Server instance at the time the defragmentation operation is to run based on the "unit" specified.',
+    'CPU Load percentage': 'Detect the server CPU utilization percentage at the time the defragmentation operation is to run based on the "unit" specified.'
+  };
+
+  constructor(private policyService: PolicyService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadResourceChecks();
@@ -38,68 +62,87 @@ export class ResourceCheckComponent implements OnInit {
     this.policyService.GetResourceCheckConfigList().subscribe({
       next: (res: any) => {
         const list = res?.data ?? [];
+        // Map API data to our resource checks
+        // If API doesn't return all required checks, initialize with default list
+        const defaultChecks = [
+          { checkName: 'Active session counts', comparisonOperator: '>', thresholdOldValue: 0 },
+          { checkName: 'CPU Load Percentage (SQL Instance)', comparisonOperator: '>', thresholdOldValue: 0 },
+          { checkName: 'Memory Usage percentage', comparisonOperator: '>', thresholdOldValue: 0 },
+          { checkName: 'Jobname', comparisonOperator: 'Does Not Contain', thresholdOldValue: '' },
+          { checkName: 'Job count', comparisonOperator: '>', thresholdOldValue: 0 },
+          { checkName: 'Users logged in', comparisonOperator: '>', thresholdOldValue: 0 },
+          { checkName: 'Active transaction count', comparisonOperator: '>', thresholdOldValue: 0 },
+          { checkName: 'Transaction log Usage percentage', comparisonOperator: '>', thresholdOldValue: 0 },
+          { checkName: 'CPU Load percentage', comparisonOperator: '>', thresholdOldValue: 0 }
+        ];
 
-        this.resourceChecks = list.map((x: any) => ({
-          checkId: x.checkId,
-          checkName: x.checkName,
-          comparisonOperator: x.comparisonOperator,
-          thresholdOldValue: x.thresholdOldValue,
-          thresholdNewValue: x.thresholdNewValue ?? 0,
-          isActive: false,
-          expanded: false,
-        }));
+        // Merge API data with defaults, prioritizing API data
+        const apiCheckMap = new Map(list.map((x: any) => [x.checkName, x]));
+        
+        this.resourceChecks = defaultChecks.map((defaultCheck) => {
+          const apiCheck: any = apiCheckMap.get(defaultCheck.checkName);
+          return {
+            checkId: apiCheck?.checkId || '',
+            checkName: defaultCheck.checkName,
+            comparisonOperator: apiCheck?.comparisonOperator || defaultCheck.comparisonOperator,
+            thresholdOldValue: apiCheck?.thresholdOldValue ?? defaultCheck.thresholdOldValue,
+            thresholdNewValue: apiCheck?.thresholdNewValue ?? null,
+            isActive: false,
+            expanded: false,
+          };
+        });
 
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Failed to load resource checks', err),
-    });
-  }
-
-  showDetails(item: ResourceCheckViewModel): void {
-    const paramKey = this.mapCheckNameToParam(item.checkName);
-    const dialogRef = this.dialog.open(DialogResourceCheckComponent, {
-      data: {
-        paramKey: paramKey,
-        paramValue: item.thresholdOldValue,
+      error: (err) => {
+        console.error('Failed to load resource checks', err);
+        // Initialize with default checks if API fails
+        this.initializeDefaultChecks();
       },
-      panelClass: 'custom-dark-dialog',
     });
-    dialogRef.afterClosed().subscribe(() => {});
   }
 
-  // NEW: Map check names to API param keys
-  mapCheckNameToParam(checkName: string): string {
-    switch (checkName) {
-      case 'Active session counts':
-        return 'ActiveSessionCountThreshold';
+  initializeDefaultChecks(): void {
+    this.resourceChecks = [
+      { checkId: '', checkName: 'Active session counts', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
+      { checkId: '', checkName: 'CPU Load Percentage (SQL Instance)', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
+      { checkId: '', checkName: 'Memory Usage percentage', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
+      { checkId: '', checkName: 'Jobname', comparisonOperator: 'Does Not Contain', thresholdOldValue: '', isActive: false, expanded: false },
+      { checkId: '', checkName: 'Job count', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
+      { checkId: '', checkName: 'Users logged in', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
+      { checkId: '', checkName: 'Active transaction count', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
+      { checkId: '', checkName: 'Transaction log Usage percentage', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
+      { checkId: '', checkName: 'CPU Load percentage', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false }
+    ];
+    this.cdr.detectChanges();
+  }
 
-      case 'Active transaction count':
-        return 'ActiveTransactionCountThreshold';
+  getTooltipMessage(checkName: string): string {
+    let tooltipMessage = this.tooltipMessages[checkName] || '';
+    if (checkName === 'Jobname') {
+      tooltipMessage = tooltipMessage.replace('"Jobname(s)"', this.resourceChecks.find(x => x.checkName === checkName)?.thresholdOldValue?.toString() || '');
+    } else {
+      tooltipMessage = tooltipMessage.replace('"unit"', this.resourceChecks.find(x => x.checkName === checkName)?.thresholdOldValue?.toString() || '');
+    }
+    return tooltipMessage;
+  }
 
-      case 'CPU Load Percentage (SQL Instance)':
-        return 'SQLInstanceCPUThreshold';
+  isJobnameCheck(checkName: string): boolean {
+    return checkName === 'Jobname';
+  }
 
-      case 'CPU load percentage':
-        return 'TotalServerCPUThreshold';
+  getOperatorsForCheck(checkName: string): string[] {
+    if (checkName === 'Jobname') {
+      return this.jobnameOperators;
+    }
+    return this.comparisonOperators;
+  }
 
-      case 'Job count':
-        return 'ExecutingJobCountThreshold';
-
-      case 'Job name':
-        return 'ExcludedJobName';
-
-      case 'Memory usage percentage':
-        return 'MemoryUsageThreshold';
-
-      case 'Transaction log usage percentage':
-        return 'TransactionLogUsageThreshold';
-
-      case 'Users logged in':
-        return 'UsersLoggedInThreshold';
-
-      default:
-        console.warn('No param mapping found for:', checkName);
-        return '';
+  onDelayTimeUnitChange(): void {
+    if (this.delayTimeUnit === 'never') {
+      this.cancelPolicyOnDelay = false;
+      this.delayTimeValue = 0;
     }
   }
+
 }
