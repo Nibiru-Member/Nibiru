@@ -12,6 +12,7 @@ import {
   UpdatePolicySchedule,
   UpdatePolicyTargetSelection,
   UpdateStatusPayload,
+  UpdatePolicyResource,
 } from '../../models/policy.model';
 
 @Injectable({
@@ -75,22 +76,7 @@ export class PolicyService {
       this.options,
     );
   }
-  /**
-   * Used to get Policy Detail List
-   * @returns
-   */
-  GetResourceCheckConfigList(): Observable<BaseResponse> {
-    return this.httpService.get(`/api/Policy/GetResourceCheckConfigList`, this.options);
-  }
 
-  /**
-   * Used to update the Policy Defragment
-   * @param data
-   * @returns
-   */
-  UpdatePolicyResourceConfig(data: UpdatePolicyDefragment): Observable<BaseResponse> {
-    return this.httpService.put(`/api/Policy/UpdatePolicyResourceConfig`, data, this.options);
-  }
   /**
    * Used to update the Policy Target
    * @param data
@@ -122,6 +108,23 @@ export class PolicyService {
    */
   updatePolicyNotifications(data: UpdatePolicyNotifications): Observable<BaseResponse> {
     return this.httpService.put(`/api/Policy/UpdatePolicyNotifications`, data, this.options);
+  }
+  /**
+   * Used to update the Policy Resource Checks (Contention Checks)
+   * @param data
+   * @returns
+   */
+  updatePolicyResource(data: UpdatePolicyResource): Observable<BaseResponse> {
+    return this.httpService.put(`/api/Policy/UpdatePolicyResourceConfig`, data, this.options);
+  }
+
+  /**
+   * Used to get Policy Resource Checks (Contention Checks) by PolicyId
+   * @param policyId
+   * @returns
+   */
+  getPolicyResourceConfig(policyId: string): Observable<BaseResponse> {
+    return this.httpService.get(`/api/Policy/GetPolicyResourceConfig/${policyId}`, this.options);
   }
   CheckDynamicContentionConditions(paramKey: string, paramValue: any): Observable<BaseResponse> {
     console.log({ paramKey }, { paramValue }, '{paramKey}=${paramValue}');

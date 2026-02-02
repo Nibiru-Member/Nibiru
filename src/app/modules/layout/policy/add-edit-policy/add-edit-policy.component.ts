@@ -466,6 +466,16 @@ export class AddEditPolicyComponent implements OnInit {
         }
         case 6: {
           // Resource check update
+          const payload = this.resourceCheckComp.getFormData();
+          await this.policyService.updatePolicyResource(payload).toPromise();
+
+          // LOG UPDATE SUCCESS
+          this.activityLogger.logUpdate(
+            'Policy',
+            `Policy resource checks updated for ${getPolicyName()}`,
+            this.policyId || '',
+            true,
+          );
           break;
         }
 

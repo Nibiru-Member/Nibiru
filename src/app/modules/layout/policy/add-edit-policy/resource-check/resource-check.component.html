@@ -41,14 +41,14 @@
               <input
                 *ngIf="!isJobnameCheck(item.checkName)"
                 type="number"
-                [(ngModel)]="item.thresholdOldValue"
+                [(ngModel)]="item.value"
                 class="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-200 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                 placeholder="Enter value"
               />
               <input
                 *ngIf="isJobnameCheck(item.checkName)"
                 type="text"
-                [(ngModel)]="item.thresholdOldValue"
+                [(ngModel)]="item.value"
                 class="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-200 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                 placeholder="Enter jobname(s)"
               />

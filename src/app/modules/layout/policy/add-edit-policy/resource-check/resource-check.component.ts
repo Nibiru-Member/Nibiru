@@ -5,15 +5,7 @@ import { PolicyService } from 'src/app/core/services/Policy/policy.service';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { UpdatePolicyResource } from 'src/app/core/models/policy.model';
-
-interface ResourceCheckViewModel {
-  checkId: string;
-  checkName: string;
-  comparisonOperator: string;
-  thresholdOldValue: number | string;
-  isActive: boolean;
-  expanded: boolean;
-}
+import { ResourceCheckConfig } from 'src/app/core/models/policy.model';
 
 @Component({
   selector: 'app-resource-check',
@@ -26,7 +18,7 @@ export class ResourceCheckComponent implements OnInit {
   @Input() policyId!: string;
   @Input() userId!: string;
 
-  resourceChecks: ResourceCheckViewModel[] = [];
+  resourceChecks: ResourceCheckConfig[] = [];
   
   // Comparison operators dropdown options (standard operators for numeric comparisons)
   comparisonOperators: string[] = ['=', '!=', '>', '>=', '<', '<='];
@@ -59,60 +51,62 @@ export class ResourceCheckComponent implements OnInit {
   }
 
   loadResourceChecks(): void {
-    this.policyService.GetResourceCheckConfigList().subscribe({
-      next: (res: any) => {
-        const list = res?.data ?? [];
-        // Map API data to our resource checks
-        // If API doesn't return all required checks, initialize with default list
-        const defaultChecks = [
-          { checkName: 'Active session counts', comparisonOperator: '>', thresholdOldValue: 0 },
-          { checkName: 'CPU Load Percentage (SQL Instance)', comparisonOperator: '>', thresholdOldValue: 0 },
-          { checkName: 'Memory Usage percentage', comparisonOperator: '>', thresholdOldValue: 0 },
-          { checkName: 'Jobname', comparisonOperator: 'Does Not Contain', thresholdOldValue: '' },
-          { checkName: 'Job count', comparisonOperator: '>', thresholdOldValue: 0 },
-          { checkName: 'Users logged in', comparisonOperator: '>', thresholdOldValue: 0 },
-          { checkName: 'Active transaction count', comparisonOperator: '>', thresholdOldValue: 0 },
-          { checkName: 'Transaction log Usage percentage', comparisonOperator: '>', thresholdOldValue: 0 },
-          { checkName: 'CPU Load percentage', comparisonOperator: '>', thresholdOldValue: 0 }
-        ];
+    // If policyId is available, load from backend; otherwise use defaults
+    if (this.policyId && this.policyId !== '') {
+      this.policyService.getPolicyResourceConfig(this.policyId).subscribe({
+        next: (response: any) => {
+          if (response?.data) {
+            const data = response.data;
+            
+            // Load delay settings
+            if (data.delayTimeValue !== null && data.delayTimeValue !== undefined) {
+              this.delayTimeValue = data.delayTimeValue;
+            }
+            if (data.delayTimeUnit) {
+              this.delayTimeUnit = data.delayTimeUnit;
+            }
 
-        // Merge API data with defaults, prioritizing API data
-        const apiCheckMap = new Map(list.map((x: any) => [x.checkName, x]));
-        
-        this.resourceChecks = defaultChecks.map((defaultCheck) => {
-          const apiCheck: any = apiCheckMap.get(defaultCheck.checkName);
-          return {
-            checkId: apiCheck?.checkId || '',
-            checkName: defaultCheck.checkName,
-            comparisonOperator: apiCheck?.comparisonOperator || defaultCheck.comparisonOperator,
-            thresholdOldValue: apiCheck?.thresholdOldValue ?? defaultCheck.thresholdOldValue,
-            thresholdNewValue: apiCheck?.thresholdNewValue ?? null,
-            isActive: false,
-            expanded: false,
-          };
-        });
-
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Failed to load resource checks', err);
-        // Initialize with default checks if API fails
-        this.initializeDefaultChecks();
-      },
-    });
+            // Load resource checks if available
+            if (data.checks && data.checks.length > 0) {
+              this.resourceChecks = data.checks.map((check: any) => ({
+                checkName: check.checkName,
+                comparisonOperator: check.comparisonOperator,
+                value: check.value !== null && check.value !== undefined ? (this.isJobnameCheck(check.checkName) ? check.value : Number(check.value) || 0) : (this.isJobnameCheck(check.checkName) ? '' : 0),
+                isActive: check.isActive || false
+              }));
+            } else {
+              // If no checks found, initialize with defaults
+              this.initializeDefaultChecks();
+            }
+          } else {
+            // If no data, initialize with defaults
+            this.initializeDefaultChecks();
+          }
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error loading resource checks:', error);
+          // On error, initialize with defaults
+          this.initializeDefaultChecks();
+        }
+      });
+    } else {
+      // No policyId, initialize with defaults
+      this.initializeDefaultChecks();
+    }
   }
 
   initializeDefaultChecks(): void {
     this.resourceChecks = [
-      { checkId: '', checkName: 'Active session counts', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
-      { checkId: '', checkName: 'CPU Load Percentage (SQL Instance)', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
-      { checkId: '', checkName: 'Memory Usage percentage', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
-      { checkId: '', checkName: 'Jobname', comparisonOperator: 'Does Not Contain', thresholdOldValue: '', isActive: false, expanded: false },
-      { checkId: '', checkName: 'Job count', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
-      { checkId: '', checkName: 'Users logged in', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
-      { checkId: '', checkName: 'Active transaction count', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
-      { checkId: '', checkName: 'Transaction log Usage percentage', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false },
-      { checkId: '', checkName: 'CPU Load percentage', comparisonOperator: '>', thresholdOldValue: 0, isActive: false, expanded: false }
+      { checkName: 'Active session counts', comparisonOperator: '>', value: 0, isActive: false },
+      { checkName: 'CPU Load Percentage (SQL Instance)', comparisonOperator: '>', value: 0, isActive: false },
+      { checkName: 'Memory Usage percentage', comparisonOperator: '>', value: 0, isActive: false },
+      { checkName: 'Jobname', comparisonOperator: 'Does Not Contain', value: '', isActive: false },
+      { checkName: 'Job count', comparisonOperator: '>', value: 0, isActive: false },
+      { checkName: 'Users logged in', comparisonOperator: '>', value: 0, isActive: false },
+      { checkName: 'Active transaction count', comparisonOperator: '>', value: 0, isActive: false },
+      { checkName: 'Transaction log Usage percentage', comparisonOperator: '>', value: 0, isActive: false },
+      { checkName: 'CPU Load percentage', comparisonOperator: '>', value: 0, isActive: false }
     ];
     this.cdr.detectChanges();
   }
@@ -120,9 +114,9 @@ export class ResourceCheckComponent implements OnInit {
   getTooltipMessage(checkName: string): string {
     let tooltipMessage = this.tooltipMessages[checkName] || '';
     if (checkName === 'Jobname') {
-      tooltipMessage = tooltipMessage.replace('"Jobname(s)"', this.resourceChecks.find(x => x.checkName === checkName)?.thresholdOldValue?.toString() || '');
+      tooltipMessage = tooltipMessage.replace('"Jobname(s)"', this.resourceChecks.find(x => x.checkName === checkName)?.value?.toString() || '');
     } else {
-      tooltipMessage = tooltipMessage.replace('"unit"', this.resourceChecks.find(x => x.checkName === checkName)?.thresholdOldValue?.toString() || '');
+      tooltipMessage = tooltipMessage.replace('"unit"', this.resourceChecks.find(x => x.checkName === checkName)?.value?.toString() || '');
     }
     return tooltipMessage;
   }
@@ -143,6 +137,24 @@ export class ResourceCheckComponent implements OnInit {
       this.cancelPolicyOnDelay = false;
       this.delayTimeValue = 0;
     }
+  }
+
+  getFormData(): UpdatePolicyResource {
+    // Convert checks array, ensuring value is always a string
+    const checks = this.resourceChecks.map(check => ({
+      checkName: check.checkName,
+      comparisonOperator: check.comparisonOperator,
+      value: check.value !== null && check.value !== undefined ? String(check.value) : '',
+      isActive: check.isActive
+    }));
+    
+    return {
+      userId: this.userId,
+      policyId: this.policyId,
+      checks: checks,
+      delayTimeValue: this.delayTimeValue,
+      delayTimeUnit: this.delayTimeUnit
+    };
   }
 
 }

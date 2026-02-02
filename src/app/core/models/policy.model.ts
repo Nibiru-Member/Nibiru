@@ -109,9 +109,19 @@ export interface UpdatePolicyDefragment {
   isBackup: boolean;
   backupPath: string;
 }
+export interface ResourceCheckConfig {
+  checkName: string;
+  comparisonOperator: string;
+  value: number | string;
+  isActive: boolean;
+}
+
 export interface UpdatePolicyResource {
   userId: string;
   policyId: string;
+  checks: ResourceCheckConfig[];
+  delayTimeValue: number;
+  delayTimeUnit: 'minutes' | 'hours' | 'days' | 'never';
 }
 export interface UpdatePolicySchedule {
   userId: string;
