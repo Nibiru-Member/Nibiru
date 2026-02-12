@@ -75,8 +75,7 @@ export class SettingsMenuComponent implements OnInit {
 
   navigateToLicensing() {
     this.isOpen = false;
-    // Placeholder for actual licensing route
-    // this.router.navigate(['/settings/licensing']);
+    this.router.navigate(['/settings/licensing']);
   }
 }
 

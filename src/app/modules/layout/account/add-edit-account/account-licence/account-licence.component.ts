@@ -102,6 +102,7 @@ export class AccountLicenceComponent implements OnInit, OnChanges {
   }
 
   emitLicenseData(): void {
+    console.log('emitLicenseData', this.localLicenseData);
     this.licenseUpdated.emit({ ...this.localLicenseData });
   }
 }

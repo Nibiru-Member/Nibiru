@@ -30,6 +30,11 @@ const routes: Routes = [
         canLoad: [AuthGuard],
       },
       {
+        path: 'settings',
+        loadChildren: () => import('../layout/settings/settings.module').then((m) => m.SettingsModule),
+        canLoad: [AuthGuard],
+      },
+      {
         path: 'components',
         loadChildren: () => import('../uikit/uikit.module').then((m) => m.UikitModule),
         canLoad: [AuthGuard], // ✅ Guarded

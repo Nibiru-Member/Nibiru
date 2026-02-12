@@ -119,6 +119,12 @@ export class NftComponent implements OnInit, OnDestroy {
   fillFactorData: any[] = [];
   totalFragmentationData: any[] = [];
   totalIndexFragmentationData: any[] = [];
+  
+  // Multi-column sorting state for fragmented indexes table
+  // Array of sort orders: [{ column: 'fragPercentage', direction: 'desc' }, ...]
+  sortOrders: Array<{ column: 'fragPercentage' | 'fillFactorPercentage' | 'fragChange'; direction: 'asc' | 'desc' }> = [
+    { column: 'fragPercentage', direction: 'desc' }
+  ];
 
   // charts
   fillFactorChartOptions!: LineChartOptions | undefined;
@@ -1162,7 +1168,8 @@ export class NftComponent implements OnInit, OnDestroy {
           this.indexFilesReviews = [];
         }
       }
-
+      console.log('----------indexFilesReviewRes--------');
+      console.log(res);
       // IndexFill Factor History (index-specific)
       const fillFactorHistoryRes = res.fillFactorHistory;
       if (fillFactorHistoryRes && fillFactorHistoryRes.success && Array.isArray(fillFactorHistoryRes.data)) {
@@ -1204,6 +1211,9 @@ export class NftComponent implements OnInit, OnDestroy {
       const indexRes = res.indexList;
       if (indexRes && indexRes.success && Array.isArray(indexRes.data)) {
         this.fragmentedIndexes = indexRes.data;
+        // Apply default sort by Frag% (descending)
+        this.sortOrders = [{ column: 'fragPercentage', direction: 'desc' }];
+        this.applySorting();
         anySuccess = true;
       } else {
         this.fragmentedIndexes = [];
@@ -1799,5 +1809,155 @@ export class NftComponent implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  /**
+   * Get value from index object for sorting
+   * @param item - Index item
+   * @param column - Column to get value from
+   * @returns Numeric value for sorting
+   */
+  private getSortValue(item: any, column: 'fragPercentage' | 'fillFactorPercentage' | 'fragChange'): number {
+    switch (column) {
+      case 'fragPercentage':
+        const frag = typeof item.fragPercentage === 'string' 
+          ? item.fragPercentage.replace('%', '').trim() 
+          : item.fragPercentage;
+        return parseFloat(frag) || 0;
+      case 'fillFactorPercentage':
+        const fill = typeof item.fillFactorPercentage === 'string' 
+          ? item.fillFactorPercentage.replace('%', '').trim() 
+          : item.fillFactorPercentage;
+        return parseFloat(fill) || 0;
+      case 'fragChange':
+        return parseFloat(item.fragChange) || 0;
+      default:
+        return 0;
+    }
+  }
+
+  /**
+   * Sort fragmented indexes table with multi-column support
+   * Click behavior: 1st click = desc, 2nd click = asc, 3rd click = remove
+   * @param column - Column to sort by
+   * @param direction - Optional sort direction ('asc' or 'desc'), if not provided, follows 3-click cycle
+   */
+  sortFragmentedIndexes(column: 'fragPercentage' | 'fillFactorPercentage' | 'fragChange', direction?: 'asc' | 'desc') {
+    // Find if this column is already in the sort orders
+    const existingIndex = this.sortOrders.findIndex(order => order.column === column);
+
+    if (existingIndex >= 0) {
+      // Column already exists
+      if (direction) {
+        // Direction provided, update it
+        this.sortOrders[existingIndex].direction = direction;
+      } else {
+        // No direction provided - follow 3-click cycle
+        const currentDirection = this.sortOrders[existingIndex].direction;
+        
+        if (currentDirection === 'desc') {
+          // 1st click was desc, 2nd click = toggle to asc
+          this.sortOrders[existingIndex].direction = 'asc';
+        } else {
+          // 2nd click was asc, 3rd click = remove the sort
+          this.sortOrders.splice(existingIndex, 1);
+          
+          // If no sorts remain and the removed column is not Frag%, reset to default sort by Frag%
+          // If Frag% was removed, allow it to stay removed (empty sort orders)
+          if (this.sortOrders.length === 0 && column !== 'fragPercentage') {
+            this.sortOrders = [{ column: 'fragPercentage', direction: 'desc' }];
+          }
+        }
+      }
+    } else {
+      // Column not in sort orders - add it (1st click = desc)
+      this.sortOrders.push({
+        column: column,
+        direction: direction || 'desc'
+      });
+    }
+
+    // Apply the sorting
+    this.applySorting();
+  }
+
+  /**
+   * Apply all sort orders to the fragmented indexes array
+   */
+  private applySorting() {
+    if (this.sortOrders.length === 0) {
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.fragmentedIndexes.sort((a, b) => {
+      // Apply each sort order in sequence
+      for (const sortOrder of this.sortOrders) {
+        const aValue = this.getSortValue(a, sortOrder.column);
+        const bValue = this.getSortValue(b, sortOrder.column);
+
+        // If values are different, return the comparison result
+        if (aValue !== bValue) {
+          if (sortOrder.direction === 'asc') {
+            return aValue - bValue;
+          } else {
+            return bValue - aValue;
+          }
+        }
+        // If values are equal, continue to next sort order
+      }
+      // All sort values are equal
+      return 0;
+    });
+
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Get sort icon and order indicator based on current sort state
+   * @param column - Column to check
+   * @returns Object with icon path and sort order index, or null
+   */
+  getSortIcon(column: 'fragPercentage' | 'fillFactorPercentage' | 'fragChange'): string | null {
+    const sortOrder = this.sortOrders.find(order => order.column === column);
+    if (!sortOrder) {
+      return null; // No icon if not in sort orders
+    }
+    return sortOrder.direction === 'asc' 
+      ? 'assets/icons/heroicons/solid/chevron-up.svg'
+      : 'assets/icons/heroicons/solid/chevron-down.svg';
+  }
+
+  /**
+   * Get sort order number (1, 2, 3, etc.) for a column
+   * @param column - Column to check
+   * @returns Sort order number (1-based) or null if not sorted
+   */
+  getSortOrder(column: 'fragPercentage' | 'fillFactorPercentage' | 'fragChange'): number | null {
+    const index = this.sortOrders.findIndex(order => order.column === column);
+    return index >= 0 ? index + 1 : null;
+  }
+
+  /**
+   * Remove a column from the sort orders
+   * @param column - Column to remove from sorting
+   * @param event - Click event to prevent propagation
+   */
+  removeSort(column: 'fragPercentage' | 'fillFactorPercentage' | 'fragChange', event?: Event) {
+    if (event) {
+      event.stopPropagation(); // Prevent triggering the sort button click
+    }
+    
+    const index = this.sortOrders.findIndex(order => order.column === column);
+    if (index >= 0) {
+      this.sortOrders.splice(index, 1);
+      
+      // If no sorts remain, reset to default sort by Frag%
+      if (this.sortOrders.length === 0) {
+        this.sortOrders = [{ column: 'fragPercentage', direction: 'desc' }];
+      }
+      
+      this.applySorting();
+    }
   }
 }

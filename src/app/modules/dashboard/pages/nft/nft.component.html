@@ -138,24 +138,23 @@
               [style.top.px]="mdfMenuPosition.y"
               [style.left.px]="mdfMenuPosition.x"
               (click)="$event.stopPropagation()">
-              <!-- ================= BACKUP ================= -->
+              <!-- ================= Analyze ================= -->
               <div
                 class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
-                (click)="backupMdfFile(menu.row); closeMdfMenu()">
-                <span class="text-sm text-sm text-white">Backup</span>
+                (click)="analyzeMdfFile(menu.row); closeMdfMenu()">
+                <span class="text-sm text-sm text-white">Analyze</span>
               </div>
-              
               <!-- ================= DEFRAGMENT ================= -->
               <div
                 class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
                 (click)="defragmentMdfFile(menu.row); closeMdfMenu()">
                 <span class="text-sm text-sm text-white">Defragment</span>
               </div>
-              <!-- ================= Analyze ================= -->
+              <!-- ================= BACKUP ================= -->
               <div
                 class="flex cursor-pointer items-center px-4 py-2 hover:bg-gray-700"
-                (click)="analyzeMdfFile(menu.row); closeMdfMenu()">
-                <span class="text-sm text-sm text-white">Analyze</span>
+                (click)="backupMdfFile(menu.row); closeMdfMenu()">
+                <span class="text-sm text-sm text-white">Backup</span>
               </div>
             </div>
             }
@@ -399,9 +398,78 @@
                 <th class="px-3 text-primary">Tables</th>
                 <th class="px-3 text-primary">Type</th>
                 <th class="px-3 text-center text-primary">Cluster</th>
-                <th class="px-3 text-primary">Frag %</th>
-                <th class="px-3 text-primary">Fill Factor %</th>
-                <th class="px-3 text-primary">Frag Change</th>
+                <th class="px-3 text-primary text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <span>Frag %</span>
+                    <button 
+                      class="relative p-1.5 rounded-md transition-all duration-200 cursor-pointer flex items-center justify-center group min-w-[32px] min-h-[32px] hover:opacity-80"
+                      (click)="sortFragmentedIndexes('fragPercentage')"
+                      [title]="getSortOrder('fragPercentage') ? 'Click to toggle direction or remove sort' : 'Sort by Frag %'">
+                      @if (getSortIcon('fragPercentage')) {
+                        <svg-icon
+                          [src]="getSortIcon('fragPercentage')!"
+                          [svgClass]="'h-4 w-4 text-white'"></svg-icon>
+                      } @else {
+                        <div class="flex flex-col items-center -space-y-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                          <svg-icon
+                            src="assets/icons/heroicons/solid/chevron-up.svg"
+                            [svgClass]="'h-2.5 w-2.5 text-gray-400 group-hover:text-primary transition-colors'"></svg-icon>
+                          <svg-icon
+                            src="assets/icons/heroicons/solid/chevron-down.svg"
+                            [svgClass]="'h-2.5 w-2.5 text-gray-400 group-hover:text-primary transition-colors'"></svg-icon>
+                        </div>
+                      }
+                    </button>
+                  </div>
+                </th>
+                <th class="px-3 text-primary text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <span>Fill Factor %</span>
+                    <button 
+                      class="relative p-1.5 rounded-md transition-all duration-200 cursor-pointer flex items-center justify-center group min-w-[32px] min-h-[32px] hover:opacity-80"
+                      (click)="sortFragmentedIndexes('fillFactorPercentage')"
+                      [title]="getSortOrder('fillFactorPercentage') ? 'Click to toggle direction or remove sort' : 'Sort by Fill Factor %'">
+                      @if (getSortIcon('fillFactorPercentage')) {
+                        <svg-icon
+                          [src]="getSortIcon('fillFactorPercentage')!"
+                          [svgClass]="'h-4 w-4 text-white'"></svg-icon>
+                      } @else {
+                        <div class="flex flex-col items-center -space-y-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                          <svg-icon
+                            src="assets/icons/heroicons/solid/chevron-up.svg"
+                            [svgClass]="'h-2.5 w-2.5 text-gray-400 group-hover:text-primary transition-colors'"></svg-icon>
+                          <svg-icon
+                            src="assets/icons/heroicons/solid/chevron-down.svg"
+                            [svgClass]="'h-2.5 w-2.5 text-gray-400 group-hover:text-primary transition-colors'"></svg-icon>
+                        </div>
+                      }
+                    </button>
+                  </div>
+                </th>
+                <th class="px-3 text-primary text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <span>Frag Change</span>
+                    <button 
+                      class="relative p-1.5 rounded-md transition-all duration-200 cursor-pointer flex items-center justify-center group min-w-[32px] min-h-[32px] hover:opacity-80"
+                      (click)="sortFragmentedIndexes('fragChange')"
+                      [title]="getSortOrder('fragChange') ? 'Click to toggle direction or remove sort' : 'Sort by Frag Change'">
+                      @if (getSortIcon('fragChange')) {
+                        <svg-icon
+                          [src]="getSortIcon('fragChange')!"
+                          [svgClass]="'h-4 w-4 text-white'"></svg-icon>
+                      } @else {
+                        <div class="flex flex-col items-center -space-y-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                          <svg-icon
+                            src="assets/icons/heroicons/solid/chevron-up.svg"
+                            [svgClass]="'h-2.5 w-2.5 text-gray-400 group-hover:text-primary transition-colors'"></svg-icon>
+                          <svg-icon
+                            src="assets/icons/heroicons/solid/chevron-down.svg"
+                            [svgClass]="'h-2.5 w-2.5 text-gray-400 group-hover:text-primary transition-colors'"></svg-icon>
+                        </div>
+                      }
+                    </button>
+                  </div>
+                </th>
               </tr>
             </thead>
 

@@ -1,0 +1,143 @@
+<div class="flex h-full w-full items-start justify-center bg-transparent p-6">
+  <div class="w-full max-w-3xl space-y-6 rounded-xl bg-gray-950/80 p-6 shadow-lg ring-1 ring-gray-800">
+    <h2 class="text-xl font-semibold text-white">Licensing</h2>
+    <p class="text-sm text-gray-400">
+      View your current license status and activate or update your license key for this account.
+    </p>
+
+    <!-- Current License Status -->
+    <div class="rounded-lg border border-gray-700 bg-gray-900 p-4">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-300">Current License Status</p>
+          <p class="mt-1 text-lg font-semibold text-white">
+            {{ licenseStatus?.licenseType || 'No License' }}
+          </p>
+          <p class="mt-1 text-sm text-gray-400" *ngIf="licenseStatus">
+            <span *ngIf="licenseStatus.isValid">
+              License is valid
+              <span *ngIf="licenseStatus.licenseEndDate">
+                until {{ licenseStatus.licenseEndDate | date: 'mediumDate' }}
+              </span>
+              ({{ licenseStatus.daysRemaining }} days remaining)
+            </span>
+            <span *ngIf="!licenseStatus.isValid">License is expired or invalid.</span>
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="rounded-full px-3 py-1 text-xs font-semibold" [ngClass]="getStatusBadgeClass()">
+            <ng-container *ngIf="licenseStatus; else noStatus">
+              <ng-container *ngIf="licenseStatus.isValid; else invalidStatus">
+                <ng-container *ngIf="licenseStatus.isExpiringSoon; else activeStatus">
+                  Expiring Soon
+                </ng-container>
+                <ng-template #activeStatus> Active </ng-template>
+              </ng-container>
+              <ng-template #invalidStatus> Expired / Invalid </ng-template>
+            </ng-container>
+            <ng-template #noStatus> No License </ng-template>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activation Form -->
+    <div class="rounded-lg border border-gray-700 bg-gray-900 p-4">
+      <h3 class="text-base font-semibold text-white">Activate / Update License</h3>
+      <p class="mt-1 text-xs text-gray-400">
+        Enter the license key you received from Nibiru Software. For permanent licenses, your corporate email is
+        required.
+      </p>
+
+      <form class="mt-4 space-y-4" (ngSubmit)="activateLicense()">
+        <!-- License Key -->
+        <div>
+          <label class="text-xs font-medium text-gray-300">License Key *</label>
+          <input
+            type="text"
+            [(ngModel)]="licenseKey"
+            name="licenseKey"
+            required
+            class="mt-1 w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            placeholder="Enter your license key" />
+        </div>
+
+        <!-- Corporate Email -->
+        <div>
+          <label class="text-xs font-medium text-gray-300">Corporate Email</label>
+          <input
+            type="email"
+            [(ngModel)]="corporateEmail"
+            name="corporateEmail"
+            class="mt-1 w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            placeholder="email@company.com" />
+          <p class="mt-1 text-[11px] text-gray-500">
+            Used to validate permanent licenses. Pre-filled from your profile where available.
+          </p>
+        </div>
+
+        <!-- Instance Info -->
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <label class="text-xs font-medium text-gray-300">Instance Name</label>
+            <input
+              type="text"
+              [(ngModel)]="instanceName"
+              name="instanceName"
+              class="mt-1 w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              placeholder="e.g. Production Server" />
+          </div>
+
+          <div>
+            <label class="text-xs font-medium text-gray-300">Machine ID (optional)</label>
+            <input
+              type="text"
+              [(ngModel)]="machineId"
+              name="machineId"
+              class="mt-1 w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+              placeholder="Unique machine identifier" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-medium text-gray-300">IP Address (optional)</label>
+          <input
+            type="text"
+            [(ngModel)]="ipAddress"
+            name="ipAddress"
+            class="mt-1 w-full rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            placeholder="e.g. 192.168.1.100" />
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-4 flex items-center justify-between gap-3">
+          <button
+            type="submit"
+            [disabled]="isLoading || !licenseKey"
+            class="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-emerald-900">
+            <span *ngIf="!isLoading">Validate &amp; Activate License</span>
+            <span *ngIf="isLoading" class="flex items-center gap-2">
+              <span
+                class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+              Processing...
+            </span>
+          </button>
+
+          <button
+            type="button"
+            (click)="loadLicenseStatus()"
+            class="text-xs font-medium text-gray-400 hover:text-gray-200">
+            Refresh Status
+          </button>
+        </div>
+
+        <p *ngIf="activationMessage" class="mt-2 text-xs text-emerald-400">
+          {{ activationMessage }}
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+
+

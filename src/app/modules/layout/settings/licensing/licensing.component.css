@@ -1,0 +1,9 @@
+.page-container {
+  height: 100%;
+}
+
+.card {
+  backdrop-filter: blur(16px);
+}
+
+

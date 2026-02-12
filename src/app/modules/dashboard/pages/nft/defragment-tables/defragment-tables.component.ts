@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { ServerService } from 'src/app/core/services/server/server.service';
@@ -12,7 +12,7 @@ import { catchError, EMPTY, take } from 'rxjs';
   templateUrl: './defragment-tables.component.html',
   styleUrl: './defragment-tables.component.css',
 })
-export class DefragmentTablesComponent {
+export class DefragmentTablesComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<DefragmentTablesComponent>);
   private cdr = inject(ChangeDetectorRef);
   data = inject(MAT_DIALOG_DATA, { optional: true });
@@ -43,7 +43,7 @@ export class DefragmentTablesComponent {
   getDetailedTableFragmentation() {
     const linkedServerName = this._serverState.getLinkedServerName();
     this._serverService
-      .getDetailedTableFragmentation(this.data.mdfFiles, 5, linkedServerName)
+      .getDetailedTableFragmentation(this.data.databaseName, 5, linkedServerName)
       .pipe(
         catchError(() => EMPTY),
         take(1),
@@ -58,5 +58,33 @@ export class DefragmentTablesComponent {
           this._toast.error(res.message);
         }
       });
+  }
+
+  /**
+   * Format date as mm-dd-ccyy hh:mm AM|PM
+   * @param date - Date string or Date object
+   * @returns Formatted date string
+   */
+  formatAnalysisTime(date: any): string {
+    if (!date) {
+      return '';
+    }
+
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+      return '';
+    }
+
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const year = dateObj.getFullYear();
+    const hours = dateObj.getHours();
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    
+    const hour12 = hours % 12 || 12;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const hourFormatted = String(hour12).padStart(2, '0');
+
+    return `${month}-${day}-${year} ${hourFormatted}:${minutes} ${ampm}`;
   }
 }
